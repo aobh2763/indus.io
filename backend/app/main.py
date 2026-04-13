@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.db.database import Base, engine
+from app.routers import project
 
+
+Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="indus.io Backend API",
     description="Backend for the Production Line Simulation Platform",
@@ -14,7 +18,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(project.router)
 @app.get("/")
 def root():
     return {"message": "Hello World!"}
