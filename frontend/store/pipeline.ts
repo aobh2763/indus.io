@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { applyNodeChanges, applyEdgeChanges, addEdge, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type OnConnect } from "@xyflow/react";
-import type { MachineType, MachineTypeConfig, MachineParameter } from "../types/machine";
+import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "../types/machine";
 
 export interface MachineNodeData extends Record<string, unknown> {
   label: string;
-  machineType: MachineType;
+  process: MachineProcess;
   color: string;
   icon: string;
-  parameters: MachineParameter[];
+  attributes: ProcessAttributes;
 }
 
 export type MachineNode = Node<MachineNodeData, "machineNode">;
@@ -71,13 +71,10 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       position,
       data: {
         label: machineConfig.name,
-        machineType: machineConfig.type,
+        process: machineConfig.process,
         color: machineConfig.color,
         icon: machineConfig.icon,
-        parameters: machineConfig.defaultParameters.map((p) => ({
-          ...p,
-          value: p.value,
-        })),
+        attributes: JSON.parse(JSON.stringify(machineConfig.defaultAttributes)),
       },
     };
     set({ nodes: [...get().nodes, newNode] });
