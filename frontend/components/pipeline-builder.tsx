@@ -40,7 +40,7 @@ const PipelineBuilder: FC = () => {
   const fitViewOptions = useMemo(() => ({ padding: 0.2 }), []);
 
   return (
-    <div className="w-full h-screen flex bg-gray-50 dark:bg-gray-950">
+    <div className="w-full h-screen flex bg-gray-950 dark:bg-gray-950">
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
@@ -56,10 +56,10 @@ const PipelineBuilder: FC = () => {
           <Panel position="top-left">
             <MachineList />
           </Panel>
-          <Background gap={16} color="#e5e7eb" className="dark:!bg-gray-950" />
-          <Controls className="dark:fill-gray-300 [&>button]:dark:bg-gray-800 [&>button]:dark:border-gray-700 [&>button]:dark:text-gray-300" />
+          <Background gap={16} color="#1f2937" className="dark:!bg-gray-950" />
+          <Controls className="dark:fill-gray-300 [&>button]:dark:bg-gray-800 [&>button]:dark:border-gray-700 [&>button]:dark:text-gray-300 [&>button]:bg-gray-800 [&>button]:border-gray-700 [&>button]:text-gray-300" />
           <MiniMap
-            className="dark:!bg-gray-900 dark:!border-gray-700"
+            className="dark:!bg-gray-900 dark:!border-gray-700 !bg-gray-900 !border-gray-700"
             nodeColor={(node) => (node.data as { color?: string }).color || "#999"}
           />
           <Panel position="top-right">

@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Activity, AlertCircle, BarChart3, Briefcase, Settings, CheckCircle2, TrendingUp, Clock, Factory, ArrowRight } from "lucide-react";
+import { Activity, AlertCircle, Briefcase, CheckCircle2, TrendingUp, Clock, Factory, ArrowRight } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { ReactFlow, Background, Controls } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -25,23 +25,8 @@ const mockEdges = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
+    <div className="min-h-screen bg-gray-950 text-gray-100 pt-24 px-8 pb-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tableau de Bord</h1>
-            <p className="text-slate-500">Vue d'ensemble de la production et des KPIs indus.io</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/pipeline-builder" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-slate-900 text-white shadow hover:bg-slate-900/90 h-9 px-4 py-2">
-              <Settings className="mr-2 h-4 w-4" />
-              Gérer la Pipeline
-            </Link>
-          </div>
-        </header>
-
         {/* KPIs Row */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card title="OEE Moyen" value="78.5%" icon={<Activity className="h-4 w-4 text-emerald-500" />} trend="+2.5% depuis hier" />
@@ -57,10 +42,10 @@ export default function HomePage() {
           <div className="lg:col-span-4 space-y-4">
             
             {/* Chart Block */}
-            <div className="rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm p-6">
+            <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
               <div className="flex flex-col space-y-1.5 mb-4">
-                <h3 className="font-semibold leading-none tracking-tight">Performance Globale (OEE & Rendement)</h3>
-                <p className="text-sm text-slate-500">Évolution de la production sur la journée</p>
+                <h3 className="font-semibold leading-none tracking-tight text-white">Performance Globale (OEE & Rendement)</h3>
+                <p className="text-sm text-gray-400">Évolution de la production sur la journée</p>
               </div>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -71,12 +56,12 @@ export default function HomePage() {
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dx={-10} />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ color: '#0f172a', fontWeight: 500 }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#1f2937', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)' }}
+                      itemStyle={{ color: '#f3f4f6', fontWeight: 500 }}
                     />
                     <Area type="monotone" dataKey="oee" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorOee)" name="OEE (%)" />
                   </AreaChart>
@@ -85,11 +70,11 @@ export default function HomePage() {
             </div>
 
             {/* Projects Block */}
-            <div className="rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm p-6">
+            <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
               <div className="flex flex-col space-y-1.5 mb-4 flex-row justify-between items-start">
                 <div>
-                  <h3 className="font-semibold leading-none tracking-tight">Projets Récents</h3>
-                  <p className="text-sm text-slate-500">Suivi de l'avancement des commandes</p>
+                  <h3 className="font-semibold leading-none tracking-tight text-white">Projets Récents</h3>
+                  <p className="text-sm text-gray-400">Suivi de l'avancement des commandes</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -105,20 +90,20 @@ export default function HomePage() {
           <div className="lg:col-span-3 space-y-4">
             
              {/* Pipeline Preview Window */}
-             <div className="rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm p-6 flex flex-col h-[350px]">
+             <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6 flex flex-col h-[350px]">
               <div className="flex flex-col space-y-1.5 mb-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
+                  <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2 text-white">
                     <Factory className="h-4 w-4" /> 
                     Pipeline de Production
                   </h3>
-                  <Link to="/pipeline-builder" className="text-xs text-blue-600 hover:underline flex items-center">
+                  <Link to="/pipeline-builder" className="text-xs text-blue-400 hover:text-blue-300 flex items-center">
                     Voir détails <ArrowRight className="ml-1 h-3 w-3" />
                   </Link>
                 </div>
-                <p className="text-sm text-slate-500">Aperçu du flux actuel</p>
+                <p className="text-sm text-gray-400">Aperçu du flux actuel</p>
               </div>
-              <div className="flex-1 border rounded-lg overflow-hidden bg-slate-50 relative">
+              <div className="flex-1 border border-gray-800 rounded-lg overflow-hidden bg-gray-800 relative">
                 <ReactFlow 
                   nodes={mockNodes} 
                   edges={mockEdges} 
@@ -127,7 +112,7 @@ export default function HomePage() {
                   panOnScroll={false}
                   zoomOnScroll={false}
                 >
-                  <Background color="#ccc" variant="dots" />
+                  <Background color="#1f2937" gap={16} variant="dots" />
                 </ReactFlow>
                 {/* Disable interaction overlay */}
                 <div className="absolute inset-0 bg-transparent cursor-pointer z-10" title="Cliquez pour modifier la pipeline" onClick={() => window.location.href = '/pipeline-builder'}></div>
@@ -135,13 +120,13 @@ export default function HomePage() {
             </div>
 
             {/* Alerts Block */}
-            <div className="rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm p-6">
+            <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
               <div className="flex flex-col space-y-1.5 mb-4">
-                <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-rose-500" />
+                <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2 text-white">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
                   Alertes IA & Machines
                 </h3>
-                <p className="text-sm text-slate-500">Notifications critiques du système</p>
+                <p className="text-sm text-gray-400">Notifications critiques du système</p>
               </div>
               <div className="space-y-4">
                 <AlertItem type="critical" time="Il y a 10 min" message="Machine Coupe-02: Baisse de performance détectée (OEE < 50%)." />
@@ -160,16 +145,16 @@ export default function HomePage() {
 // Reusable micro-components for the dashboard
 function Card({ title, value, icon, trend, text }: any) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm p-6">
+    <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
       <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <h3 className="tracking-tight text-sm font-medium">{title}</h3>
+        <h3 className="tracking-tight text-sm font-medium text-gray-200">{title}</h3>
         {icon}
       </div>
       <div>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold text-white">{value}</div>
         {(trend || text) && (
-          <p className="text-xs text-slate-500 mt-1">
-            {trend && <span className={trend.includes('+') ? 'text-emerald-500 font-medium' : 'text-rose-500 font-medium'}>{trend}</span>}
+          <p className="text-xs text-gray-400 mt-1">
+            {trend && <span className={trend.includes('+') ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>{trend}</span>}
             {trend && text && " · "}
             {text}
           </p>
@@ -183,16 +168,16 @@ function ProjectItem({ name, progress, expected, status }: any) {
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-1.5 flex-1">
-        <p className="text-sm font-medium leading-none">{name}</p>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <p className="text-sm font-medium leading-none text-white">{name}</p>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
           <Clock className="h-3 w-3" /> {expected}
         </div>
       </div>
       <div className="flex items-center gap-4 w-1/3 justify-end">
-        <div className="w-full bg-slate-100 rounded-full h-2 max-w-[80px]">
-          <div className={`h-2 rounded-full ${status === 'Retard' ? 'bg-orange-500' : 'bg-blue-600'}`} style={{ width: `${progress}%` }}></div>
+        <div className="w-full bg-gray-800 rounded-full h-2 max-w-[80px]">
+          <div className={`h-2 rounded-full ${status === 'Retard' ? 'bg-orange-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }}></div>
         </div>
-        <span className="text-xs font-medium w-8 text-right">{progress}%</span>
+        <span className="text-xs font-medium w-8 text-right text-gray-300">{progress}%</span>
       </div>
     </div>
   );
@@ -203,15 +188,15 @@ function AlertItem({ type, message, time }: any) {
   const isWarning = type === 'warning';
   
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-lg border ${isCritical ? 'bg-rose-50 border-rose-100' : isWarning ? 'bg-orange-50 border-orange-100' : 'bg-blue-50 border-blue-100'}`}>
-      <div className={`mt-0.5 ${isCritical ? 'text-rose-600' : isWarning ? 'text-orange-600' : 'text-blue-600'}`}>
+    <div className={`flex items-start gap-3 p-3 rounded-lg border ${isCritical ? 'bg-red-900/30 border-red-800' : isWarning ? 'bg-orange-900/30 border-orange-800' : 'bg-blue-900/30 border-blue-800'}`}>
+      <div className={`mt-0.5 ${isCritical ? 'text-red-400' : isWarning ? 'text-orange-400' : 'text-blue-400'}`}>
         {isCritical ? <AlertCircle className="h-4 w-4" /> : isWarning ? <Activity className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
       </div>
       <div className="space-y-1">
-        <p className={`text-sm font-medium ${isCritical ? 'text-rose-900' : isWarning ? 'text-orange-900' : 'text-blue-900'}`}>
+        <p className={`text-sm font-medium ${isCritical ? 'text-red-200' : isWarning ? 'text-orange-200' : 'text-blue-200'}`}>
           {message}
         </p>
-        <p className={`text-xs ${isCritical ? 'text-rose-600/80' : isWarning ? 'text-orange-600/80' : 'text-blue-600/80'}`}>
+        <p className={`text-xs ${isCritical ? 'text-red-400/70' : isWarning ? 'text-orange-400/70' : 'text-blue-400/70'}`}>
           {time}
         </p>
       </div>

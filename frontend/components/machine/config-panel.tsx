@@ -71,8 +71,8 @@ const ConfigPanel: FC = () => {
   };
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-900 flex flex-col animate-slide-in">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="w-80 bg-gray-900 flex flex-col animate-slide-in shadow-lg border border-gray-800">
+      <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center"
@@ -80,42 +80,42 @@ const ConfigPanel: FC = () => {
           >
             <IconComponent size={20} className="text-white" />
           </div>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="font-medium text-white">
             Configure
           </span>
         </div>
         <button
           onClick={() => setConfigPanelOpen(false)}
-          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="p-1 rounded-lg hover:bg-gray-800 transition-colors"
         >
-          <X size={20} className="text-gray-500" />
+          <X size={20} className="text-gray-400" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label className="block text-sm font-medium text-gray-200 mb-1.5">
             Name
           </label>
           <input
             type="text"
             value={localLabel}
             onChange={(e) => setLocalLabel(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
           />
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <h3 className="text-sm font-medium text-gray-200 mb-3">
             Parameters
           </h3>
           <div className="space-y-3">
             {localParameters.map((param, index) => (
               <div key={index}>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-xs text-gray-400 mb-1">
                   {param.metadata.name}
                   {param.unit && (
-                    <span className="ml-1 text-gray-400">({param.unit})</span>
+                    <span className="ml-1 text-gray-500">({param.unit})</span>
                   )}
                 </label>
                 <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ const ConfigPanel: FC = () => {
                     onChange={(e) =>
                       handleParameterChange(index, parseFloat(e.target.value) || 0)
                     }
-                    className="flex-1 px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                    className="flex-1 px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   />
                 </div>
               </div>
@@ -134,10 +134,10 @@ const ConfigPanel: FC = () => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+      <div className="p-4 border-t border-gray-800 flex gap-2">
         <button
           onClick={handleDelete}
-          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-400 hover:text-red-300 rounded-lg hover:bg-red-900/20 transition-colors"
         >
           <Trash2 size={16} />
           Delete
