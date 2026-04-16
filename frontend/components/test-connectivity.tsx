@@ -6,8 +6,8 @@ function TestConnectivity() {
 
   useEffect(() => {
     axios.get('http://localhost:8000/')
-    .then(res => setMessage(res.data.message))
-    .catch(() => setMessage("Error connecting to backend"))
+      .then(res => setMessage(res.data.message))
+      .catch(() => setMessage("Error connecting to backend"))
   }, [])
 
   return (
