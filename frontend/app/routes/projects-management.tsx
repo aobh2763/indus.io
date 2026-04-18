@@ -70,8 +70,6 @@ export default function ProjectManagementPage() {
           onSubmit={handleCreate}
         />
       </div>
-
-      {/* List Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-medium text-gray-200">
           Projects

@@ -1,5 +1,3 @@
-// app/services/projects.service.ts
-
 import type {
   Project,
   CreateProjectDTO,
@@ -7,8 +5,6 @@ import type {
 } from "../../types/project";
 
 const BASE_URL = "http://localhost:8000/projects";
-
-// normalize backend → frontend
 function normalizeProject(raw: any): Project {
   return {
     project_id: raw.project_id,

@@ -93,8 +93,6 @@ export default function ProjectForm({ form, setForm, onSubmit }: Props) {
           <option value="public">Public</option>
         </select>
       </div>
-
-      {/* Submit Button */}
       <button
         onClick={onSubmit}
         className="w-full bg-indigo-600 hover:bg-indigo-700 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 mt-4"

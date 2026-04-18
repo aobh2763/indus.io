@@ -13,8 +13,6 @@ export default function ProjectCard({
 }: Props) {
   return (
     <div className="bg-gray-900 p-5 rounded-2xl flex flex-col gap-4 shadow-md hover:shadow-lg transition">
-
-      {/* Header */}
       <div className="flex justify-between items-start">
         <h2 className="text-lg font-semibold text-white">
           {project.name}
@@ -24,14 +22,11 @@ export default function ProjectCard({
           {project.visibility}
         </span>
       </div>
-
-      {/* Info */}
       <div className="space-y-2 text-sm text-gray-300">
         <p>
           <span className="text-gray-500">Manager:</span>{" "}
           {project.project_manager}
         </p>
-
         <p>
           <span className="text-gray-500">Production Lines:</span>{" "}
           {project.production_lines.length > 0
@@ -47,7 +42,6 @@ export default function ProjectCard({
         </p>
       </div>
 
-      {/* Footer */}
       <div className="flex justify-between items-center mt-2">
 
         <div className="text-xs text-gray-500">
