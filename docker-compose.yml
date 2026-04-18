@@ -11,6 +11,8 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    depends_on:
+      - db
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
@@ -23,3 +25,13 @@ services:
       - backend
     ports:
       - "5173:5173"
+  db:
+    image: postgres:15
+    container_name: indusio_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ahmedahmed12345
+      POSTGRES_DB: ppp
+    ports:
+      - "5432:5432"

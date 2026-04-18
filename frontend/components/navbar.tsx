@@ -17,8 +17,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/projects-management"
-            className="rounded-lg border border-gray-700 px-4 py-2 text-xs font-medium text-gray-200 transition hover:border-gray-600 hover:bg-gray-800"
-          >
+            className="rounded-lg border border-gray-700 px-4 py-2 text-xs font-medium text-gray-200 transition hover:border-gray-600 hover:bg-gray-800">
             Projects Management
           </Link>
         </div>

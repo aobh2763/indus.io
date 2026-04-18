@@ -1,40 +1,94 @@
-import { ClipboardList, FolderKanban, Plus, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ProjectsService } from "../services/projects.service";
+import ProjectForm from "../../components/project/project-form";
+import ProjectList from "../../components/project/project-list";
+import type {
+  Project,
+  CreateProjectDTO,
+} from "../../types/project";
 
-export default function ProjectsManagementPage() {
+export default function ProjectManagementPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [form, setForm] = useState<CreateProjectDTO>({
+    name: "",
+    project_manager: "",
+    visibility: "private",
+    production_lines: [],
+    shift_supervisors: [],
+  });
+
+  const fetchProjects = async () => {
+    setLoading(true);
+    const data = await ProjectsService.getAll();
+    setProjects(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const handleCreate = async () => {
+    const created = await ProjectsService.create(form);
+    setProjects((prev) => [created, ...prev]); // new on top
+  };
+
+  const handleDelete = async (id: string) => {
+    await ProjectsService.remove(id);
+    setProjects((prev) =>
+      prev.filter((p) => p.project_id !== id)
+    );
+  };
+
+  const handleAddSupervisor = (id: string) => {
+    console.log("Add supervisor to project:", id);
+  };
+
   return (
-    <section className="space-y-6">
-      <header className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Projects Management</h1>
-          <p className="mt-1 text-sm text-zinc-400">Track manufacturing projects, owners, and progress.</p>
-        </div>
-        <button className="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs font-medium text-zinc-100 transition hover:border-zinc-700 hover:bg-zinc-900">
-          <Plus className="h-4 w-4" />
-          New Project
-        </button>
-      </header>
+    <div className="p-6 text-white space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Project Management
+        </h1>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <InfoCard icon={<FolderKanban className="h-4 w-4" />} title="Total Projects" value="24" />
-        <InfoCard icon={<ClipboardList className="h-4 w-4" />} title="In Progress" value="9" />
-        <InfoCard icon={<Users className="h-4 w-4" />} title="Assigned Teams" value="6" />
+        <span className="text-sm text-gray-400">
+          {projects.length} project{projects.length !== 1 && "s"}
+        </span>
       </div>
 
-      <div className="rounded-xl border border-zinc-900 bg-zinc-950 p-5">
-        <p className="text-sm text-zinc-300">Project management module is ready for your CRUD integration.</p>
-      </div>
-    </section>
-  );
-}
+      {/* Form Section */}
+      <div className="bg-gray-900 rounded-2xl p-5 shadow-md">
+        <h2 className="text-lg font-medium mb-4 text-gray-200">
+          Create New Project
+        </h2>
 
-function InfoCard({ icon, title, value }: { icon: React.ReactNode; title: string; value: string }) {
-  return (
-    <article className="rounded-xl border border-zinc-900 bg-zinc-950 p-4">
-      <div className="flex items-center justify-between text-zinc-400">
-        <span className="text-xs uppercase tracking-wider">{title}</span>
-        {icon}
+        <ProjectForm
+          form={form}
+          setForm={setForm}
+          onSubmit={handleCreate}
+        />
       </div>
-      <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
-    </article>
+
+      {/* List Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-medium text-gray-200">
+          Projects
+        </h2>
+
+        {loading ? (
+          <div className="text-gray-400 text-sm animate-pulse">
+            Loading projects...
+          </div>
+        ) : (
+          <ProjectList
+            projects={projects}
+            onDelete={handleDelete}
+            onAddSupervisor={handleAddSupervisor}
+          />
+        )}
+      </div>
+    </div>
   );
 }
