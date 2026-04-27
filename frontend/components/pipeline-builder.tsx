@@ -1,33 +1,25 @@
-import { type FC, useCallback, useMemo } from "react";
-import { ReactFlow, Background, Controls, MiniMap, type OnSelectionChangeFunc, Panel, ReactFlowProvider, BackgroundVariant } from "@xyflow/react";
-import { useShallow } from "zustand/react/shallow";
-import { usePipelineStore } from "../store/pipeline";
+import {
+  Panel,
+  ReactFlow,
+  Background,
+  type OnSelectionChangeFunc,
+} from "@xyflow/react";
+
+import { useCallback } from "react";
 import MachineNode from "./machine/node";
 import MachineList from "./machine/list";
 import ConfigPanel from "./machine/config-panel";
+import { usePipelineStore } from "../store/pipeline";
 
-const nodeTypes = {
-  machineNode: MachineNode,
-};
-
-const PipelineBuilder: FC = () => {
+const PipelineBuilder = () => {
   const {
     nodes,
     edges,
+    onConnect,
     onNodesChange,
     onEdgesChange,
-    onConnect,
     setSelectedNode,
-  } = usePipelineStore(
-    useShallow((state) => ({
-      nodes: state.nodes,
-      edges: state.edges,
-      onNodesChange: state.onNodesChange,
-      onEdgesChange: state.onEdgesChange,
-      onConnect: state.onConnect,
-      setSelectedNode: state.setSelectedNode,
-    }))
-  );
+  } = usePipelineStore();
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(({ nodes: selectedNodes }) => {
     if (selectedNodes.length === 1) {
@@ -37,33 +29,32 @@ const PipelineBuilder: FC = () => {
     }
   }, [setSelectedNode]);
 
-  const fitViewOptions = useMemo(() => ({ padding: 0.2 }), []);
-
   return (
     <div className="h-screen">
-      <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onSelectionChange={onSelectionChange}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={fitViewOptions}
-          proOptions={{ hideAttribution: true }}
-          style={{ background: "#000" }}
-        >
-          <Panel position="center-left">
-            <MachineList />
-          </Panel>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onConnect={onConnect}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onSelectionChange={onSelectionChange}
 
-          <Panel position="center-right">
-            <ConfigPanel />
-          </Panel>
-        </ReactFlow>
-      </ReactFlowProvider>
+        fitView
+        style={{ background: "#000" }}
+        fitViewOptions={{ padding: 0.2 }}
+        proOptions={{ hideAttribution: true }}
+        nodeTypes={{ machineNode: MachineNode }}
+      >
+        <Background />
+
+        <Panel position="center-left">
+          <MachineList />
+        </Panel>
+
+        <Panel position="center-right">
+          <ConfigPanel />
+        </Panel>
+      </ReactFlow>
     </div>
   );
 };

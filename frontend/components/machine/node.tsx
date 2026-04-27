@@ -1,26 +1,7 @@
 import { memo } from "react";
+import { ICON_MAP } from "../../types/machine";
 import { Handle, Position } from "@xyflow/react";
-import {
-  Factory,
-  Hammer,
-  Move3d,
-  Bot,
-  Scan,
-  Zap,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
 import type { MachineNodeData } from "../../store/pipeline";
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  Factory,
-  Hammer,
-  Move3d,
-  Bot,
-  Scan,
-  Zap,
-  Wrench,
-};
 
 export interface MachineNodeComponentProps {
   data: MachineNodeData;
@@ -28,7 +9,7 @@ export interface MachineNodeComponentProps {
 }
 
 function MachineNodeComponent({ data, selected }: MachineNodeComponentProps) {
-  const IconComponent = ICON_MAP[data.icon] || Factory;
+  const IconComponent = ICON_MAP[data.icon] || ICON_MAP["Factory"];
 
   return (
     <div className={`flex flex-col items-center ${selected ? "gap-1" : ""}`}>

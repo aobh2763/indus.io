@@ -1,27 +1,8 @@
+import { ICON_MAP } from "../../types/machine";
 import { useState, useEffect, type FC } from "react";
-import { X, Trash2, Save, ChevronDown, ChevronRight } from "lucide-react";
-import {
-  Factory,
-  Hammer,
-  Move3d,
-  Bot,
-  Scan,
-  Zap,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
 import { usePipelineStore } from "../../store/pipeline";
+import { X, Trash2, Save, ChevronDown, ChevronRight } from "lucide-react";
 import type { ProcessAttributes, AttributeInstance } from "../../types/machine";
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  Factory,
-  Hammer,
-  Move3d,
-  Bot,
-  Scan,
-  Zap,
-  Wrench,
-};
 
 type LayerKey = "inputs" | "configs" | "outputs";
 
@@ -200,7 +181,7 @@ const ConfigPanel: FC = () => {
 
   if (!isConfigPanelOpen || !selectedNode) return null;
 
-  const IconComponent = ICON_MAP[selectedNode.data.icon] || Factory;
+  const IconComponent = ICON_MAP[selectedNode.data.icon] || ICON_MAP["Factory"];
 
   const handleSave = () => {
     updateNodeData(selectedNodeId!, {

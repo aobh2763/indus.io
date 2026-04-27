@@ -1,35 +1,72 @@
-import { useState, useMemo, type FC } from "react";
-import { useReactFlow } from "@xyflow/react";
 import { Search } from "lucide-react";
-import {
-  Factory,
-  Hammer,
-  Move3d,
-  Bot,
-  Scan,
-  Zap,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
-import { AVAILABLE_MACHINES } from "../../types/machine";
+import MachinePreview from "./preview";
+import { useDraggable } from '@neodrag/react';
+import { ICON_MAP } from "../../types/machine";
 import { usePipelineStore } from "../../store/pipeline";
+import { AVAILABLE_MACHINES } from "../../types/machine";
 import type { MachineTypeConfig } from "../../types/machine";
+import { useReactFlow, type XYPosition } from "@xyflow/react";
+import { useRef, useState, useMemo, useCallback, type FC } from "react";
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  Factory,
-  Hammer,
-  Move3d,
-  Bot,
-  Scan,
-  Zap,
-  Wrench,
+interface DraggableMachineProps {
+  machine: MachineTypeConfig;
+  onMouseLeave: () => void;
+  onMouseEnter: (machine: MachineTypeConfig) => void;
+  onDrop: (machine: MachineTypeConfig, position: XYPosition) => void;
+}
+
+export const DraggableMachine: FC<DraggableMachineProps> = ({ machine, onMouseEnter, onMouseLeave, onDrop }) => {
+  const draggableRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
+
+  useDraggable(draggableRef, {
+    position,
+
+    onDrag: ({ offsetX, offsetY }) => {
+      setPosition({
+        x: offsetX,
+        y: offsetY,
+      });
+    },
+
+    onDragEnd: ({ event }) => {
+      setPosition({ x: 0, y: 0 });
+      onDrop(machine, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+  });
+
+  const IconComponent = ICON_MAP[machine.icon] || ICON_MAP["Factory"];
+
+  return (
+    <div
+      ref={draggableRef}
+      onMouseEnter={() => onMouseEnter(machine)}
+      onMouseLeave={onMouseLeave}
+      className={`p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-150 group max-w-24 cursor-grab active:cursor-grabbing`}
+    >
+      <div className="flex flex-col items-center gap-1">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow"
+          style={{ backgroundColor: machine.color }}
+        >
+          <IconComponent size={20} className="text-white" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-gray-900 dark:text-white text-[11px] max-w-[80px] text-center leading-tight">
+            {machine.name}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const MachineList: FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredMachine, setHoveredMachine] = useState<MachineTypeConfig | null>(null);
-  const { fitView } = useReactFlow();
-  const addNode = usePipelineStore((state) => state.addNode);
 
   const groupedMachines = useMemo(() => {
     const filtered = !searchQuery.trim()
@@ -50,76 +87,74 @@ const MachineList: FC = () => {
     return groups;
   }, [searchQuery]);
 
-  const handleAddMachine = (machineConfig: MachineTypeConfig) => {
-    addNode(machineConfig, { x: 250, y: 150 });
-    setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100);
-  };
-
   const hasResults = Object.keys(groupedMachines).length > 0;
 
+  const { addNode } = usePipelineStore();
+  const { screenToFlowPosition } = useReactFlow();
+
+  const handleNodeDrop = useCallback(
+    (machine: MachineTypeConfig, screenPosition: XYPosition) => {
+      const flow = document.querySelector('.react-flow');
+      const flowRect = flow?.getBoundingClientRect();
+      const isInFlow =
+        flowRect &&
+        screenPosition.x >= flowRect.left &&
+        screenPosition.x <= flowRect.right &&
+        screenPosition.y >= flowRect.top &&
+        screenPosition.y <= flowRect.bottom;
+
+      if (isInFlow) {
+        const position = screenToFlowPosition(screenPosition);
+        addNode(machine, position);
+      }
+    },
+    [addNode, screenToFlowPosition],
+  );
+
   return (
-    <div className="relative group/list">
-      <div className="w-80 bg-white dark:bg-gray-900 flex flex-col max-h-[80vh] rounded-lg shadow-xl border border-gray-200 dark:border-gray-800">
-        <div className="p-4 shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            Machines
+    <div>
+      <div className="dark:bg-gray-900/80 flex flex-col backdrop-blur-md max-h-[80vh] rounded-2xl">
+        <div className="p-4 border-b border-gray-100 dark:border-gray-600">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+            Machine Library
           </h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search machines..."
+              placeholder="Search components..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-gray-900 dark:text-white placeholder-gray-400 transition-all"
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-4">
           {!hasResults ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
               No machines found
             </p>
           ) : (
-            <div className="space-y-6 pb-4">
+            <div className="space-y-8 pb-4">
               {Object.entries(groupedMachines).map(([process, machines]) => (
-                <div key={process} className="space-y-2">
-                  <div className="px-2">
-                    <h3 className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500">
+                <div key={process} className="space-y-3">
+                  <div>
+                    <h3 className="text-sm capitalize dark:text-gray-500">
                       {process}
                     </h3>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {machines.map((machine) => {
-                      const IconComponent = ICON_MAP[machine.icon] || Factory;
 
-                      return (
-                        <button
-                          key={machine.name}
-                          onClick={() => handleAddMachine(machine)}
-                          onMouseEnter={() => setHoveredMachine(machine)}
-                          onMouseLeave={() => setHoveredMachine(null)}
-                          className="p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-150 group max-w-24"
-                        >
-                          <div className="flex flex-col items-center gap-1">
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                              style={{ backgroundColor: machine.color }}
-                            >
-                              <IconComponent size={20} className="text-white" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="font-medium text-gray-900 dark:text-white text-sm max-w-[80px] text-center truncate">
-                                  {machine.name}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                  <div className="flex flex-wrap gap-2">
+                    {machines.map((machine) => (
+                      <DraggableMachine
+                        key={machine.name}
+                        machine={machine}
+                        onDrop={handleNodeDrop}
+                        onMouseEnter={setHoveredMachine}
+                        onMouseLeave={() => setHoveredMachine(null)}
+                      />
+                    ))}
                   </div>
                 </div>
               ))}
@@ -128,75 +163,7 @@ const MachineList: FC = () => {
         </div>
       </div>
 
-      {hoveredMachine && (
-        <div className="h-full absolute left-full top-0 ml-4 w-72 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-800 p-4 z-50 animate-in fade-in slide-in-from-left-2 duration-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg"
-              style={{ backgroundColor: hoveredMachine.color }}
-            >
-              {(() => {
-                const Icon = ICON_MAP[hoveredMachine.icon] || Factory;
-                return <Icon size={20} className="text-white" />;
-              })()}
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-900 dark:text-white leading-tight">
-                {hoveredMachine.name}
-              </h4>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-blue-500">
-                {hoveredMachine.process}
-              </p>
-            </div>
-          </div>
-
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
-            {hoveredMachine.description}
-          </p>
-
-          <div className="space-y-3">
-            {Object.keys(hoveredMachine.defaultAttributes.inputs).length > 0 && (
-              <div>
-                <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tight">
-                  Inputs
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {Object.values(hoveredMachine.defaultAttributes.inputs).map(
-                    (attr) => (
-                      <span
-                        key={attr.definition.id}
-                        className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-[10px] rounded text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-                      >
-                        {attr.definition.name}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            {Object.keys(hoveredMachine.defaultAttributes.outputs).length > 0 && (
-              <div>
-                <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tight">
-                  Outputs
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {Object.values(hoveredMachine.defaultAttributes.outputs).map(
-                    (attr) => (
-                      <span
-                        key={attr.definition.id}
-                        className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-[10px] rounded text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-                      >
-                        {attr.definition.name}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {hoveredMachine && <MachinePreview machine={hoveredMachine} />}
     </div>
   );
 };

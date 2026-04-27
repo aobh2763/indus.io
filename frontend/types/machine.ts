@@ -1,3 +1,15 @@
+import { Factory, type LucideIcon, Bot, Hammer, Move3d, Scan, Wrench, Zap } from "lucide-react";
+
+export const ICON_MAP: Record<string, LucideIcon> = {
+  Factory,
+  Hammer,
+  Move3d,
+  Bot,
+  Scan,
+  Zap,
+  Wrench,
+};
+
 export enum MachineProcess {
   SPINNING = "spinning",
   WEAVING = "weaving",

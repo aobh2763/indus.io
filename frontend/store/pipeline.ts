@@ -1,34 +1,38 @@
 import { create } from "zustand";
-import { applyNodeChanges, applyEdgeChanges, addEdge, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type OnConnect } from "@xyflow/react";
 import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "../types/machine";
+import { applyNodeChanges, applyEdgeChanges, addEdge, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type OnConnect } from "@xyflow/react";
 
 export interface MachineNodeData extends Record<string, unknown> {
+  icon: string;
+  color: string;
   label: string;
   process: MachineProcess;
-  color: string;
-  icon: string;
   attributes: ProcessAttributes;
 }
 
 export type MachineNode = Node<MachineNodeData, "machineNode">;
 
 interface PipelineState {
-  nodes: Node<MachineNodeData>[];
   edges: Edge[];
+  nodes: Node<MachineNodeData>[];
   selectedNodeId: string | null;
   isConfigPanelOpen: boolean;
 
-  setNodes: (nodes: Node<MachineNodeData>[]) => void;
   setEdges: (edges: Edge[]) => void;
-  onNodesChange: OnNodesChange;
+  setNodes: (nodes: Node<MachineNodeData>[]) => void;
+
   onEdgesChange: OnEdgesChange;
-  onConnect: OnConnect;
+  onNodesChange: OnNodesChange;
+
   addNode: (machineConfig: MachineTypeConfig, position: { x: number; y: number }) => void;
   updateNodeData: (nodeId: string, data: Partial<MachineNodeData>) => void;
   removeNode: (nodeId: string) => void;
-  setSelectedNode: (nodeId: string | null) => void;
-  setConfigPanelOpen: (open: boolean) => void;
+
   getSelectedNode: () => MachineNode | undefined;
+  setSelectedNode: (nodeId: string | null) => void;
+
+  setConfigPanelOpen: (open: boolean) => void;
+  onConnect: OnConnect;
 }
 
 export const usePipelineStore = create<PipelineState>((set, get) => ({
@@ -104,6 +108,11 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     });
   },
 
+  getSelectedNode: () => {
+    const { nodes, selectedNodeId } = get();
+    return nodes.find((node) => node.id === selectedNodeId) as MachineNode | undefined;
+  },
+
   setConfigPanelOpen: (open) => {
     set({
       isConfigPanelOpen: open,
@@ -111,8 +120,4 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     });
   },
 
-  getSelectedNode: () => {
-    const { nodes, selectedNodeId } = get();
-    return nodes.find((node) => node.id === selectedNodeId) as MachineNode | undefined;
-  },
 }));
