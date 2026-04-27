@@ -1,48 +1,34 @@
 import { Search } from "lucide-react";
 import MachinePreview from "./preview";
-import { useDraggable } from '@neodrag/react';
+import { useReactFlow } from "@xyflow/react";
+import { useDraggable } from '@dnd-kit/react';
 import { ICON_MAP } from "../../types/machine";
 import { usePipelineStore } from "../../store/pipeline";
 import { AVAILABLE_MACHINES } from "../../types/machine";
 import type { MachineTypeConfig } from "../../types/machine";
-import { useReactFlow, type XYPosition } from "@xyflow/react";
-import { useRef, useState, useMemo, useCallback, type FC } from "react";
+import { useState, useMemo, useCallback, type FC, useEffect } from "react";
 
 interface DraggableMachineProps {
-  machine: MachineTypeConfig;
   onMouseLeave: () => void;
+  machine: MachineTypeConfig;
+  onDrop: (machine: MachineTypeConfig) => void;
   onMouseEnter: (machine: MachineTypeConfig) => void;
-  onDrop: (machine: MachineTypeConfig, position: XYPosition) => void;
 }
 
 export const DraggableMachine: FC<DraggableMachineProps> = ({ machine, onMouseEnter, onMouseLeave, onDrop }) => {
-  const draggableRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
-
-  useDraggable(draggableRef, {
-    position,
-
-    onDrag: ({ offsetX, offsetY }) => {
-      setPosition({
-        x: offsetX,
-        y: offsetY,
-      });
-    },
-
-    onDragEnd: ({ event }) => {
-      setPosition({ x: 0, y: 0 });
-      onDrop(machine, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-    },
-  });
-
+  const { ref, isDropping } = useDraggable({ id: machine.name });
   const IconComponent = ICON_MAP[machine.icon] || ICON_MAP["Factory"];
+
+  useEffect(() => {
+    if (isDropping) {
+      onDrop(machine);
+    }
+
+  }, [isDropping]);
 
   return (
     <div
-      ref={draggableRef}
+      ref={ref}
       onMouseEnter={() => onMouseEnter(machine)}
       onMouseLeave={onMouseLeave}
       className={`p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-150 group max-w-24 cursor-grab active:cursor-grabbing`}
@@ -89,11 +75,14 @@ const MachineList: FC = () => {
 
   const hasResults = Object.keys(groupedMachines).length > 0;
 
-  const { addNode } = usePipelineStore();
+  const { addNode, dragNDropPosition, getDragNDropPosition, setDragNDropPosition } = usePipelineStore();
   const { screenToFlowPosition } = useReactFlow();
 
   const handleNodeDrop = useCallback(
-    (machine: MachineTypeConfig, screenPosition: XYPosition) => {
+    (machine: MachineTypeConfig) => {
+      const screenPosition = getDragNDropPosition() || { x: 0, y: 0 };
+      setDragNDropPosition(null);
+
       const flow = document.querySelector('.react-flow');
       const flowRect = flow?.getBoundingClientRect();
       const isInFlow =

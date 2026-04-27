@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "../types/machine";
-import { applyNodeChanges, applyEdgeChanges, addEdge, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type OnConnect } from "@xyflow/react";
+import { applyNodeChanges, applyEdgeChanges, addEdge, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type OnConnect, type XYPosition } from "@xyflow/react";
 
 export interface MachineNodeData extends Record<string, unknown> {
   icon: string;
@@ -17,6 +17,8 @@ interface PipelineState {
   nodes: Node<MachineNodeData>[];
   selectedNodeId: string | null;
   isConfigPanelOpen: boolean;
+  dragNDropPosition: XYPosition | null;
+  dragNDropMachineName: string | null;
 
   setEdges: (edges: Edge[]) => void;
   setNodes: (nodes: Node<MachineNodeData>[]) => void;
@@ -31,6 +33,11 @@ interface PipelineState {
   getSelectedNode: () => MachineNode | undefined;
   setSelectedNode: (nodeId: string | null) => void;
 
+  getDragNDropPosition: () => XYPosition | null;
+  setDragNDropPosition: (position: XYPosition | null) => void;
+
+  setDragNDropMachineName: (machineName: string | null) => void;
+
   setConfigPanelOpen: (open: boolean) => void;
   onConnect: OnConnect;
 }
@@ -40,6 +47,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   edges: [],
   selectedNodeId: null,
   isConfigPanelOpen: false,
+  dragNDropPosition: null,
+  dragNDropMachineName: null,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -113,11 +122,22 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     return nodes.find((node) => node.id === selectedNodeId) as MachineNode | undefined;
   },
 
+  setDragNDropMachineName: (machineName) => {
+    set({ dragNDropMachineName: machineName });
+  },
+
+  setDragNDropPosition: (position) => {
+    set({ dragNDropPosition: position });
+  },
+
+  getDragNDropPosition: () => {
+    return get().dragNDropPosition;
+  },
+
   setConfigPanelOpen: (open) => {
     set({
       isConfigPanelOpen: open,
       selectedNodeId: open ? get().selectedNodeId : null,
     });
   },
-
 }));
