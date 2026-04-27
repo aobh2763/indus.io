@@ -230,22 +230,22 @@ const ConfigPanel: FC = () => {
         </div>
         <button
           onClick={() => setConfigPanelOpen(false)}
-          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="p-1 rounded-lg hover:bg-gray-800 transition-colors"
         >
-          <X size={20} className="text-gray-500" />
+          <X size={20} className="text-gray-400" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label className="block text-sm font-medium text-gray-200 mb-1.5">
             Name
           </label>
           <input
             type="text"
             value={localLabel}
             onChange={(e) => setLocalLabel(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
           />
         </div>
 
