@@ -24,7 +24,7 @@ from typing import Optional
 @dataclass
 class InputMaterial:
     """
-    Layer 2 — Input material properties for Airjet Spinning.
+    Layer 2 — Input material properties for Spinning.
     Feedstock is always draw frame sliver (3 passages recommended).
     """
     fiber_type: str              # "cotton", "polyester", "blend_PES_CO", "viscose", "MMF"
@@ -80,7 +80,7 @@ class AirjetOperationalParams:
 @dataclass
 class YarnQualityOutput:
     """
-    Layer 4 — Predicted output quality metrics for Airjet Spinning.
+    Layer 4 — Predicted output quality metrics for Spinning.
     """
     wrapping_twist_am: float           # Wrapping twist multiplier (αm). Optimal range: 140 - 160 am.
     wrapping_fiber_pct: float          # % of total yarn mass that are wrapping/surface fibers.
@@ -263,7 +263,7 @@ def predict_yarn_tenacity(
     # Normalized to 30 mm (PES/CO typical length)
     length_factor = 0.85 + (fiber_length_mm / 30.0) * 0.15
 
-    tenacity = base * twist_factor * length_factor * (1.0 - wrap_penalty)
+    tenacity = base * twist_factor * length_factor * (1.0 - wrap_penalty) # type: ignore
     return round(max(5.0, tenacity), 2)
 
 
