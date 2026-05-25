@@ -16,7 +16,7 @@ export const Protect = ({ children, fallback = null }: ProtectProps) => {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      navigate("/auth/login");
+      navigate("/login");
     }
   }, [isHydrated, isLoading, isAuthenticated, navigate]);
 

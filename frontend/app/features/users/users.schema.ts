@@ -3,11 +3,10 @@ import { z } from 'zod';
 export const userResponseSchema = z.object({
   id: z.string(),
   email: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-  deletedAt: z.coerce.date().nullable(),
+  name: z.string(),
+  role: z.string(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
 });
 
 export type UserResponse = z.infer<typeof userResponseSchema>;

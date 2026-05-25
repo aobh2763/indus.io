@@ -8,7 +8,6 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import Navbar from "./components/navbar";
 
 import "./app.css";
 import '@xyflow/react/dist/style.css';
@@ -28,15 +27,14 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-        <Navbar />
+      <body>
         {children}
         <ScrollRestoration />
         <Scripts />

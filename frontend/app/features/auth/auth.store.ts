@@ -33,7 +33,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
-          const { token } = await authApi.login(credentials);
+          const { access_token: token } = await authApi.login(credentials);
 
           set({ token });
           await get().hydrateUser();

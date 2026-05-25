@@ -1,12 +1,17 @@
-import { Search } from "lucide-react";
 import MachinePreview from "./machine.preview";
 import { useReactFlow } from "@xyflow/react";
-import { useDraggable } from '@dnd-kit/react';
+import { useDraggable } from "@dnd-kit/react";
 import { ICON_MAP } from "../pipeline.shema";
 import { usePipelineStore } from "../pipeline.store";
 import { AVAILABLE_MACHINES } from "../pipeline.shema";
 import type { MachineTypeConfig } from "../pipeline.shema";
 import { useState, useMemo, useCallback, type FC, useEffect } from "react";
+
+import { Input } from "~/components/ui/input";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Separator } from "~/components/ui/separator";
+
+import { Search } from "lucide-react";
 
 interface DraggableMachineProps {
   onMouseLeave: () => void;
@@ -15,23 +20,30 @@ interface DraggableMachineProps {
   onMouseEnter: (machine: MachineTypeConfig) => void;
 }
 
-export const DraggableMachine: FC<DraggableMachineProps> = ({ machine, onMouseEnter, onMouseLeave, onDrop }) => {
-  const { ref, isDropping } = useDraggable({ id: machine.name });
+export const DraggableMachine: FC<DraggableMachineProps> = ({
+  machine,
+  onMouseEnter,
+  onMouseLeave,
+  onDrop,
+}) => {
+  const { ref, isDropping } = useDraggable({
+    id: machine.name,
+  });
+
   const IconComponent = ICON_MAP[machine.icon] || ICON_MAP["Factory"];
 
   useEffect(() => {
     if (isDropping) {
       onDrop(machine);
     }
-
-  }, [isDropping]);
+  }, [isDropping, machine, onDrop]);
 
   return (
     <div
       ref={ref}
       onMouseEnter={() => onMouseEnter(machine)}
       onMouseLeave={onMouseLeave}
-      className={`p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-150 group max-w-24 cursor-grab active:cursor-grabbing`}
+      className="p-3 text-left hover:bg-accent rounded-lg transition-all duration-150 group max-w-24 cursor-grab active:cursor-grabbing shrink-0"
     >
       <div className="flex flex-col items-center gap-1">
         <div
@@ -40,11 +52,10 @@ export const DraggableMachine: FC<DraggableMachineProps> = ({ machine, onMouseEn
         >
           <IconComponent size={20} className="text-white" />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-gray-900 dark:text-white text-[11px] max-w-[80px] text-center leading-tight">
-            {machine.name}
-          </p>
-        </div>
+
+        <p className="font-medium text-foreground text-[11px] max-w-[80px] text-center leading-tight break-words">
+          {machine.name}
+        </p>
       </div>
     </div>
   );
@@ -52,39 +63,58 @@ export const DraggableMachine: FC<DraggableMachineProps> = ({ machine, onMouseEn
 
 const MachineList: FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredMachine, setHoveredMachine] = useState<MachineTypeConfig | null>(null);
+  const [hoveredMachine, setHoveredMachine] =
+    useState<MachineTypeConfig | null>(null);
 
   const groupedMachines = useMemo(() => {
     const filtered = !searchQuery.trim()
       ? AVAILABLE_MACHINES
       : AVAILABLE_MACHINES.filter(
         (machine) =>
-          machine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          machine.description.toLowerCase().includes(searchQuery.toLowerCase())
+          machine.name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          machine.description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
       );
 
     const groups: Record<string, MachineTypeConfig[]> = {};
+
     filtered.forEach((machine) => {
       if (!groups[machine.process]) {
         groups[machine.process] = [];
       }
+
       groups[machine.process].push(machine);
     });
+
     return groups;
   }, [searchQuery]);
 
   const hasResults = Object.keys(groupedMachines).length > 0;
 
-  const { addNode, dragNDropPosition, getDragNDropPosition, setDragNDropPosition } = usePipelineStore();
+  const {
+    addNode,
+    getDragNDropPosition,
+    setDragNDropPosition,
+  } = usePipelineStore();
+
   const { screenToFlowPosition } = useReactFlow();
 
   const handleNodeDrop = useCallback(
     (machine: MachineTypeConfig) => {
-      const screenPosition = getDragNDropPosition() || { x: 0, y: 0 };
+      const screenPosition = getDragNDropPosition() || {
+        x: 0,
+        y: 0,
+      };
+
       setDragNDropPosition(null);
 
-      const flow = document.querySelector('.react-flow');
+      const flow = document.querySelector(".react-flow");
+
       const flowRect = flow?.getBoundingClientRect();
+
       const isInFlow =
         flowRect &&
         screenPosition.x >= flowRect.left &&
@@ -93,66 +123,90 @@ const MachineList: FC = () => {
         screenPosition.y <= flowRect.bottom;
 
       if (isInFlow) {
-        const position = screenToFlowPosition(screenPosition);
-        addNode(machine, position);
+        addNode(machine, screenToFlowPosition(screenPosition));
       }
     },
-    [addNode, screenToFlowPosition],
+    [
+      addNode,
+      getDragNDropPosition,
+      screenToFlowPosition,
+      setDragNDropPosition,
+    ]
   );
 
   return (
-    <div>
-      <div className="dark:bg-gray-900/80 flex flex-col backdrop-blur-md max-h-[80vh] rounded-2xl">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-600">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+    <div className="relative">
+      <div className="bg-card/80 backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
+        {/* Header */}
+        <div className="p-4 shrink-0">
+          <h2 className="text-lg font-bold mb-3">
             Machine Library
           </h2>
+
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+            <Input
               placeholder="Search components..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-gray-900 dark:text-white placeholder-gray-400 transition-all"
+              className="pl-9"
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          {!hasResults ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-              No machines found
-            </p>
-          ) : (
-            <div className="space-y-8 pb-4">
-              {Object.entries(groupedMachines).map(([process, machines]) => (
-                <div key={process} className="space-y-3">
-                  <div>
-                    <h3 className="text-sm capitalize dark:text-gray-500">
-                      {process}
-                    </h3>
-                  </div>
+        <Separator className="shrink-0" />
 
-                  <div className="flex flex-wrap gap-2">
-                    {machines.map((machine) => (
-                      <DraggableMachine
-                        key={machine.name}
-                        machine={machine}
-                        onDrop={handleNodeDrop}
-                        onMouseEnter={setHoveredMachine}
-                        onMouseLeave={() => setHoveredMachine(null)}
-                      />
-                    ))}
-                  </div>
+        {/* Scrollable Machine List */}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              {!hasResults ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No machines found
+                </p>
+              ) : (
+                <div className="space-y-6 pb-4">
+                  {Object.entries(groupedMachines).map(
+                    ([process, machines], index, arr) => (
+                      <div
+                        key={process}
+                        className="space-y-3"
+                      >
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          {process}
+                        </h3>
+
+                        <div className="flex flex-wrap gap-2">
+                          {machines.map((machine) => (
+                            <DraggableMachine
+                              key={machine.name}
+                              machine={machine}
+                              onDrop={handleNodeDrop}
+                              onMouseEnter={setHoveredMachine}
+                              onMouseLeave={() =>
+                                setHoveredMachine(null)
+                              }
+                            />
+                          ))}
+                        </div>
+
+                        {index < arr.length - 1 && (
+                          <Separator className="mt-4" />
+                        )}
+                      </div>
+                    )
+                  )}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          </ScrollArea>
         </div>
       </div>
 
-      {hoveredMachine && <MachinePreview machine={hoveredMachine} />}
+      {hoveredMachine && (
+        <MachinePreview machine={hoveredMachine} />
+      )}
     </div>
   );
 };

@@ -1,8 +1,27 @@
 import { ICON_MAP } from "../pipeline.shema";
 import { useState, useEffect, type FC } from "react";
 import { usePipelineStore } from "../pipeline.store";
-import { X, Trash2, Save, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Trash2, Save } from "lucide-react";
 import type { ProcessAttributes, AttributeInstance } from "../pipeline.shema";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Separator } from "~/components/ui/separator";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 type LayerKey = "inputs" | "configs" | "outputs";
 
@@ -23,70 +42,59 @@ function AttributeField({
 }) {
   const { definition, value } = attr;
 
-  if (definition.type === "number") {
-    return (
-      <div>
-        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-          {definition.name}
-          {definition.unit && (
-            <span className="ml-1 text-gray-400">({definition.unit})</span>
-          )}
-        </label>
-        <input
-          type="number"
-          value={value}
-          onChange={(e) =>
-            onChange(attrKey, parseFloat(e.target.value) || 0)
-          }
-          className="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-        />
-      </div>
-    );
-  }
-
   if (definition.type === "boolean") {
     return (
       <div className="flex items-center justify-between">
-        <label className="text-xs text-gray-500 dark:text-gray-400">
-          {definition.name}
-        </label>
-        <input
-          type="checkbox"
+        <Label className="text-xs text-muted-foreground">{definition.name}</Label>
+        <Checkbox
           checked={!!value}
-          onChange={(e) => onChange(attrKey, e.target.checked)}
-          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+          onCheckedChange={(checked) => onChange(attrKey, checked)}
         />
       </div>
     );
   }
 
-  // string / enum / fallback
+  if (definition.type === "enum" && definition.options) {
+    return (
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{definition.name}</Label>
+        <Select value={value} onValueChange={(v) => onChange(attrKey, v)}>
+          <SelectTrigger className="h-8 text-sm">
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+          <SelectContent>
+            {definition.options.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">
         {definition.name}
-      </label>
-      {definition.type === "enum" && definition.options ? (
-        <select
-          value={value}
-          onChange={(e) => onChange(attrKey, e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-        >
-          <option value="">Select...</option>
-          {definition.options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(attrKey, e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-        />
-      )}
+        {definition.unit && (
+          <span className="ml-1 text-muted-foreground/60">({definition.unit})</span>
+        )}
+      </Label>
+      <Input
+        type={definition.type === "number" ? "number" : "text"}
+        value={value}
+        onChange={(e) =>
+          onChange(
+            attrKey,
+            definition.type === "number"
+              ? parseFloat(e.target.value) || 0
+              : e.target.value
+          )
+        }
+        className="h-8 text-sm"
+      />
     </div>
   );
 }
@@ -100,54 +108,43 @@ function AttributeSection({
   attributes: Record<string, AttributeInstance>;
   onChange: (layer: LayerKey, key: string, value: any) => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [open, setOpen] = useState(true);
   const entries = Object.entries(attributes);
-  const { title, description } = LAYER_LABELS[layerKey];
+  const { title } = LAYER_LABELS[layerKey];
 
   if (entries.length === 0) {
     return (
-      <div className="opacity-50">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {title}
-          </span>
-        </div>
-        <p className="text-xs text-gray-400 italic">No attributes defined yet</p>
+      <div className="opacity-50 space-y-1">
+        <span className="text-sm font-medium">{title}</span>
+        <p className="text-xs text-muted-foreground italic">No attributes defined yet</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full text-left mb-2"
-      >
-        {expanded ? (
-          <ChevronDown size={14} className="text-gray-400" />
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex items-center gap-2 w-full text-left mb-2 group">
+        {open ? (
+          <ChevronDown size={14} className="text-muted-foreground" />
         ) : (
-          <ChevronRight size={14} className="text-gray-400" />
+          <ChevronRight size={14} className="text-muted-foreground" />
         )}
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {title}
-        </span>
-        <span className="text-[10px] text-gray-400 ml-auto">
+        <span className="text-sm font-medium">{title}</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">
           {entries.length} attr{entries.length !== 1 ? "s" : ""}
         </span>
-      </button>
-      {expanded && (
-        <div className="space-y-3 pl-5">
-          {entries.map(([key, attr]) => (
-            <AttributeField
-              key={key}
-              attrKey={key}
-              attr={attr}
-              onChange={(k, v) => onChange(layerKey, k, v)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-3 pl-5">
+        {entries.map(([key, attr]) => (
+          <AttributeField
+            key={key}
+            attrKey={key}
+            attr={attr}
+            onChange={(k, v) => onChange(layerKey, k, v)}
+          />
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -172,9 +169,7 @@ const ConfigPanel: FC = () => {
 
   useEffect(() => {
     if (selectedNode) {
-      setLocalAttributes(
-        JSON.parse(JSON.stringify(selectedNode.data.attributes))
-      );
+      setLocalAttributes(JSON.parse(JSON.stringify(selectedNode.data.attributes)));
       setLocalLabel(selectedNode.data.label);
     }
   }, [selectedNode]);
@@ -184,10 +179,7 @@ const ConfigPanel: FC = () => {
   const IconComponent = ICON_MAP[selectedNode.data.icon] || ICON_MAP["Factory"];
 
   const handleSave = () => {
-    updateNodeData(selectedNodeId!, {
-      label: localLabel,
-      attributes: localAttributes,
-    });
+    updateNodeData(selectedNodeId!, { label: localLabel, attributes: localAttributes });
     setConfigPanelOpen(false);
   };
 
@@ -201,81 +193,77 @@ const ConfigPanel: FC = () => {
       ...prev,
       [layer]: {
         ...prev[layer],
-        [key]: {
-          ...prev[layer][key],
-          value,
-        },
+        [key]: { ...prev[layer][key], value },
       },
     }));
   };
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-900 flex flex-col animate-slide-in rounded-lg max-h-[80vh]">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+    <div className="w-80 bg-card flex flex-col animate-slide-in rounded-lg max-h-[80vh] border border-border shadow-md">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 shrink-0">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
             style={{ backgroundColor: selectedNode.data.color }}
           >
             <IconComponent size={20} className="text-white" />
           </div>
           <div>
-            <span className="font-medium text-gray-900 dark:text-white block">
-              Configure
-            </span>
-            <span className="text-[10px] uppercase font-bold text-gray-400">
+            <span className="font-medium block">Configure</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">
               {selectedNode.data.process}
             </span>
           </div>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setConfigPanelOpen(false)}
-          className="p-1 rounded-lg hover:bg-gray-800 transition-colors"
+          className="h-8 w-8"
         >
-          <X size={20} className="text-gray-400" />
-        </button>
+          <X size={16} />
+        </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-gray-200 mb-1.5">
-            Name
-          </label>
-          <input
-            type="text"
-            value={localLabel}
-            onChange={(e) => setLocalLabel(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-          />
+      <Separator />
+
+      {/* Body */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-5">
+          <div className="space-y-1.5">
+            <Label>Name</Label>
+            <Input
+              value={localLabel}
+              onChange={(e) => setLocalLabel(e.target.value)}
+            />
+          </div>
+
+          <Separator />
+
+          {(["configs"] as LayerKey[]).map((layer) => (
+            <AttributeSection
+              key={layer}
+              layerKey={layer}
+              attributes={localAttributes[layer]}
+              onChange={handleAttributeChange}
+            />
+          ))}
         </div>
+      </ScrollArea>
 
-        <hr className="border-gray-200 dark:border-gray-700" />
+      <Separator />
 
-        {(["configs"] as LayerKey[]).map((layer) => (
-          <AttributeSection
-            key={layer}
-            layerKey={layer}
-            attributes={localAttributes[layer]}
-            onChange={handleAttributeChange}
-          />
-        ))}
-      </div>
-
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2 shrink-0">
-        <button
-          onClick={handleDelete}
-          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-red-600 text-white"
-        >
+      {/* Footer */}
+      <div className="p-4 flex gap-2 shrink-0">
+        <Button variant="destructive" onClick={handleDelete} className="gap-2">
           <Trash2 size={16} />
           Delete
-        </button>
-        <button
-          onClick={handleSave}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-        >
+        </Button>
+        <Button onClick={handleSave} className="flex-1 gap-2">
           <Save size={16} />
           Save
-        </button>
+        </Button>
       </div>
     </div>
   );
