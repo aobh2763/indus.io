@@ -11,12 +11,7 @@ from app.modules.production.models import (
     MachineAttributeValue,
     ProductionLine,
 )
-from app.db.graph import (
-    sync_machine_to_graph,
-    delete_machine_from_graph,
-    sync_connection_to_graph,
-    delete_connection_from_graph
-)
+
 from app.modules.production.schemas import (
     AttributeDefinitionCreate,
     ConnectionCreate,
@@ -110,11 +105,7 @@ def create_machine(db: Session, line_id: uuid.UUID, data: MachineCreate) -> Mach
     db.commit()
     db.refresh(machine)
     
-    # Sync to Graph
-    sync_machine_to_graph(db, machine.id, machine.name, {
-        "process": machine.process,
-        "manufacturer": machine.manufacturer
-    })
+
     
     return machine
 
@@ -137,8 +128,7 @@ def soft_delete_machine(db: Session, machine_id: uuid.UUID) -> Optional[Machine]
     machine.deleted_at = datetime.now(timezone.utc)
     db.commit()
     
-    # Remove from Graph
-    delete_machine_from_graph(db, machine.id)
+
     
     return machine
 
@@ -167,8 +157,7 @@ def create_connection(db: Session, line_id: uuid.UUID, data: ConnectionCreate) -
     db.commit()
     db.refresh(conn)
     
-    # Sync to Graph
-    sync_connection_to_graph(db, conn.source_machine_id, conn.target_machine_id, conn.weight)
+
     
     return conn
 
@@ -191,8 +180,7 @@ def soft_delete_connection(db: Session, conn_id: uuid.UUID) -> Optional[Connecti
     conn.deleted_at = datetime.now(timezone.utc)
     db.commit()
     
-    # Remove from Graph
-    delete_connection_from_graph(db, conn.source_machine_id, conn.target_machine_id)
+
     
     return conn
 

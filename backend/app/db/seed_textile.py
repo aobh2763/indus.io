@@ -389,7 +389,6 @@ def seed_alerts(db: Session, line_id, machines, kpis, simulation_id):
 
 
 def seed_textile_data(db: Session):
-	ensure_graph_workspace(db)
 	users = seed_identity(db)
 	projects = seed_projects(db, owner_id=users[0].id)
 
@@ -399,7 +398,6 @@ def seed_textile_data(db: Session):
 		for line in lines:
 			machines = seed_machines(db, line.id)
 			connections = seed_connections(db, line.id, machines)
-			sync_graph_from_relational(db, machines, connections)
 			kpis = seed_kpis(db, line.id, machines)
 			simulation = seed_simulation(db, line.id)
 			seed_kpi_values(db, kpis, simulation_id=simulation.id)
@@ -418,60 +416,7 @@ def parse_args():
 	return parser.parse_args()
 
 
-def ensure_graph_workspace(db: Session):
-	db.execute(text("CREATE EXTENSION IF NOT EXISTS age;"))
-	db.execute(text("SET search_path = ag_catalog, \"$user\", public;"))
-	exists = db.execute(
-		text("SELECT 1 FROM ag_catalog.ag_graph WHERE name = 'indus_production' LIMIT 1;")
-	).first()
-	if not exists:
-		db.execute(text("SELECT create_graph('indus_production');"))
-	db.commit()
 
-
-def escape_cypher_value(value: str) -> str:
-	return value.replace("'", "''")
-
-
-def execute_cypher_raw(db: Session, query: str):
-	db.execute(text("SET search_path = ag_catalog, \"$user\", public;"))
-	db.execute(text(f"SELECT * FROM cypher('indus_production', $$ {query} $$) as (result agtype);"))
-
-
-def sync_graph_from_relational(db: Session, machines, connections):
-	for machine in machines:
-		machine_id = escape_cypher_value(str(machine.id))
-		name = escape_cypher_value(machine.name)
-		process = escape_cypher_value(machine.process or "")
-		manufacturer = escape_cypher_value(machine.manufacturer or "")
-		execute_cypher_raw(
-			db,
-			"\n".join(
-				[
-					f"MERGE (m:Machine {{id: '{machine_id}'}})",
-					f"SET m.name = '{name}'",
-					f"SET m.process = '{process}'",
-					f"SET m.manufacturer = '{manufacturer}'",
-				]
-			),
-		)
-
-	for connection in connections:
-		source_id = escape_cypher_value(str(connection.source_machine_id))
-		target_id = escape_cypher_value(str(connection.target_machine_id))
-		weight = connection.weight or 1.0
-		execute_cypher_raw(
-			db,
-			"\n".join(
-				[
-					f"MATCH (a:Machine {{id: '{source_id}'}}), (b:Machine {{id: '{target_id}'}})",
-					"MERGE (a)-[r:CONNECTION]->(b)",
-					f"SET r.weight = {weight}",
-				]
-			),
-		)
-
-	db.commit()
 
 
 def main():
