@@ -1,7 +1,7 @@
 from typing import Generator
 
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import UnauthorizedError, ForbiddenError
@@ -9,7 +9,7 @@ from app.core.permissions import GlobalRole
 from app.core.security import decode_access_token
 from app.db.database import SessionLocal
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+bearer_scheme = HTTPBearer()
 
 
 # ── Database session ─────────────────────────────────────
@@ -23,10 +23,10 @@ def get_db() -> Generator[Session, None, None]:
 
 # ── Current user ─────────────────────────────────────────
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ):
-    payload = decode_access_token(token)
+    payload = decode_access_token(credentials.credentials)
     if payload is None:
         raise UnauthorizedError()
 
