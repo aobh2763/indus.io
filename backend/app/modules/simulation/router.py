@@ -14,16 +14,16 @@ from app.modules.simulation.schemas import (
     SimulationUpdate,
 )
 
-router = APIRouter(tags=["Simulations"])
+router = APIRouter()
 
 
 # ── Simulations ──────────────────────────────────────────
-@router.get("/lines/{line_id}/simulations", response_model=list[SimulationResponse])
+@router.get("/lines/{line_id}/simulations", response_model=list[SimulationResponse], tags=["Simulations"])
 def list_simulations(line_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return service.get_simulations_by_line(db, line_id)
 
 
-@router.post("/lines/{line_id}/simulations", response_model=SimulationResponse, status_code=201)
+@router.post("/lines/{line_id}/simulations", response_model=SimulationResponse, status_code=201, tags=["Simulations"])
 def create_simulation(
     line_id: str,
     data: SimulationCreate,
@@ -33,7 +33,7 @@ def create_simulation(
     return service.create_simulation(db, line_id, data)
 
 
-@router.get("/simulations/{simulation_id}", response_model=SimulationResponse)
+@router.get("/simulations/{simulation_id}", response_model=SimulationResponse, tags=["Simulations"])
 def get_simulation(simulation_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     sim = service.get_simulation_by_id(db, simulation_id)
     if not sim:
@@ -41,7 +41,7 @@ def get_simulation(simulation_id: str, db: Session = Depends(get_db), current_us
     return sim
 
 
-@router.put("/simulations/{simulation_id}", response_model=SimulationResponse)
+@router.put("/simulations/{simulation_id}", response_model=SimulationResponse, tags=["Simulations"])
 def update_simulation(
     simulation_id: str,
     data: SimulationUpdate,
@@ -54,7 +54,7 @@ def update_simulation(
     return sim
 
 
-@router.delete("/simulations/{simulation_id}", status_code=204)
+@router.delete("/simulations/{simulation_id}", status_code=204, tags=["Simulations"])
 def delete_simulation(simulation_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     sim = service.soft_delete_simulation(db, simulation_id)
     if not sim:

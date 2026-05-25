@@ -17,16 +17,16 @@ from app.modules.production.schemas import (
     ProductionLineUpdate,
 )
 
-router = APIRouter(tags=["Production"])
+router = APIRouter()
 
 
 # ── Production Lines ─────────────────────────────────────
-@router.get("/projects/{project_id}/lines", response_model=list[ProductionLineResponse])
+@router.get("/projects/{project_id}/lines", response_model=list[ProductionLineResponse], tags=["Production Lines"])
 def list_lines(project_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return service.get_lines_by_project(db, project_id)
 
 
-@router.post("/projects/{project_id}/lines", response_model=ProductionLineResponse, status_code=201)
+@router.post("/projects/{project_id}/lines", response_model=ProductionLineResponse, status_code=201, tags=["Production Lines"])
 def create_line(
     project_id: str,
     data: ProductionLineCreate,
@@ -36,7 +36,7 @@ def create_line(
     return service.create_line(db, project_id, data)
 
 
-@router.get("/lines/{line_id}", response_model=ProductionLineResponse)
+@router.get("/lines/{line_id}", response_model=ProductionLineResponse, tags=["Production Lines"])
 def get_line(line_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     line = service.get_line_by_id(db, line_id)
     if not line:
@@ -44,7 +44,7 @@ def get_line(line_id: str, db: Session = Depends(get_db), current_user: User = D
     return line
 
 
-@router.put("/lines/{line_id}", response_model=ProductionLineResponse)
+@router.put("/lines/{line_id}", response_model=ProductionLineResponse, tags=["Production Lines"])
 def update_line(
     line_id: str,
     data: ProductionLineUpdate,
@@ -57,7 +57,7 @@ def update_line(
     return line
 
 
-@router.delete("/lines/{line_id}", status_code=204)
+@router.delete("/lines/{line_id}", status_code=204, tags=["Production Lines"])
 def delete_line(line_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     line = service.soft_delete_line(db, line_id)
     if not line:

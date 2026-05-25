@@ -13,16 +13,16 @@ from app.modules.analytics.schemas import (
     KPIValueResponse,
 )
 
-router = APIRouter(tags=["Analytics"])
+router = APIRouter()
 
 
 # ── KPIs ─────────────────────────────────────────────────
-@router.get("/lines/{line_id}/kpis", response_model=list[KPIResponse])
+@router.get("/lines/{line_id}/kpis", response_model=list[KPIResponse], tags=["KPIs"])
 def list_kpis(line_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return service.get_kpis_by_line(db, line_id)
 
 
-@router.post("/lines/{line_id}/kpis", response_model=KPIResponse, status_code=201)
+@router.post("/lines/{line_id}/kpis", response_model=KPIResponse, status_code=201, tags=["KPIs"])
 def create_kpi(
     line_id: str,
     data: KPICreate,
@@ -32,7 +32,7 @@ def create_kpi(
     return service.create_kpi(db, line_id, data)
 
 
-@router.get("/kpis/{kpi_id}", response_model=KPIResponse)
+@router.get("/kpis/{kpi_id}", response_model=KPIResponse, tags=["KPIs"])
 def get_kpi(kpi_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     kpi = service.get_kpi_by_id(db, kpi_id)
     if not kpi:
@@ -40,7 +40,7 @@ def get_kpi(kpi_id: str, db: Session = Depends(get_db), current_user: User = Dep
     return kpi
 
 
-@router.put("/kpis/{kpi_id}", response_model=KPIResponse)
+@router.put("/kpis/{kpi_id}", response_model=KPIResponse, tags=["KPIs"])
 def update_kpi(
     kpi_id: str,
     data: KPIUpdate,
@@ -53,7 +53,7 @@ def update_kpi(
     return kpi
 
 
-@router.delete("/kpis/{kpi_id}", status_code=204)
+@router.delete("/kpis/{kpi_id}", status_code=204, tags=["KPIs"])
 def delete_kpi(kpi_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     kpi = service.soft_delete_kpi(db, kpi_id)
     if not kpi:
