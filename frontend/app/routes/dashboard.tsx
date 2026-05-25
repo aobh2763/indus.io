@@ -1,140 +1,311 @@
-import { Link } from "react-router";
-import { Activity, AlertCircle, Briefcase, CheckCircle2, TrendingUp, Clock, Factory, ArrowRight } from "lucide-react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { ReactFlow, Background, Controls } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router";
+import {
+  Activity, AlertTriangle, Box, Brain, Clock,
+  Factory, Layers, Lock, Eye, Play, Square, Check, RefreshCw
+} from "lucide-react";
+import { useDashboardStore } from "../../store/dashboard";
+import { KpiCharts } from "../../components/dashboard/kpi-charts";
+import { PipelinePreview } from "../../components/dashboard/pipeline-preview";
+import type { Project, ProductionLine, Alert, Suggestion, Simulation } from "../../types/dashboard";
 
-const kpiData = [
-  { time: "08:00", oee: 65, throughput: 120 },
-  { time: "10:00", oee: 72, throughput: 145 },
-  { time: "12:00", oee: 68, throughput: 130 },
-  { time: "14:00", oee: 78, throughput: 160 },
-  { time: "16:00", oee: 82, throughput: 175 },
-  { time: "18:00", oee: 85, throughput: 190 },
-];
+// ── Tiny helpers ────────────────────────────────────────
+function timeAgo(d: string) {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
-const mockNodes = [
-  { id: "1", position: { x: 50, y: 50 }, data: { label: "Matière Première" }, style: { width: 100, fontSize: '10px', padding: '5px' } },
-  { id: "2", position: { x: 200, y: 50 }, data: { label: "Coupe" }, style: { width: 80, fontSize: '10px', padding: '5px' } },
-  { id: "3", position: { x: 350, y: 50 }, data: { label: "Assemblage" }, style: { width: 90, fontSize: '10px', padding: '5px' } },
-];
-const mockEdges = [
-  { id: "e1-2", source: "1", target: "2" },
-  { id: "e2-3", source: "2", target: "3" },
-];
-
-export default function HomePage() {
+function StatusDot({ color }: { color: string }) {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 pt-24 px-8 pb-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* KPIs Row */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card title="OEE Moyen" value="78.5%" icon={<Activity className="h-4 w-4 text-emerald-500" />} trend="+2.5% depuis hier" />
-          <Card title="Rendement (Unités/h)" value="1,240" icon={<TrendingUp className="h-4 w-4 text-blue-500" />} trend="+15% par rapport à l'objectif" />
-          <Card title="Projets en cours" value="12" icon={<Briefcase className="h-4 w-4 text-purple-500" />} text="3 en retard" />
-          <Card title="Alertes Machines" value="4" icon={<AlertCircle className="h-4 w-4 text-rose-500" />} text="Nécessite une attention immédiate" />
+    <span className="relative flex h-2 w-2">
+      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${color}`} />
+      <span className={`relative inline-flex rounded-full h-2 w-2 ${color}`} />
+    </span>
+  );
+}
+
+// ── Main Dashboard ──────────────────────────────────────
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const store = useDashboardStore();
+  const { projects, lines, machines, simulations, alerts, suggestions, kpis, isLoading, error, fetchDashboardData, acknowledgeAlert, resolveAlert, startSimulation, stopSimulation, completeSimulation } = store;
+
+  useEffect(() => {
+    const token = localStorage.getItem("indus_token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    
+    fetchDashboardData();
+    const i = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(i);
+  }, [navigate, fetchDashboardData]);
+
+  useEffect(() => {
+    if (error === "UNAUTHORIZED") {
+      navigate("/login");
+    }
+  }, [error, navigate]);
+
+  if (typeof window !== "undefined" && (!localStorage.getItem("indus_token") || error === "UNAUTHORIZED")) {
+    return null;
+  }
+
+  const openAlerts = alerts.filter(a => a.status === "OPEN").length;
+  const runningSims = simulations.filter(s => s.status === "RUNNING").length;
+
+  return (
+    <div className="min-h-screen bg-black text-neutral-200 font-sans">
+      {/* ── Top Bar ──────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-neutral-800 bg-black/80 backdrop-blur-md">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between h-12 px-5">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white tracking-tight">
+              <Factory className="h-4 w-4 text-white" />
+              indus.io
+            </Link>
+            <span className="text-neutral-700">/</span>
+            <span className="text-sm text-neutral-400">Dashboard</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => fetchDashboardData()} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors cursor-pointer">
+              <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
+              Sync
+            </button>
+            <Link to="/pipeline-builder" className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
+              Pipeline
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-[1600px] mx-auto px-5 py-6">
+        {/* ── Stats Strip ────────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800 rounded-lg overflow-hidden mb-6">
+          <StatCell label="Projects" value={projects.length} />
+          <StatCell label="Production Lines" value={lines.length} />
+          <StatCell label="Machines" value={machines.length} />
+          <StatCell label="Open Alerts" value={openAlerts} alert={openAlerts > 0} />
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          
-          {/* Left Column (Charts & Projects) */}
-          <div className="lg:col-span-4 space-y-4">
-            
-            {/* Chart Block */}
-            <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
-              <div className="flex flex-col space-y-1.5 mb-4">
-                <h3 className="font-semibold leading-none tracking-tight text-white">Performance Globale (OEE & Rendement)</h3>
-                <p className="text-sm text-gray-400">Évolution de la production sur la journée</p>
-              </div>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={kpiData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorOee" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
-                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dx={-10} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#1f2937', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)' }}
-                      itemStyle={{ color: '#f3f4f6', fontWeight: 500 }}
-                    />
-                    <Area type="monotone" dataKey="oee" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorOee)" name="OEE (%)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Projects Block */}
-            <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
-              <div className="flex flex-col space-y-1.5 mb-4 flex-row justify-between items-start">
-                <div>
-                  <h3 className="font-semibold leading-none tracking-tight text-white">Projets Récents</h3>
-                  <p className="text-sm text-gray-400">Suivi de l'avancement des commandes</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <ProjectItem name="Lot T-Shirts Hiver" progress={85} expected="Aujourd'hui" status="Bon" />
-                <ProjectItem name="Pantalons Denim Q3" progress={45} expected="Dans 3 jours" status="Retard" />
-                <ProjectItem name="Vestes Légères" progress={15} expected="Semaine prochaine" status="Bon" />
-              </div>
-            </div>
-
+        {/* ── Charts & Pipeline Preview ────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+          <div className="lg:col-span-2">
+            <KpiCharts
+              kpis={kpis}
+              kpiValues={store.kpiValues}
+              machines={machines}
+              sensorData={store.sensorData}
+            />
           </div>
+          <div>
+            <PipelinePreview machines={machines} connections={[]} />
+          </div>
+        </div>
 
-          {/* Right Column (Alerts & Pipeline) */}
-          <div className="lg:col-span-3 space-y-4">
-            
-             {/* Pipeline Preview Window */}
-             <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6 flex flex-col h-[350px]">
-              <div className="flex flex-col space-y-1.5 mb-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2 text-white">
-                    <Factory className="h-4 w-4" /> 
-                    Pipeline de Production
-                  </h3>
-                  <Link to="/pipeline-builder" className="text-xs text-blue-400 hover:text-blue-300 flex items-center">
-                    Voir détails <ArrowRight className="ml-1 h-3 w-3" />
-                  </Link>
+        {/* ── Four Column Grid ───────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+
+          {/* Column 1: Projects */}
+          <Column title="Projects" count={projects.length} icon={<Layers className="h-3.5 w-3.5" />}>
+            {isLoading && projects.length === 0 ? (
+              <LoadingRows count={3} />
+            ) : projects.length === 0 ? (
+              <EmptyState text="No projects yet" />
+            ) : (
+              <div className="stagger-children">
+                {projects.map(p => <ProjectCard key={p.id} project={p} lines={lines.filter(l => l.project_id === p.id)} />)}
+              </div>
+            )}
+          </Column>
+
+          {/* Column 2: Production & Machines */}
+          <Column title="Production" count={lines.length} icon={<Box className="h-3.5 w-3.5" />}>
+            {isLoading && lines.length === 0 ? (
+              <LoadingRows count={3} />
+            ) : lines.length === 0 ? (
+              <EmptyState text="No production lines" />
+            ) : (
+              <div className="stagger-children">
+                {lines.map(l => (
+                  <LineCard key={l.id} line={l} machineCount={machines.filter(m => m.production_line_id === l.id).length} />
+                ))}
+              </div>
+            )}
+          </Column>
+
+          {/* Column 3: Simulations & KPIs */}
+          <Column title="Simulations" count={simulations.length} icon={<Activity className="h-3.5 w-3.5" />} badge={runningSims > 0 ? `${runningSims} running` : undefined}>
+            {isLoading && simulations.length === 0 ? (
+              <LoadingRows count={3} />
+            ) : simulations.length === 0 ? (
+              <EmptyState text="No simulations" />
+            ) : (
+              <div className="stagger-children">
+                {simulations.map(s => (
+                  <SimCard key={s.id} sim={s} onStart={() => startSimulation(s.id)} onStop={() => stopSimulation(s.id)} onComplete={() => completeSimulation(s.id)} />
+                ))}
+              </div>
+            )}
+          </Column>
+
+          {/* Column 4: Alerts & AI */}
+          <Column title="Intelligence" count={alerts.length + suggestions.length} icon={<Brain className="h-3.5 w-3.5" />} badge={openAlerts > 0 ? `${openAlerts} open` : undefined} badgeColor="text-red-400">
+            {alerts.length > 0 && (
+              <div className="space-y-1 mb-4">
+                <SectionLabel text="Alerts" />
+                <div className="stagger-children">
+                  {alerts.slice(0, 5).map(a => (
+                    <AlertRow key={a.id} alert={a} onAck={() => acknowledgeAlert(a.id)} onResolve={() => resolveAlert(a.id)} />
+                  ))}
                 </div>
-                <p className="text-sm text-gray-400">Aperçu du flux actuel</p>
               </div>
-              <div className="flex-1 border border-gray-800 rounded-lg overflow-hidden bg-gray-800 relative">
-                <ReactFlow 
-                  nodes={mockNodes} 
-                  edges={mockEdges} 
-                  fitView 
-                  proOptions={{ hideAttribution: true }}
-                  panOnScroll={false}
-                  zoomOnScroll={false}
-                >
-                  <Background color="#1f2937" gap={16} variant="dots" />
-                </ReactFlow>
-                {/* Disable interaction overlay */}
-                <div className="absolute inset-0 bg-transparent cursor-pointer z-10" title="Cliquez pour modifier la pipeline" onClick={() => window.location.href = '/pipeline-builder'}></div>
+            )}
+            {suggestions.length > 0 && (
+              <div className="space-y-1">
+                <SectionLabel text="AI Suggestions" />
+                <div className="stagger-children">
+                  {suggestions.slice(0, 4).map(s => <SuggestionRow key={s.id} suggestion={s} />)}
+                </div>
               </div>
-            </div>
+            )}
+            {alerts.length === 0 && suggestions.length === 0 && (
+              isLoading ? <LoadingRows count={3} /> : <EmptyState text="All clear — no alerts" />
+            )}
+          </Column>
+        </div>
+      </main>
+    </div>
+  );
+}
 
-            {/* Alerts Block */}
-            <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
-              <div className="flex flex-col space-y-1.5 mb-4">
-                <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2 text-white">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  Alertes IA & Machines
-                </h3>
-                <p className="text-sm text-gray-400">Notifications critiques du système</p>
-              </div>
-              <div className="space-y-4">
-                <AlertItem type="critical" time="Il y a 10 min" message="Machine Coupe-02: Baisse de performance détectée (OEE < 50%)." />
-                <AlertItem type="warning" time="Il y a 1 heure" message="Goulot d'étranglement prédit sur l'Atelier Couture d'ici 2h." />
-                <AlertItem type="info" time="Il y a 3 heures" message="Maintenance préventive recommandée pour Machine Tissu-01." />
-              </div>
-            </div>
+// ── Sub-components ──────────────────────────────────────
 
+function StatCell({ label, value, alert }: { label: string; value: number; alert?: boolean }) {
+  return (
+    <div className="bg-black px-4 py-3.5 flex flex-col gap-1">
+      <span className="text-[11px] text-neutral-500 uppercase tracking-wider font-medium">{label}</span>
+      <span className={`text-xl font-semibold tabular-nums ${alert ? "text-red-400" : "text-white"}`}>{value}</span>
+    </div>
+  );
+}
+
+function Column({ title, count, icon, badge, badgeColor, children }: { title: string; count: number; icon: React.ReactNode; badge?: string; badgeColor?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between mb-3 px-0.5">
+        <div className="flex items-center gap-2 text-sm font-medium text-white">
+          <span className="text-neutral-500">{icon}</span>
+          {title}
+          <span className="text-xs text-neutral-600 tabular-nums">{count}</span>
+        </div>
+        {badge && <span className={`text-[10px] font-medium ${badgeColor || "text-emerald-400"}`}>{badge}</span>}
+      </div>
+      <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] pr-1">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({ project, lines }: { project: Project; lines: ProductionLine[] }) {
+  const running = lines.filter(l => l.status === "RUNNING").length;
+  return (
+    <div className="group border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all cursor-default bg-neutral-950/50">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-medium text-white truncate">{project.name}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {project.visibility === "PUBLIC" ? <Eye className="h-3 w-3 text-neutral-600" /> : <Lock className="h-3 w-3 text-neutral-600" />}
+          <span className="text-[10px] text-neutral-600 uppercase">{project.visibility}</span>
+        </div>
+      </div>
+      {project.description && <p className="text-xs text-neutral-500 mb-2.5 line-clamp-2">{project.description}</p>}
+      <div className="flex items-center gap-3 text-[11px] text-neutral-500">
+        <span className="flex items-center gap-1"><Layers className="h-3 w-3" />{lines.length} lines</span>
+        {running > 0 && <span className="flex items-center gap-1"><StatusDot color="bg-emerald-500" />{running} active</span>}
+        <span className="flex items-center gap-1 ml-auto"><Clock className="h-3 w-3" />{timeAgo(project.created_at)}</span>
+      </div>
+    </div>
+  );
+}
+
+function LineCard({ line, machineCount }: { line: ProductionLine; machineCount: number }) {
+  const statusColor = line.status === "RUNNING" ? "bg-emerald-500" : line.status === "ARCHIVED" ? "bg-neutral-600" : "bg-amber-500";
+  return (
+    <div className="border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all bg-neutral-950/50">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-sm font-medium text-white truncate">{line.name}</span>
+        <div className="flex items-center gap-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full ${statusColor}`} />
+          <span className="text-[10px] text-neutral-500 uppercase">{line.status || "DRAFT"}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 text-[11px] text-neutral-500">
+        <span className="flex items-center gap-1"><Box className="h-3 w-3" />{machineCount} machines</span>
+        <span className="flex items-center gap-1 ml-auto"><Clock className="h-3 w-3" />{timeAgo(line.updated_at)}</span>
+      </div>
+    </div>
+  );
+}
+
+function SimCard({ sim, onStart, onStop, onComplete }: { sim: Simulation; onStart: () => void; onStop: () => void; onComplete: () => void }) {
+  const isRunning = sim.status === "RUNNING";
+  const isStopped = sim.status === "STOPPED";
+  const isDone = sim.status === "COMPLETED";
+  return (
+    <div className="border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all bg-neutral-950/50">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-mono text-neutral-400 truncate">{sim.id.slice(0, 8)}…</span>
+        <div className="flex items-center gap-1.5">
+          {isRunning && <StatusDot color="bg-emerald-500" />}
+          <span className={`text-[10px] font-medium uppercase ${isRunning ? "text-emerald-400" : isDone ? "text-blue-400" : "text-neutral-500"}`}>{sim.status || "—"}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button onClick={onStart} disabled={isRunning || isDone} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-white">
+          <Play className="h-3 w-3" /> Start
+        </button>
+        <button onClick={onStop} disabled={!isRunning} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-red-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-red-400">
+          <Square className="h-3 w-3" /> Stop
+        </button>
+        <button onClick={onComplete} disabled={isDone} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-blue-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-blue-400">
+          <Check className="h-3 w-3" /> Complete
+        </button>
+      </div>
+      <div className="flex items-center gap-3 text-[11px] text-neutral-600 mt-2">
+        {sim.start_time && <span>Started {timeAgo(sim.start_time)}</span>}
+        <span className="ml-auto">{timeAgo(sim.created_at)}</span>
+      </div>
+    </div>
+  );
+}
+
+function AlertRow({ alert, onAck, onResolve }: { alert: Alert; onAck: () => void; onResolve: () => void }) {
+  const sevColor = alert.severity === "CRITICAL" ? "text-red-400" : alert.severity === "HIGH" ? "text-orange-400" : alert.severity === "MEDIUM" ? "text-amber-400" : "text-blue-400";
+  const dotColor = alert.severity === "CRITICAL" ? "bg-red-500" : alert.severity === "HIGH" ? "bg-orange-500" : alert.severity === "MEDIUM" ? "bg-amber-500" : "bg-blue-500";
+  return (
+    <div className={`border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 transition-all bg-neutral-950/50 ${alert.status === "RESOLVED" ? "opacity-40" : ""}`}>
+      <div className="flex items-start gap-2">
+        <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${dotColor} ${alert.severity === "CRITICAL" ? "animate-pulse-dot" : ""}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-neutral-200 leading-relaxed">{alert.message}</p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={`text-[10px] font-medium uppercase ${sevColor}`}>{alert.severity}</span>
+            <span className="text-[10px] text-neutral-600">·</span>
+            <span className="text-[10px] text-neutral-600">{timeAgo(alert.created_at)}</span>
+            {alert.status !== "RESOLVED" && (
+              <div className="flex items-center gap-1 ml-auto">
+                {!alert.acknowledged && <button onClick={onAck} className="text-[10px] text-amber-500 hover:text-amber-400 cursor-pointer">Ack</button>}
+                {alert.acknowledged && <button onClick={onResolve} className="text-[10px] text-emerald-500 hover:text-emerald-400 cursor-pointer">Resolve</button>}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -142,64 +313,44 @@ export default function HomePage() {
   );
 }
 
-// Reusable micro-components for the dashboard
-function Card({ title, value, icon, trend, text }: any) {
+function SuggestionRow({ suggestion }: { suggestion: Suggestion }) {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-6">
-      <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <h3 className="tracking-tight text-sm font-medium text-gray-200">{title}</h3>
-        {icon}
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-white">{value}</div>
-        {(trend || text) && (
-          <p className="text-xs text-gray-400 mt-1">
-            {trend && <span className={trend.includes('+') ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>{trend}</span>}
-            {trend && text && " · "}
-            {text}
-          </p>
+    <div className="border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 transition-all bg-neutral-950/50">
+      <p className="text-xs text-neutral-200 leading-relaxed mb-1.5">{suggestion.description}</p>
+      <div className="flex items-center gap-2">
+        {suggestion.type && <span className="text-[10px] text-neutral-500 border border-neutral-800 rounded px-1.5 py-0.5">{suggestion.type}</span>}
+        {suggestion.confidence != null && (
+          <div className="flex items-center gap-1.5 ml-auto">
+            <div className="w-12 h-1 bg-neutral-800 rounded-full overflow-hidden">
+              <div className="h-full bg-neutral-400 rounded-full" style={{ width: `${suggestion.confidence * 100}%` }} />
+            </div>
+            <span className="text-[10px] font-mono text-neutral-500">{Math.round(suggestion.confidence * 100)}%</span>
+          </div>
         )}
+        {suggestion.applied && <span className="text-[10px] text-emerald-500">Applied</span>}
       </div>
     </div>
   );
 }
 
-function ProjectItem({ name, progress, expected, status }: any) {
+function SectionLabel({ text }: { text: string }) {
+  return <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-medium px-0.5 mb-1">{text}</p>;
+}
+
+function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="space-y-1.5 flex-1">
-        <p className="text-sm font-medium leading-none text-white">{name}</p>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <Clock className="h-3 w-3" /> {expected}
-        </div>
-      </div>
-      <div className="flex items-center gap-4 w-1/3 justify-end">
-        <div className="w-full bg-gray-800 rounded-full h-2 max-w-[80px]">
-          <div className={`h-2 rounded-full ${status === 'Retard' ? 'bg-orange-500' : 'bg-blue-500'}`} style={{ width: `${progress}%` }}></div>
-        </div>
-        <span className="text-xs font-medium w-8 text-right text-gray-300">{progress}%</span>
-      </div>
+    <div className="flex items-center justify-center py-12 text-xs text-neutral-600 border border-dashed border-neutral-800 rounded-lg">
+      {text}
     </div>
   );
 }
 
-function AlertItem({ type, message, time }: any) {
-  const isCritical = type === 'critical';
-  const isWarning = type === 'warning';
-  
+function LoadingRows({ count }: { count: number }) {
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-lg border ${isCritical ? 'bg-red-900/30 border-red-800' : isWarning ? 'bg-orange-900/30 border-orange-800' : 'bg-blue-900/30 border-blue-800'}`}>
-      <div className={`mt-0.5 ${isCritical ? 'text-red-400' : isWarning ? 'text-orange-400' : 'text-blue-400'}`}>
-        {isCritical ? <AlertCircle className="h-4 w-4" /> : isWarning ? <Activity className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-      </div>
-      <div className="space-y-1">
-        <p className={`text-sm font-medium ${isCritical ? 'text-red-200' : isWarning ? 'text-orange-200' : 'text-blue-200'}`}>
-          {message}
-        </p>
-        <p className={`text-xs ${isCritical ? 'text-red-400/70' : isWarning ? 'text-orange-400/70' : 'text-blue-400/70'}`}>
-          {time}
-        </p>
-      </div>
+    <div className="space-y-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="h-[72px] rounded-lg animate-shimmer" />
+      ))}
     </div>
   );
 }

@@ -1,6 +1,20 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import { ClipboardList, FolderKanban, Plus, Users } from "lucide-react";
 
 export default function ProjectsManagementPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem("indus_token")) {
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  if (typeof window !== "undefined" && !localStorage.getItem("indus_token")) {
+    return null;
+  }
+
   return (
     <section className="space-y-6">
       <header className="flex items-end justify-between gap-4">
