@@ -8,7 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import Navbar from "../components/navbar";
+import Navbar from "./components/navbar";
 
 import "./app.css";
 import '@xyflow/react/dist/style.css';

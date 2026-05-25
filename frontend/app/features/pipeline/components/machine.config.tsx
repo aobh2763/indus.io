@@ -1,8 +1,8 @@
-import { ICON_MAP } from "../../types/machine";
+import { ICON_MAP } from "../pipeline.shema";
 import { useState, useEffect, type FC } from "react";
-import { usePipelineStore } from "../../store/pipeline";
+import { usePipelineStore } from "../pipeline.store";
 import { X, Trash2, Save, ChevronDown, ChevronRight } from "lucide-react";
-import type { ProcessAttributes, AttributeInstance } from "../../types/machine";
+import type { ProcessAttributes, AttributeInstance } from "../pipeline.shema";
 
 type LayerKey = "inputs" | "configs" | "outputs";
 

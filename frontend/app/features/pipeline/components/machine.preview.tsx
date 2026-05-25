@@ -1,5 +1,5 @@
-import { ICON_MAP } from "../../types/machine";
-import type { MachineTypeConfig } from "../../types/machine";
+import { ICON_MAP } from "../pipeline.shema";
+import type { MachineTypeConfig } from "../pipeline.shema";
 
 interface MachinePreview {
   machine: MachineTypeConfig;

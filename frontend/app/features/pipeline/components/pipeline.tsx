@@ -6,11 +6,11 @@ import {
 } from "@xyflow/react";
 
 import { useCallback } from "react";
-import MachineNode from "./machine/node";
-import MachineList from "./machine/list";
-import ConfigPanel from "./machine/config-panel";
+import MachineNode from "./machine.node";
+import MachineList from "./machine.list";
+import ConfigPanel from "./machine.config";
 import { DragDropProvider } from "@dnd-kit/react";
-import { usePipelineStore } from "../store/pipeline";
+import { usePipelineStore } from "../pipeline.store";
 
 const PipelineBuilder = () => {
   const {

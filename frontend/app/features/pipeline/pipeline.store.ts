@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "../types/machine";
+import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "./pipeline.shema";
 import { applyNodeChanges, applyEdgeChanges, addEdge, type Node, type Edge, type OnNodesChange, type OnEdgesChange, type OnConnect, type XYPosition } from "@xyflow/react";
 
 export interface MachineNodeData extends Record<string, unknown> {
