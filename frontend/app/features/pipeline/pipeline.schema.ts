@@ -1,4 +1,8 @@
 import { Factory, type LucideIcon, Bot, Hammer, Move3d, Scan, Wrench, Zap } from "lucide-react";
+import z from "zod";
+
+export const DEFAULT_PROJECT_ID = "9a93ef27-b031-44f7-a650-b22a18dead47";
+export const DEFAULT_LINE_ID = "1db1f20c-ac09-40d9-bb48-0e4545bd3c3c";
 
 export const ICON_MAP: Record<string, LucideIcon> = {
   Factory,
@@ -322,3 +326,57 @@ export const AVAILABLE_MACHINES: MachineTypeConfig[] = [
     defaultAttributes: { inputs: {}, configs: {}, outputs: {} },
   },
 ];
+
+export const createProductionLineRequestSchema = z.object({
+  name: z.string(),
+  status: z.string(),
+});
+export type CreateProductionLineRequest = z.infer<
+  typeof createProductionLineRequestSchema
+>;
+
+export const updateProductionLineRequestSchema =
+  createProductionLineRequestSchema.partial();
+export type UpdateProductionLineRequest = z.infer<
+  typeof updateProductionLineRequestSchema
+>;
+
+export const productionLineResponseSchema =
+  createProductionLineRequestSchema.extend({
+    id: z.string(),
+    project_id: z.string(),
+    created_at: z.coerce.date(),
+    updated_at: z.coerce.date(),
+  });
+export type ProductionLineResponse = z.infer<
+  typeof productionLineResponseSchema
+>;
+
+export const productionLineListResponseSchema = z.array(
+  productionLineResponseSchema
+);
+export type ProductionLineListResponse = z.infer<
+  typeof productionLineListResponseSchema
+>;
+
+/**
+ * Derive the UI color for a machine based on its process type.
+ * Falls back to the first AVAILABLE_MACHINES entry for that process, or a default gray.
+ */
+export function getColorForProcess(process: string): string {
+  const machine = AVAILABLE_MACHINES.find(
+    (m) => m.process === process
+  );
+  return machine?.color ?? "#6B7280";
+}
+
+/**
+ * Derive the UI icon name for a machine based on its process type.
+ * Falls back to "Factory".
+ */
+export function getIconForProcess(process: string): string {
+  const machine = AVAILABLE_MACHINES.find(
+    (m) => m.process === process
+  );
+  return machine?.icon ?? "Factory";
+}

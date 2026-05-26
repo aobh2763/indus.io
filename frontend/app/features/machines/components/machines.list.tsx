@@ -1,15 +1,15 @@
-import MachinePreview from "./machine.preview";
 import { useReactFlow } from "@xyflow/react";
 import { useDraggable } from "@dnd-kit/react";
-import { ICON_MAP } from "../pipeline.shema";
-import { usePipelineStore } from "../pipeline.store";
-import { AVAILABLE_MACHINES } from "../pipeline.shema";
-import type { MachineTypeConfig } from "../pipeline.shema";
+import MachinePreview from "./machines.preview";
+import { ICON_MAP } from "~/features/pipeline/pipeline.schema";
+import { usePipelineStore } from "~/features/pipeline/pipeline.store";
+import { AVAILABLE_MACHINES } from "~/features/pipeline/pipeline.schema";
 import { useState, useMemo, useCallback, type FC, useEffect } from "react";
+import type { MachineTypeConfig } from "~/features/pipeline/pipeline.schema";
 
 import { Input } from "~/components/ui/input";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
+import { ScrollArea } from "~/components/ui/scroll-area";
 
 import { Search } from "lucide-react";
 

@@ -5,12 +5,14 @@ import {
   type OnSelectionChangeFunc,
 } from "@xyflow/react";
 
-import { useCallback } from "react";
-import MachineNode from "./machine.node";
-import MachineList from "./machine.list";
-import ConfigPanel from "./machine.config";
+import { useCallback, useEffect } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { usePipelineStore } from "../pipeline.store";
+import { DEFAULT_LINE_ID } from "../pipeline.schema";
+import MachineNode from "~/features/machines/components/machines.node";
+import MachineList from "~/features/machines/components/machines.list";
+import ConfigPanel from "~/features/machines/components/machines.config";
+import { Loader2 } from "lucide-react";
 
 const PipelineBuilder = () => {
   const {
@@ -20,8 +22,15 @@ const PipelineBuilder = () => {
     onNodesChange,
     onEdgesChange,
     setSelectedNode,
-    setDragNDropPosition
+    setDragNDropPosition,
+    loadPipeline,
+    isLoading,
   } = usePipelineStore();
+
+  // Load pipeline data from backend on mount
+  useEffect(() => {
+    loadPipeline(DEFAULT_LINE_ID);
+  }, [loadPipeline]);
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(({ nodes: selectedNodes }) => {
     if (selectedNodes.length === 1) {
@@ -30,6 +39,17 @@ const PipelineBuilder = () => {
       setSelectedNode(null);
     }
   }, [setSelectedNode]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Loading pipeline...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DragDropProvider

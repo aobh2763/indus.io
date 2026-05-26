@@ -1,7 +1,7 @@
 import { memo } from "react";
-import { ICON_MAP } from "../pipeline.shema";
 import { Handle, Position } from "@xyflow/react";
-import type { MachineNodeData } from "../pipeline.store";
+import { ICON_MAP } from "~/features/pipeline/pipeline.schema";
+import type { MachineNodeData } from "~/features/pipeline/pipeline.store";
 
 export interface MachineNodeComponentProps {
   data: MachineNodeData;

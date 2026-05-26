@@ -10,6 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - ./backend/app/db/init_graph.sql:/docker-entrypoint-initdb.d/db_init.sql
       - postgres_data:/var/lib/postgresql
 
   adminer: 

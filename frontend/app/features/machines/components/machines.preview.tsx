@@ -1,8 +1,8 @@
-import { ICON_MAP } from "../pipeline.shema";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
-import type { MachineTypeConfig } from "../pipeline.shema";
+import { ICON_MAP } from "~/features/pipeline/pipeline.schema";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import type { MachineTypeConfig } from "~/features/pipeline/pipeline.schema";
 
 interface MachinePreview {
   machine: MachineTypeConfig;

@@ -1,7 +1,7 @@
 import { Navbar1 } from "~/components/navbar";
 import { ReactFlowProvider } from "@xyflow/react";
-import PipelineBuilder from "~/features/pipeline/components/pipeline";
 import { Protect } from "~/features/auth/components/protect";
+import PipelineBuilder from "~/features/pipeline/components/pipeline.canvas";
 
 export default function PipelineBuilderPage() {
   return (

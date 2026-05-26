@@ -1,14 +1,15 @@
-import { ICON_MAP } from "../pipeline.shema";
-import { useState, useEffect, type FC } from "react";
-import { usePipelineStore } from "../pipeline.store";
-import { X, Trash2, Save } from "lucide-react";
-import type { ProcessAttributes, AttributeInstance } from "../pipeline.shema";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { X, Trash2, Save } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
+import { useState, useEffect, type FC } from "react";
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { ICON_MAP } from "~/features/pipeline/pipeline.schema";
+import { usePipelineStore } from "~/features/pipeline/pipeline.store";
+import type { ProcessAttributes, AttributeInstance } from "~/features/pipeline/pipeline.schema";
+
 import {
   Select,
   SelectContent,
@@ -169,7 +170,7 @@ const ConfigPanel: FC = () => {
 
   useEffect(() => {
     if (selectedNode) {
-      setLocalAttributes(JSON.parse(JSON.stringify(selectedNode.data.attributes)));
+      setLocalAttributes(selectedNode.data.attributes);
       setLocalLabel(selectedNode.data.label);
     }
   }, [selectedNode]);
@@ -199,7 +200,7 @@ const ConfigPanel: FC = () => {
   };
 
   return (
-    <div className="w-80 bg-card flex flex-col animate-slide-in rounded-lg max-h-[80vh] border border-border shadow-md">
+    <div className="w-85 bg-card/80 backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 shrink-0">
         <div className="flex items-center gap-3">
@@ -229,7 +230,7 @@ const ConfigPanel: FC = () => {
       <Separator />
 
       {/* Body */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-4 space-y-5">
           <div className="space-y-1.5">
             <Label>Name</Label>
@@ -241,7 +242,7 @@ const ConfigPanel: FC = () => {
 
           <Separator />
 
-          {(["configs"] as LayerKey[]).map((layer) => (
+          {(["inputs", "configs", "outputs"] as LayerKey[]).map((layer) => (
             <AttributeSection
               key={layer}
               layerKey={layer}
@@ -256,7 +257,7 @@ const ConfigPanel: FC = () => {
 
       {/* Footer */}
       <div className="p-4 flex gap-2 shrink-0">
-        <Button variant="destructive" onClick={handleDelete} className="gap-2">
+        <Button variant="outline" onClick={handleDelete} className="gap-2">
           <Trash2 size={16} />
           Delete
         </Button>
