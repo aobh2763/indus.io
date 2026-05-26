@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   Activity, AlertTriangle, Box, Brain, Clock,
@@ -7,17 +7,12 @@ import {
 import { useDashboardStore } from "../../store/dashboard";
 import { KpiCharts } from "../../components/dashboard/kpi-charts";
 import { PipelinePreview } from "../../components/dashboard/pipeline-preview";
-import type { Project, ProductionLine, Alert, Suggestion, Simulation } from "../../types/dashboard";
+import { SlideOverPanel } from "../../components/ui/slide-over-panel";
+import { ProjectPanel, LinePanel, SimulationPanel, AlertPanel, SuggestionPanel, MachinePanel } from "../../components/dashboard/detail-panels";
+import type { Project, ProductionLine, Alert, Suggestion, Simulation, Machine, KPI } from "../../types/dashboard";
+import { timeAgo } from "../../lib/utils";
 
 // ── Tiny helpers ────────────────────────────────────────
-function timeAgo(d: string) {
-  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
 
 function StatusDot({ color }: { color: string }) {
   return (
@@ -32,7 +27,36 @@ function StatusDot({ color }: { color: string }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const store = useDashboardStore();
-  const { projects, lines, machines, simulations, alerts, suggestions, kpis, isLoading, error, fetchDashboardData, acknowledgeAlert, resolveAlert, startSimulation, stopSimulation, completeSimulation } = store;
+  const {
+    projects, lines, machines, simulations, alerts, suggestions, kpis, isLoading, error,
+    fetchDashboardData, acknowledgeAlert, resolveAlert, startSimulation, stopSimulation,
+    completeSimulation, applySuggestion
+  } = store;
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    projects: false,
+    production: false,
+    simulations: false,
+    alerts: false,
+    suggestions: false,
+  });
+
+  type PanelState = {
+    type: "project" | "line" | "machine" | "simulation" | "alert" | "suggestion";
+    id: string;
+  };
+  const [panelStack, setPanelStack] = useState<PanelState[]>([]);
+  const activePanel = panelStack.length > 0 ? panelStack[panelStack.length - 1] : null;
+
+  const openPanel = (type: PanelState["type"], id: string) => {
+    setPanelStack(prev => [...prev, { type, id }]);
+  };
+  const closePanel = () => setPanelStack([]);
+  const goBack = () => setPanelStack(prev => prev.slice(0, -1));
+
+  const toggleExpand = (col: string) => {
+    setExpanded(prev => ({ ...prev, [col]: !prev[col] }));
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("indus_token");
@@ -58,6 +82,12 @@ export default function Dashboard() {
 
   const openAlerts = alerts.filter(a => a.status === "OPEN").length;
   const runningSims = simulations.filter(s => s.status === "RUNNING").length;
+
+  const visibleProjects = expanded.projects ? projects : projects.slice(0, 5);
+  const visibleLines = expanded.production ? lines : lines.slice(0, 5);
+  const visibleSimulations = expanded.simulations ? simulations : simulations.slice(0, 5);
+  const visibleAlerts = expanded.alerts ? alerts : alerts.slice(0, 5);
+  const visibleSuggestions = expanded.suggestions ? suggestions : suggestions.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-black text-neutral-200 font-sans">
@@ -118,8 +148,16 @@ export default function Dashboard() {
             ) : projects.length === 0 ? (
               <EmptyState text="No projects yet" />
             ) : (
-              <div className="stagger-children">
-                {projects.map(p => <ProjectCard key={p.id} project={p} lines={lines.filter(l => l.project_id === p.id)} />)}
+              <div className="stagger-children space-y-2">
+                {visibleProjects.map(p => <ProjectCard key={p.id} project={p} lines={lines.filter(l => l.project_id === p.id)} onClick={() => openPanel("project", p.id)} />)}
+                {projects.length > 5 && (
+                  <button
+                    onClick={() => toggleExpand("projects")}
+                    className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                  >
+                    {expanded.projects ? "Show Less" : `Show More (${projects.length - 5} more)`}
+                  </button>
+                )}
               </div>
             )}
           </Column>
@@ -131,10 +169,18 @@ export default function Dashboard() {
             ) : lines.length === 0 ? (
               <EmptyState text="No production lines" />
             ) : (
-              <div className="stagger-children">
-                {lines.map(l => (
-                  <LineCard key={l.id} line={l} machineCount={machines.filter(m => m.production_line_id === l.id).length} />
+              <div className="stagger-children space-y-2">
+                {visibleLines.map(l => (
+                  <LineCard key={l.id} line={l} machineCount={machines.filter(m => m.production_line_id === l.id).length} onClick={() => openPanel("line", l.id)} />
                 ))}
+                {lines.length > 5 && (
+                  <button
+                    onClick={() => toggleExpand("production")}
+                    className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                  >
+                    {expanded.production ? "Show Less" : `Show More (${lines.length - 5} more)`}
+                  </button>
+                )}
               </div>
             )}
           </Column>
@@ -146,10 +192,18 @@ export default function Dashboard() {
             ) : simulations.length === 0 ? (
               <EmptyState text="No simulations" />
             ) : (
-              <div className="stagger-children">
-                {simulations.map(s => (
-                  <SimCard key={s.id} sim={s} onStart={() => startSimulation(s.id)} onStop={() => stopSimulation(s.id)} onComplete={() => completeSimulation(s.id)} />
+              <div className="stagger-children space-y-2">
+                {visibleSimulations.map(s => (
+                  <SimCard key={s.id} sim={s} onStart={() => startSimulation(s.id)} onStop={() => stopSimulation(s.id)} onComplete={() => completeSimulation(s.id)} onClick={() => openPanel("simulation", s.id)} />
                 ))}
+                {simulations.length > 5 && (
+                  <button
+                    onClick={() => toggleExpand("simulations")}
+                    className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                  >
+                    {expanded.simulations ? "Show Less" : `Show More (${simulations.length - 5} more)`}
+                  </button>
+                )}
               </div>
             )}
           </Column>
@@ -157,20 +211,38 @@ export default function Dashboard() {
           {/* Column 4: Alerts & AI */}
           <Column title="Intelligence" count={alerts.length + suggestions.length} icon={<Brain className="h-3.5 w-3.5" />} badge={openAlerts > 0 ? `${openAlerts} open` : undefined} badgeColor="text-red-400">
             {alerts.length > 0 && (
-              <div className="space-y-1 mb-4">
+              <div className="space-y-1.5 mb-5">
                 <SectionLabel text="Alerts" />
-                <div className="stagger-children">
-                  {alerts.slice(0, 5).map(a => (
-                    <AlertRow key={a.id} alert={a} onAck={() => acknowledgeAlert(a.id)} onResolve={() => resolveAlert(a.id)} />
+                <div className="stagger-children space-y-2">
+                  {visibleAlerts.map(a => (
+                    <AlertRow key={a.id} alert={a} onAck={() => acknowledgeAlert(a.id)} onResolve={() => resolveAlert(a.id)} onClick={() => openPanel("alert", a.id)} />
                   ))}
+                  {alerts.length > 5 && (
+                    <button
+                      onClick={() => toggleExpand("alerts")}
+                      className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                    >
+                      {expanded.alerts ? "Show Less" : `Show More Alerts (${alerts.length - 5} more)`}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
             {suggestions.length > 0 && (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <SectionLabel text="AI Suggestions" />
-                <div className="stagger-children">
-                  {suggestions.slice(0, 4).map(s => <SuggestionRow key={s.id} suggestion={s} />)}
+                <div className="stagger-children space-y-2">
+                  {visibleSuggestions.map(s => (
+                    <SuggestionRow key={s.id} suggestion={s} onApply={() => applySuggestion(s.id)} onClick={() => openPanel("suggestion", s.id)} />
+                  ))}
+                  {suggestions.length > 5 && (
+                    <button
+                      onClick={() => toggleExpand("suggestions")}
+                      className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                    >
+                      {expanded.suggestions ? "Show Less" : `Show More Suggestions (${suggestions.length - 5} more)`}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -180,6 +252,30 @@ export default function Dashboard() {
           </Column>
         </div>
       </main>
+
+      {/* ── Slide Over Panel ─────────────────────────────────── */}
+      <SlideOverPanel 
+        isOpen={activePanel !== null} 
+        onClose={closePanel} 
+        onBack={goBack}
+        canGoBack={panelStack.length > 1}
+        title={
+          activePanel?.type === "project" ? "Project Details" :
+          activePanel?.type === "line" ? "Production Line Details" :
+          activePanel?.type === "machine" ? "Machine Details" :
+          activePanel?.type === "simulation" ? "Simulation Details" :
+          activePanel?.type === "alert" ? "Alert Details" :
+          activePanel?.type === "suggestion" ? "AI Suggestion" : ""
+        }
+        width="max-w-md"
+      >
+        {activePanel?.type === "project" && <ProjectPanel id={activePanel.id} openPanel={openPanel} />}
+        {activePanel?.type === "line" && <LinePanel id={activePanel.id} openPanel={openPanel} />}
+        {activePanel?.type === "machine" && <MachinePanel id={activePanel.id} openPanel={openPanel} />}
+        {activePanel?.type === "simulation" && <SimulationPanel id={activePanel.id} openPanel={openPanel} />}
+        {activePanel?.type === "alert" && <AlertPanel id={activePanel.id} openPanel={openPanel} />}
+        {activePanel?.type === "suggestion" && <SuggestionPanel id={activePanel.id} openPanel={openPanel} />}
+      </SlideOverPanel>
     </div>
   );
 }
@@ -213,10 +309,10 @@ function Column({ title, count, icon, badge, badgeColor, children }: { title: st
   );
 }
 
-function ProjectCard({ project, lines }: { project: Project; lines: ProductionLine[] }) {
+function ProjectCard({ project, lines, onClick }: { project: Project; lines: ProductionLine[]; onClick?: () => void }) {
   const running = lines.filter(l => l.status === "RUNNING").length;
   return (
-    <div className="group border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all cursor-default bg-neutral-950/50">
+    <div onClick={onClick} className="group border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all cursor-pointer bg-neutral-950/50">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-medium text-white truncate">{project.name}</span>
@@ -236,10 +332,10 @@ function ProjectCard({ project, lines }: { project: Project; lines: ProductionLi
   );
 }
 
-function LineCard({ line, machineCount }: { line: ProductionLine; machineCount: number }) {
+function LineCard({ line, machineCount, onClick }: { line: ProductionLine; machineCount: number; onClick?: () => void }) {
   const statusColor = line.status === "RUNNING" ? "bg-emerald-500" : line.status === "ARCHIVED" ? "bg-neutral-600" : "bg-amber-500";
   return (
-    <div className="border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all bg-neutral-950/50">
+    <div onClick={onClick} className="border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all cursor-pointer bg-neutral-950/50">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-sm font-medium text-white truncate">{line.name}</span>
         <div className="flex items-center gap-1.5">
@@ -255,12 +351,12 @@ function LineCard({ line, machineCount }: { line: ProductionLine; machineCount: 
   );
 }
 
-function SimCard({ sim, onStart, onStop, onComplete }: { sim: Simulation; onStart: () => void; onStop: () => void; onComplete: () => void }) {
+function SimCard({ sim, onStart, onStop, onComplete, onClick }: { sim: Simulation; onStart: () => void; onStop: () => void; onComplete: () => void; onClick?: () => void }) {
   const isRunning = sim.status === "RUNNING";
   const isStopped = sim.status === "STOPPED";
   const isDone = sim.status === "COMPLETED";
   return (
-    <div className="border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all bg-neutral-950/50">
+    <div onClick={onClick} className="border border-neutral-800 rounded-lg p-3.5 hover:border-neutral-700 transition-all cursor-pointer bg-neutral-950/50">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-mono text-neutral-400 truncate">{sim.id.slice(0, 8)}…</span>
         <div className="flex items-center gap-1.5">
@@ -269,13 +365,13 @@ function SimCard({ sim, onStart, onStop, onComplete }: { sim: Simulation; onStar
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        <button onClick={onStart} disabled={isRunning || isDone} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-white">
+        <button onClick={(e) => { e.stopPropagation(); onStart(); }} disabled={isRunning || isDone} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-white">
           <Play className="h-3 w-3" /> Start
         </button>
-        <button onClick={onStop} disabled={!isRunning} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-red-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-red-400">
+        <button onClick={(e) => { e.stopPropagation(); onStop(); }} disabled={!isRunning} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-red-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-red-400">
           <Square className="h-3 w-3" /> Stop
         </button>
-        <button onClick={onComplete} disabled={isDone} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-blue-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-blue-400">
+        <button onClick={(e) => { e.stopPropagation(); onComplete(); }} disabled={isDone} className="flex items-center gap-1 px-2 py-1 text-[10px] border border-neutral-800 rounded hover:border-blue-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-neutral-300 hover:text-blue-400">
           <Check className="h-3 w-3" /> Complete
         </button>
       </div>
@@ -287,11 +383,11 @@ function SimCard({ sim, onStart, onStop, onComplete }: { sim: Simulation; onStar
   );
 }
 
-function AlertRow({ alert, onAck, onResolve }: { alert: Alert; onAck: () => void; onResolve: () => void }) {
+function AlertRow({ alert, onAck, onResolve, onClick }: { alert: Alert; onAck: () => void; onResolve: () => void; onClick?: () => void }) {
   const sevColor = alert.severity === "CRITICAL" ? "text-red-400" : alert.severity === "HIGH" ? "text-orange-400" : alert.severity === "MEDIUM" ? "text-amber-400" : "text-blue-400";
   const dotColor = alert.severity === "CRITICAL" ? "bg-red-500" : alert.severity === "HIGH" ? "bg-orange-500" : alert.severity === "MEDIUM" ? "bg-amber-500" : "bg-blue-500";
   return (
-    <div className={`border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 transition-all bg-neutral-950/50 ${alert.status === "RESOLVED" ? "opacity-40" : ""}`}>
+    <div onClick={onClick} className={`border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 transition-all cursor-pointer bg-neutral-950/50 ${alert.status === "RESOLVED" ? "opacity-40" : ""}`}>
       <div className="flex items-start gap-2">
         <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${dotColor} ${alert.severity === "CRITICAL" ? "animate-pulse-dot" : ""}`} />
         <div className="flex-1 min-w-0">
@@ -302,8 +398,8 @@ function AlertRow({ alert, onAck, onResolve }: { alert: Alert; onAck: () => void
             <span className="text-[10px] text-neutral-600">{timeAgo(alert.created_at)}</span>
             {alert.status !== "RESOLVED" && (
               <div className="flex items-center gap-1 ml-auto">
-                {!alert.acknowledged && <button onClick={onAck} className="text-[10px] text-amber-500 hover:text-amber-400 cursor-pointer">Ack</button>}
-                {alert.acknowledged && <button onClick={onResolve} className="text-[10px] text-emerald-500 hover:text-emerald-400 cursor-pointer">Resolve</button>}
+                {!alert.acknowledged && <button onClick={(e) => { e.stopPropagation(); onAck(); }} className="text-[10px] text-amber-500 hover:text-amber-400 cursor-pointer">Ack</button>}
+                {alert.acknowledged && <button onClick={(e) => { e.stopPropagation(); onResolve(); }} className="text-[10px] text-emerald-500 hover:text-emerald-400 cursor-pointer">Resolve</button>}
               </div>
             )}
           </div>
@@ -313,21 +409,24 @@ function AlertRow({ alert, onAck, onResolve }: { alert: Alert; onAck: () => void
   );
 }
 
-function SuggestionRow({ suggestion }: { suggestion: Suggestion }) {
+function SuggestionRow({ suggestion, onApply, onClick }: { suggestion: Suggestion; onApply?: () => void; onClick?: () => void }) {
   return (
-    <div className="border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 transition-all bg-neutral-950/50">
+    <div onClick={onClick} className="border border-neutral-800 rounded-lg p-3 hover:border-neutral-700 transition-all cursor-pointer bg-neutral-950/50">
       <p className="text-xs text-neutral-200 leading-relaxed mb-1.5">{suggestion.description}</p>
       <div className="flex items-center gap-2">
         {suggestion.type && <span className="text-[10px] text-neutral-500 border border-neutral-800 rounded px-1.5 py-0.5">{suggestion.type}</span>}
         {suggestion.confidence != null && (
-          <div className="flex items-center gap-1.5 ml-auto">
+          <div className="flex items-center gap-1.5">
             <div className="w-12 h-1 bg-neutral-800 rounded-full overflow-hidden">
               <div className="h-full bg-neutral-400 rounded-full" style={{ width: `${suggestion.confidence * 100}%` }} />
             </div>
             <span className="text-[10px] font-mono text-neutral-500">{Math.round(suggestion.confidence * 100)}%</span>
           </div>
         )}
-        {suggestion.applied && <span className="text-[10px] text-emerald-500">Applied</span>}
+        {!suggestion.applied && onApply && (
+          <button onClick={(e) => { e.stopPropagation(); onApply(); }} className="text-[10px] text-emerald-500 hover:text-emerald-400 cursor-pointer ml-auto font-medium">Apply</button>
+        )}
+        {suggestion.applied && <span className="text-[10px] text-emerald-500 ml-auto font-medium">Applied</span>}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { Factory, ArrowRight } from "lucide-react";
-import { ReactFlow, Background } from "@xyflow/react";
+import { ReactFlow, Background, BackgroundVariant } from "@xyflow/react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import type { Machine, Connection } from "../../types/dashboard";
 
@@ -94,7 +94,7 @@ export function PipelinePreview({ machines, connections }: PipelinePreviewProps)
             nodesConnectable={false}
             elementsSelectable={false}
           >
-            <Background color="#333333" gap={16} variant="dots" />
+            <Background color="#333333" gap={16} variant={BackgroundVariant.Dots} />
           </ReactFlow>
         </div>
         {/* Click overlay to navigate */}

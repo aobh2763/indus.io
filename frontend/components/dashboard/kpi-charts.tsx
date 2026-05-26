@@ -124,132 +124,156 @@ export function KpiCharts({ kpis, kpiValues, machines, sensorData }: KpiChartsPr
   const radialData = generateRadialData(machines);
 
   return (
-    <Card>
-      <Tabs defaultValue="performance">
-        <CardHeader>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* ── Card 1: Performance Trends Area Chart ── */}
+      <Card className="bg-neutral-950 border-neutral-800">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Analytics Overview</CardTitle>
-              <CardDescription>Production performance across all lines</CardDescription>
+              <CardTitle className="text-white text-sm font-semibold">Performance Trends</CardTitle>
+              <CardDescription className="text-neutral-500 text-xs">Real-time OEE, Throughput & Quality</CardDescription>
             </div>
-            <TabsList>
-              <TabsTrigger value="performance">Performance</TabsTrigger>
-              <TabsTrigger value="machines">Machines</TabsTrigger>
-              <TabsTrigger value="distribution">Distribution</TabsTrigger>
-              <TabsTrigger value="oee">OEE Breakdown</TabsTrigger>
-            </TabsList>
+            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">Live</span>
           </div>
         </CardHeader>
-
         <CardContent>
-          {/* ── Performance Area Chart ─────────────────────── */}
-          <TabsContent value="performance">
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradOee" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gradThroughput" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gradQuality" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333333" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} dx={-10} />
-                  <Tooltip {...tooltipStyle} />
-                  <Area type="monotone" dataKey="oee" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#gradOee)" name="OEE (%)" />
-                  <Area type="monotone" dataKey="throughput" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#gradThroughput)" name="Throughput" />
-                  <Area type="monotone" dataKey="quality" stroke="#8b5cf6" strokeWidth={1.5} fillOpacity={1} fill="url(#gradQuality)" name="Quality (%)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={timeSeriesData} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradOee" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradThroughput" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#262626" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#737373" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#737373" }} />
+                <Tooltip {...tooltipStyle} />
+                <Area type="monotone" dataKey="oee" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gradOee)" name="OEE (%)" />
+                <Area type="monotone" dataKey="throughput" stroke="#3b82f6" strokeWidth={1.5} fillOpacity={1} fill="url(#gradThroughput)" name="Throughput" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* ── Machine Bar Chart ─────────────────────────── */}
-          <TabsContent value="machines">
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333333" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} dx={-10} />
-                  <Tooltip {...tooltipStyle} />
-                  <Bar dataKey="throughput" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Throughput (u/h)" barSize={28} />
-                  <Bar dataKey="efficiency" fill="#10b981" radius={[6, 6, 0, 0]} name="Efficiency (%)" barSize={28} />
-                </BarChart>
-              </ResponsiveContainer>
+      {/* ── Card 2: Process Distribution Pie Chart ── */}
+      <Card className="bg-neutral-950 border-neutral-800">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white text-sm font-semibold">Process Distribution</CardTitle>
+              <CardDescription className="text-neutral-500 text-xs">Active machine roles in production</CardDescription>
             </div>
-          </TabsContent>
-
-          {/* ── Distribution Pie Chart ────────────────────── */}
-          <TabsContent value="distribution">
-            <div className="h-[350px] w-full flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={130}
-                    paddingAngle={4}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip {...tooltipStyle} />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    formatter={(value) => <span style={{ color: "#d1d5db", fontSize: "13px" }}>{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-
-          {/* ── OEE Radial Chart ──────────────────────────── */}
-          <TabsContent value="oee">
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart
+            <span className="text-[10px] text-neutral-400 border border-neutral-800 px-2 py-0.5 rounded-full font-medium">Machines</span>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center">
+          <div className="h-[210px] w-full flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius="30%"
-                  outerRadius="90%"
-                  barSize={20}
-                  data={radialData}
-                  startAngle={180}
-                  endAngle={0}
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={4}
+                  dataKey="value"
+                  stroke="none"
                 >
-                  <RadialBar
-                    background={{ fill: "#333333" }}
-                    dataKey="value"
-                    cornerRadius={10}
-                  />
-                  <Tooltip {...tooltipStyle} />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    formatter={(value) => <span style={{ color: "#d1d5db", fontSize: "13px" }}>{value}</span>}
-                  />
-                </RadialBarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip {...tooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 mt-2">
+            {pieData.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                <span>{item.name} ({item.value})</span>
+              </div>
+            ))}
+          </div>
         </CardContent>
-      </Tabs>
-    </Card>
+      </Card>
+
+      {/* ── Card 3: Machine Performance Bar Chart ── */}
+      <Card className="bg-neutral-950 border-neutral-800">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white text-sm font-semibold">Machine Performance</CardTitle>
+              <CardDescription className="text-neutral-500 text-xs">Throughput and Efficiency per machine</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#262626" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#737373" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#737373" }} />
+                <Tooltip {...tooltipStyle} />
+                <Bar dataKey="throughput" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Throughput (u/h)" barSize={16} />
+                <Bar dataKey="efficiency" fill="#10b981" radius={[4, 4, 0, 0]} name="Efficiency (%)" barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Card 4: OEE Breakdown Radial Chart ── */}
+      <Card className="bg-neutral-950 border-neutral-800">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white text-sm font-semibold">OEE Breakdown</CardTitle>
+              <CardDescription className="text-neutral-500 text-xs">Availability, Performance, Quality</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center">
+          <div className="h-[210px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="30%"
+                outerRadius="100%"
+                barSize={16}
+                data={radialData}
+                startAngle={180}
+                endAngle={0}
+              >
+                <RadialBar
+                  background={{ fill: "#262626" }}
+                  dataKey="value"
+                  cornerRadius={8}
+                />
+                <Tooltip {...tooltipStyle} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 mt-2">
+            {radialData.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                <span>{item.name} ({item.value}%)</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
