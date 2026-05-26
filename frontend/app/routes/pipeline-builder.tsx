@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
+import { ReactFlowProvider } from "@xyflow/react";
 import PipelineBuilder from "../../components/pipeline-builder";
 
 export default function PipelineBuilderPage() {
@@ -15,5 +16,10 @@ export default function PipelineBuilderPage() {
     return null;
   }
 
-  return <PipelineBuilder />;
+  return (
+    <ReactFlowProvider>
+      <PipelineBuilder />
+    </ReactFlowProvider>
+  );
 }
+

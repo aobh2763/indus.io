@@ -1,33 +1,27 @@
-import { type FC, useCallback, useMemo } from "react";
-import { ReactFlow, Background, Controls, MiniMap, type OnSelectionChangeFunc, Panel, ReactFlowProvider } from "@xyflow/react";
-import { useShallow } from "zustand/react/shallow";
-import { usePipelineStore } from "../store/pipeline";
+import {
+  Panel,
+  ReactFlow,
+  Background,
+  type OnSelectionChangeFunc,
+} from "@xyflow/react";
+
+import { useCallback } from "react";
 import MachineNode from "./machine/node";
 import MachineList from "./machine/list";
 import ConfigPanel from "./machine/config-panel";
+import { DragDropProvider } from "@dnd-kit/react";
+import { usePipelineStore } from "../store/pipeline";
 
-const nodeTypes = {
-  machineNode: MachineNode,
-};
-
-const PipelineBuilder: FC = () => {
+const PipelineBuilder = () => {
   const {
     nodes,
     edges,
+    onConnect,
     onNodesChange,
     onEdgesChange,
-    onConnect,
     setSelectedNode,
-  } = usePipelineStore(
-    useShallow((state) => ({
-      nodes: state.nodes,
-      edges: state.edges,
-      onNodesChange: state.onNodesChange,
-      onEdgesChange: state.onEdgesChange,
-      onConnect: state.onConnect,
-      setSelectedNode: state.setSelectedNode,
-    }))
-  );
+    setDragNDropPosition
+  } = usePipelineStore();
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(({ nodes: selectedNodes }) => {
     if (selectedNodes.length === 1) {
@@ -37,37 +31,41 @@ const PipelineBuilder: FC = () => {
     }
   }, [setSelectedNode]);
 
-  const fitViewOptions = useMemo(() => ({ padding: 0.2 }), []);
-
   return (
-    <div className="w-full h-screen flex bg-gray-950 dark:bg-gray-950">
-      <ReactFlowProvider>
+    <DragDropProvider
+      onDragEnd={(event) => {
+        if (event.canceled) return;
+        const { position } = event.operation;
+        setDragNDropPosition({ x: position.current.x, y: position.current.y });
+      }}
+    >
+      <div className="h-screen">
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          onConnect={onConnect}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
           onSelectionChange={onSelectionChange}
-          nodeTypes={nodeTypes}
+
           fitView
-          fitViewOptions={fitViewOptions}
+          style={{ background: "#000" }}
+          fitViewOptions={{ padding: 0.2 }}
+          proOptions={{ hideAttribution: true }}
+          nodeTypes={{ machineNode: MachineNode }}
         >
-          <Panel position="top-left">
+          <Background />
+
+          <Panel position="center-left">
             <MachineList />
           </Panel>
-          <Background gap={16} color="#1f2937" className="dark:!bg-gray-950" />
-          <Controls className="dark:fill-gray-300 [&>button]:dark:bg-gray-800 [&>button]:dark:border-gray-700 [&>button]:dark:text-gray-300 [&>button]:bg-gray-800 [&>button]:border-gray-700 [&>button]:text-gray-300" />
-          <MiniMap
-            className="dark:!bg-gray-900 dark:!border-gray-700 !bg-gray-900 !border-gray-700"
-            nodeColor={(node) => (node.data as { color?: string }).color || "#999"}
-          />
-          <Panel position="top-right">
+
+          <Panel position="center-right">
             <ConfigPanel />
           </Panel>
         </ReactFlow>
-      </ReactFlowProvider>
-    </div>
+      </div>
+    </DragDropProvider>
   );
 };
 
