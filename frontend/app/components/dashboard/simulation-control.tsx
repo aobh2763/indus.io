@@ -5,7 +5,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import type { Simulation, SimulationLog } from "../../types/dashboard";
+import type { Simulation, SimulationLog } from "../../../types/dashboard";
 
 interface SimulationControlProps {
   simulation?: Simulation;
@@ -69,7 +69,7 @@ export function SimulationControl({ simulation, logs = [], onStart, onStop, onCo
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col pt-0 px-6 pb-6 gap-4">
         <div className="grid grid-cols-2 gap-3 bg-gray-950/50 rounded-lg p-3 border border-gray-800/60">
           <div className="space-y-1">
@@ -85,25 +85,25 @@ export function SimulationControl({ simulation, logs = [], onStart, onStop, onCo
         </div>
 
         <div className="flex items-center gap-2">
-          <Button 
-            className="flex-1" 
-            variant="default" 
+          <Button
+            className="flex-1"
+            variant="default"
             disabled={status === "RUNNING" || status === "COMPLETED"}
             onClick={onStart}
           >
             <Play className="h-4 w-4" /> Start
           </Button>
-          <Button 
-            className="flex-1" 
-            variant="destructive" 
+          <Button
+            className="flex-1"
+            variant="destructive"
             disabled={status !== "RUNNING"}
             onClick={onStop}
           >
             <Square className="h-4 w-4" /> Stop
           </Button>
-          <Button 
-            className="flex-1" 
-            variant="secondary" 
+          <Button
+            className="flex-1"
+            variant="secondary"
             disabled={status !== "RUNNING" && status !== "STOPPED"}
             onClick={onComplete}
           >
@@ -112,7 +112,7 @@ export function SimulationControl({ simulation, logs = [], onStart, onStop, onCo
         </div>
 
         <Separator />
-        
+
         <div className="flex-1 flex flex-col min-h-[150px]">
           <div className="flex items-center gap-1.5 mb-2">
             <Terminal className="h-3 w-3 text-gray-400" />
@@ -127,7 +127,7 @@ export function SimulationControl({ simulation, logs = [], onStart, onStop, onCo
                       <span className="text-gray-500 shrink-0">[{formatTime(log.created_at)}]</span>
                       <span className={
                         log.level === "ERROR" ? "text-rose-400" :
-                        log.level === "WARNING" ? "text-amber-400" : "text-blue-400"
+                          log.level === "WARNING" ? "text-amber-400" : "text-blue-400"
                       }>
                         [{log.level}]
                       </span>

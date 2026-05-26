@@ -1,5 +1,5 @@
 import { Card, CardContent } from "../ui/card";
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 import { Skeleton } from "../ui/skeleton";
 import type { ReactNode } from "react";
 
@@ -95,8 +95,8 @@ export function StatCard({ title, value, icon, trend, description, color = "emer
                 trend.startsWith("+") || trend.startsWith("↑")
                   ? "text-emerald-400"
                   : trend.startsWith("-") || trend.startsWith("↓")
-                  ? "text-rose-400"
-                  : "text-gray-400"
+                    ? "text-rose-400"
+                    : "text-gray-400"
               )}
             >
               {trend}

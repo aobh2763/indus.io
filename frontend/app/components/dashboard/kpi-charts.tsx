@@ -17,7 +17,7 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
-import type { KPI, KPIValue, Machine, SensorData } from "../../types/dashboard";
+import type { KPI, KPIValue, Machine, SensorData } from "../../../types/dashboard";
 
 interface KpiChartsProps {
   kpis: KPI[];

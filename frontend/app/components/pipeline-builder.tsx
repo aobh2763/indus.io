@@ -10,7 +10,7 @@ import MachineNode from "./machine/node";
 import MachineList from "./machine/list";
 import ConfigPanel from "./machine/config-panel";
 import { DragDropProvider } from "@dnd-kit/react";
-import { usePipelineStore } from "../store/pipeline";
+import { usePipelineStore } from "../../store/pipeline";
 
 const PipelineBuilder = () => {
   const {

@@ -4,8 +4,8 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import { cn } from "../../lib/utils";
-import type { Alert } from "../../types/dashboard";
+import { cn } from "../../../lib/utils";
+import type { Alert } from "../../../types/dashboard";
 
 interface AlertsPanelProps {
   alerts: Alert[];

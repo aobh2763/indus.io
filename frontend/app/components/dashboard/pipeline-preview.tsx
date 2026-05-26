@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Factory, ArrowRight } from "lucide-react";
 import { ReactFlow, Background, BackgroundVariant } from "@xyflow/react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
-import type { Machine, Connection } from "../../types/dashboard";
+import type { Machine, Connection } from "../../../types/dashboard";
 
 interface PipelinePreviewProps {
   machines: Machine[];
@@ -72,21 +72,21 @@ export function PipelinePreview({ machines, connections }: PipelinePreviewProps)
               <CardDescription>Digital twin layout</CardDescription>
             </div>
           </div>
-          <Link 
-            to="/pipeline-builder" 
+          <Link
+            to="/pipeline-builder"
             className="text-xs font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors bg-emerald-500/10 px-2 py-1 rounded-md"
           >
             Builder <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 p-0 relative overflow-hidden rounded-b-xl border-t border-neutral-800">
         <div className="absolute inset-0 bg-black">
-          <ReactFlow 
-            nodes={displayNodes} 
-            edges={displayEdges} 
-            fitView 
+          <ReactFlow
+            nodes={displayNodes}
+            edges={displayEdges}
+            fitView
             proOptions={{ hideAttribution: true }}
             panOnScroll={false}
             zoomOnScroll={false}
@@ -98,7 +98,7 @@ export function PipelinePreview({ machines, connections }: PipelinePreviewProps)
           </ReactFlow>
         </div>
         {/* Click overlay to navigate */}
-        <Link 
+        <Link
           to="/pipeline-builder"
           className="absolute inset-0 z-20 cursor-pointer hover:bg-white/5 transition-colors"
           title="Click to edit pipeline"

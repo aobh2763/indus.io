@@ -2,10 +2,10 @@ import { Search } from "lucide-react";
 import MachinePreview from "./preview";
 import { useReactFlow } from "@xyflow/react";
 import { useDraggable } from '@dnd-kit/react';
-import { ICON_MAP } from "../../types/machine";
-import { usePipelineStore } from "../../store/pipeline";
-import { AVAILABLE_MACHINES } from "../../types/machine";
-import type { MachineTypeConfig } from "../../types/machine";
+import { ICON_MAP } from "../../../types/machine";
+import { usePipelineStore } from "../../../store/pipeline";
+import { AVAILABLE_MACHINES } from "../../../types/machine";
+import type { MachineTypeConfig } from "../../../types/machine";
 import { useState, useMemo, useCallback, type FC, useEffect } from "react";
 
 interface DraggableMachineProps {

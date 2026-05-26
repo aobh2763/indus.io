@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui
 import { Badge } from "../ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../ui/table";
 import { Separator } from "../ui/separator";
-import type { Project, ProductionLine } from "../../types/dashboard";
+import type { Project, ProductionLine } from "../../../types/dashboard";
 
 interface ProjectsTableProps {
   projects: Project[];

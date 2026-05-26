@@ -1,6 +1,6 @@
 import { Layers, Lock, Eye, Clock, Box, Play, Square, Check, Activity, AlertTriangle, Brain } from "lucide-react";
-import { useDashboardStore } from "../../store/dashboard";
-import { timeAgo } from "../../lib/utils";
+import { useDashboardStore } from "../../../store/dashboard";
+import { timeAgo } from "../../../lib/utils";
 
 // ── Project Panel ───────────────────────────────────────
 export function ProjectPanel({ id, openPanel }: { id: string; openPanel: (type: any, id: string) => void }) {
@@ -44,8 +44,8 @@ export function ProjectPanel({ id, openPanel }: { id: string; openPanel: (type: 
             <div className="text-xs text-neutral-500 border border-dashed border-neutral-800 rounded-lg p-4 text-center">No production lines in this project</div>
           ) : (
             projectLines.map(line => (
-              <div 
-                key={line.id} 
+              <div
+                key={line.id}
                 onClick={() => openPanel("line", line.id)}
                 className="flex items-center justify-between p-3 border border-neutral-800 rounded-lg bg-neutral-950/50 hover:bg-neutral-900 cursor-pointer transition-colors"
               >
@@ -85,7 +85,7 @@ export function LinePanel({ id, openPanel }: { id: string; openPanel: (type: any
         </div>
         <h3 className="text-2xl font-semibold text-white tracking-tight">{line.name}</h3>
       </div>
-      
+
       <div>
         <h4 className="text-sm font-medium text-white flex items-center gap-2 mb-3">
           <Box className="h-4 w-4 text-neutral-400" />
@@ -96,8 +96,8 @@ export function LinePanel({ id, openPanel }: { id: string; openPanel: (type: any
             <div className="text-xs text-neutral-500 border border-dashed border-neutral-800 rounded-lg p-4 text-center">No machines assigned</div>
           ) : (
             lineMachines.map(m => (
-              <div 
-                key={m.id} 
+              <div
+                key={m.id}
                 onClick={() => openPanel("machine", m.id)}
                 className="p-3 border border-neutral-800 rounded-lg bg-neutral-950/50 cursor-pointer hover:bg-neutral-900 transition-colors"
               >

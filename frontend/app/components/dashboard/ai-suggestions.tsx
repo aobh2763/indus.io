@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import type { Suggestion } from "../../types/dashboard";
+import type { Suggestion } from "../../../types/dashboard";
 
 interface AiSuggestionsProps {
   suggestions: Suggestion[];

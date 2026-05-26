@@ -1,11 +1,11 @@
-import { ICON_MAP } from "../../types/machine";
-import type { MachineTypeConfig } from "../../types/machine";
+import { ICON_MAP } from "../../../types/machine";
+import type { MachineTypeConfig } from "../../../types/machine";
 
 interface MachinePreview {
   machine: MachineTypeConfig;
 }
 
-function MachinePreview({ machine }) {
+function MachinePreview({ machine }: { machine: MachineTypeConfig }) {
   return (
     <div className="h-fit absolute left-full top-0 ml-4 w-72 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 p-5 z-50 animate-in fade-in slide-in-from-left-2 duration-300">
       <div className="flex items-center gap-4 mb-4">

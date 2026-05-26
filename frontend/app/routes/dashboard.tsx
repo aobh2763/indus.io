@@ -5,10 +5,10 @@ import {
   Factory, Layers, Lock, Eye, Play, Square, Check, RefreshCw
 } from "lucide-react";
 import { useDashboardStore } from "../../store/dashboard";
-import { KpiCharts } from "../../components/dashboard/kpi-charts";
-import { PipelinePreview } from "../../components/dashboard/pipeline-preview";
-import { SlideOverPanel } from "../../components/ui/slide-over-panel";
-import { ProjectPanel, LinePanel, SimulationPanel, AlertPanel, SuggestionPanel, MachinePanel } from "../../components/dashboard/detail-panels";
+import { KpiCharts } from "../components/dashboard/kpi-charts";
+import { PipelinePreview } from "../components/dashboard/pipeline-preview";
+import { SlideOverPanel } from "../components/ui/slide-over-panel";
+import { ProjectPanel, LinePanel, SimulationPanel, AlertPanel, SuggestionPanel, MachinePanel } from "../components/dashboard/detail-panels";
 import type { Project, ProductionLine, Alert, Suggestion, Simulation, Machine, KPI } from "../../types/dashboard";
 import { timeAgo } from "../../lib/utils";
 
@@ -64,7 +64,7 @@ export default function Dashboard() {
       navigate("/login");
       return;
     }
-    
+
     fetchDashboardData();
     const i = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(i);
@@ -254,18 +254,18 @@ export default function Dashboard() {
       </main>
 
       {/* ── Slide Over Panel ─────────────────────────────────── */}
-      <SlideOverPanel 
-        isOpen={activePanel !== null} 
-        onClose={closePanel} 
+      <SlideOverPanel
+        isOpen={activePanel !== null}
+        onClose={closePanel}
         onBack={goBack}
         canGoBack={panelStack.length > 1}
         title={
           activePanel?.type === "project" ? "Project Details" :
-          activePanel?.type === "line" ? "Production Line Details" :
-          activePanel?.type === "machine" ? "Machine Details" :
-          activePanel?.type === "simulation" ? "Simulation Details" :
-          activePanel?.type === "alert" ? "Alert Details" :
-          activePanel?.type === "suggestion" ? "AI Suggestion" : ""
+            activePanel?.type === "line" ? "Production Line Details" :
+              activePanel?.type === "machine" ? "Machine Details" :
+                activePanel?.type === "simulation" ? "Simulation Details" :
+                  activePanel?.type === "alert" ? "Alert Details" :
+                    activePanel?.type === "suggestion" ? "AI Suggestion" : ""
         }
         width="max-w-md"
       >
