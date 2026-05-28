@@ -22,11 +22,10 @@ export default function Navbar() {
             <Link
               key={link.to}
               to={link.to}
-              className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
-                location.pathname === link.to
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === link.to
                   ? "text-white bg-neutral-800"
                   : "text-neutral-400 hover:text-white hover:bg-neutral-900"
-              }`}
+                }`}
             >
               {link.label}
             </Link>

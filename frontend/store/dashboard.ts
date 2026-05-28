@@ -20,6 +20,7 @@ import {
   kpiService,
   telemetryService,
 } from "../lib/api";
+import { useAuthStore } from "~/features/auth/auth.store";
 
 interface DashboardState {
   // Data
@@ -79,7 +80,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   fetchDashboardData: async () => {
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem("indus_token");
+      const token = useAuthStore.getState().token;
       if (!token) {
         set({ error: "UNAUTHORIZED", isLoading: false });
         return;
@@ -87,10 +88,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       const [projectsRes, alertsRes] = await Promise.all([
         projectService.list().catch((e) => {
-           if (e.response?.status === 401) {
-              set({ error: "UNAUTHORIZED" });
-           }
-           return { data: [] };
+          if (e.response?.status === 401) {
+            set({ error: "UNAUTHORIZED" });
+          }
+          return { data: [] };
         }),
         alertService.list().catch(() => ({ data: [] })),
       ]);

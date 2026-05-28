@@ -1,25 +1,15 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { Navbar1 } from "~/components/navbar1";
 import { ReactFlowProvider } from "@xyflow/react";
-import PipelineBuilder from "../components/pipeline-builder";
+import { Protect } from "~/features/auth/components/protect";
+import PipelineBuilder from "~/features/pipeline/components/pipeline.canvas";
 
 export default function PipelineBuilderPage() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("indus_token")) {
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  if (typeof window !== "undefined" && !localStorage.getItem("indus_token")) {
-    return null;
-  }
-
   return (
-    <ReactFlowProvider>
-      <PipelineBuilder />
-    </ReactFlowProvider>
+    <Protect>
+      <Navbar1 />
+      <ReactFlowProvider>
+        <PipelineBuilder />
+      </ReactFlowProvider>
+    </Protect>
   );
 }
-

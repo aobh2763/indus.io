@@ -1,8 +1,6 @@
 services:
   db:
     image: apache/age:latest
-    container_name: indusio_db
-    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -12,12 +10,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
 
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: indusio_backend
-    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -34,8 +35,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: indusio_frontend
-    restart: unless-stopped
     depends_on:
       - backend
     ports:

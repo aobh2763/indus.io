@@ -11,6 +11,8 @@ import { SlideOverPanel } from "../components/ui/slide-over-panel";
 import { ProjectPanel, LinePanel, SimulationPanel, AlertPanel, SuggestionPanel, MachinePanel } from "../components/dashboard/detail-panels";
 import type { Project, ProductionLine, Alert, Suggestion, Simulation, Machine, KPI } from "../../types/dashboard";
 import { timeAgo } from "../../lib/utils";
+// ✅ Import your Protect wrapper
+import { Protect } from "~/features/auth/components/protect";
 
 // ── Tiny helpers ────────────────────────────────────────
 
@@ -25,7 +27,6 @@ function StatusDot({ color }: { color: string }) {
 
 // ── Main Dashboard ──────────────────────────────────────
 export default function Dashboard() {
-  const navigate = useNavigate();
   const store = useDashboardStore();
   const {
     projects, lines, machines, simulations, alerts, suggestions, kpis, isLoading, error,
@@ -58,28 +59,15 @@ export default function Dashboard() {
     setExpanded(prev => ({ ...prev, [col]: !prev[col] }));
   };
 
+  // ✅ Only keep the data-fetching effect — auth is now handled by <Protect>
   useEffect(() => {
-    const token = localStorage.getItem("indus_token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
     fetchDashboardData();
     const i = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(i);
-  }, [navigate, fetchDashboardData]);
+  }, [fetchDashboardData]);
 
-  useEffect(() => {
-    if (error === "UNAUTHORIZED") {
-      navigate("/login");
-    }
-  }, [error, navigate]);
-
-  if (typeof window !== "undefined" && (!localStorage.getItem("indus_token") || error === "UNAUTHORIZED")) {
-    return null;
-  }
-
+  // ✅ Keep the UNAUTHORIZED error redirect — this handles mid-session 401s
+  //    returned by dashboard API calls (separate from initial auth)
   const openAlerts = alerts.filter(a => a.status === "OPEN").length;
   const runningSims = simulations.filter(s => s.status === "RUNNING").length;
 
@@ -89,194 +77,197 @@ export default function Dashboard() {
   const visibleAlerts = expanded.alerts ? alerts : alerts.slice(0, 5);
   const visibleSuggestions = expanded.suggestions ? suggestions : suggestions.slice(0, 5);
 
+  // ✅ Wrap the entire render in <Protect> — it handles the redirect + loading state
   return (
-    <div className="min-h-screen bg-black text-neutral-200 font-sans">
-      {/* ── Top Bar ──────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-neutral-800 bg-black/80 backdrop-blur-md">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between h-12 px-5">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white tracking-tight">
-              <Factory className="h-4 w-4 text-white" />
-              indus.io
-            </Link>
-            <span className="text-neutral-700">/</span>
-            <span className="text-sm text-neutral-400">Dashboard</span>
+    <Protect>
+      <div className="min-h-screen bg-black text-neutral-200 font-sans">
+        {/* ── Top Bar ──────────────────────────────────────── */}
+        <header className="sticky top-0 z-50 border-b border-neutral-800 bg-black/80 backdrop-blur-md">
+          <div className="max-w-[1600px] mx-auto flex items-center justify-between h-12 px-5">
+            <div className="flex items-center gap-3">
+              <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white tracking-tight">
+                <Factory className="h-4 w-4 text-white" />
+                indus.io
+              </Link>
+              <span className="text-neutral-700">/</span>
+              <span className="text-sm text-neutral-400">Dashboard</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => fetchDashboardData()} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors cursor-pointer">
+                <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
+                Sync
+              </button>
+              <Link to="/pipeline-builder" className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
+                Pipeline
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => fetchDashboardData()} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors cursor-pointer">
-              <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
-              Sync
-            </button>
-            <Link to="/pipeline-builder" className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
-              Pipeline
-            </Link>
+        </header>
+
+        <main className="max-w-[1600px] mx-auto px-5 py-6">
+          {/* ── Stats Strip ────────────────────────────────── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800 rounded-lg overflow-hidden mb-6">
+            <StatCell label="Projects" value={projects.length} />
+            <StatCell label="Production Lines" value={lines.length} />
+            <StatCell label="Machines" value={machines.length} />
+            <StatCell label="Open Alerts" value={openAlerts} alert={openAlerts > 0} />
           </div>
-        </div>
-      </header>
 
-      <main className="max-w-[1600px] mx-auto px-5 py-6">
-        {/* ── Stats Strip ────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800 rounded-lg overflow-hidden mb-6">
-          <StatCell label="Projects" value={projects.length} />
-          <StatCell label="Production Lines" value={lines.length} />
-          <StatCell label="Machines" value={machines.length} />
-          <StatCell label="Open Alerts" value={openAlerts} alert={openAlerts > 0} />
-        </div>
-
-        {/* ── Charts & Pipeline Preview ────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-          <div className="lg:col-span-2">
-            <KpiCharts
-              kpis={kpis}
-              kpiValues={store.kpiValues}
-              machines={machines}
-              sensorData={store.sensorData}
-            />
+          {/* ── Charts & Pipeline Preview ────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+            <div className="lg:col-span-2">
+              <KpiCharts
+                kpis={kpis}
+                kpiValues={store.kpiValues}
+                machines={machines}
+                sensorData={store.sensorData}
+              />
+            </div>
+            <div>
+              <PipelinePreview machines={machines} connections={[]} />
+            </div>
           </div>
-          <div>
-            <PipelinePreview machines={machines} connections={[]} />
-          </div>
-        </div>
 
-        {/* ── Four Column Grid ───────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          {/* ── Four Column Grid ───────────────────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 
-          {/* Column 1: Projects */}
-          <Column title="Projects" count={projects.length} icon={<Layers className="h-3.5 w-3.5" />}>
-            {isLoading && projects.length === 0 ? (
-              <LoadingRows count={3} />
-            ) : projects.length === 0 ? (
-              <EmptyState text="No projects yet" />
-            ) : (
-              <div className="stagger-children space-y-2">
-                {visibleProjects.map(p => <ProjectCard key={p.id} project={p} lines={lines.filter(l => l.project_id === p.id)} onClick={() => openPanel("project", p.id)} />)}
-                {projects.length > 5 && (
-                  <button
-                    onClick={() => toggleExpand("projects")}
-                    className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
-                  >
-                    {expanded.projects ? "Show Less" : `Show More (${projects.length - 5} more)`}
-                  </button>
-                )}
-              </div>
-            )}
-          </Column>
-
-          {/* Column 2: Production & Machines */}
-          <Column title="Production" count={lines.length} icon={<Box className="h-3.5 w-3.5" />}>
-            {isLoading && lines.length === 0 ? (
-              <LoadingRows count={3} />
-            ) : lines.length === 0 ? (
-              <EmptyState text="No production lines" />
-            ) : (
-              <div className="stagger-children space-y-2">
-                {visibleLines.map(l => (
-                  <LineCard key={l.id} line={l} machineCount={machines.filter(m => m.production_line_id === l.id).length} onClick={() => openPanel("line", l.id)} />
-                ))}
-                {lines.length > 5 && (
-                  <button
-                    onClick={() => toggleExpand("production")}
-                    className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
-                  >
-                    {expanded.production ? "Show Less" : `Show More (${lines.length - 5} more)`}
-                  </button>
-                )}
-              </div>
-            )}
-          </Column>
-
-          {/* Column 3: Simulations & KPIs */}
-          <Column title="Simulations" count={simulations.length} icon={<Activity className="h-3.5 w-3.5" />} badge={runningSims > 0 ? `${runningSims} running` : undefined}>
-            {isLoading && simulations.length === 0 ? (
-              <LoadingRows count={3} />
-            ) : simulations.length === 0 ? (
-              <EmptyState text="No simulations" />
-            ) : (
-              <div className="stagger-children space-y-2">
-                {visibleSimulations.map(s => (
-                  <SimCard key={s.id} sim={s} onStart={() => startSimulation(s.id)} onStop={() => stopSimulation(s.id)} onComplete={() => completeSimulation(s.id)} onClick={() => openPanel("simulation", s.id)} />
-                ))}
-                {simulations.length > 5 && (
-                  <button
-                    onClick={() => toggleExpand("simulations")}
-                    className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
-                  >
-                    {expanded.simulations ? "Show Less" : `Show More (${simulations.length - 5} more)`}
-                  </button>
-                )}
-              </div>
-            )}
-          </Column>
-
-          {/* Column 4: Alerts & AI */}
-          <Column title="Intelligence" count={alerts.length + suggestions.length} icon={<Brain className="h-3.5 w-3.5" />} badge={openAlerts > 0 ? `${openAlerts} open` : undefined} badgeColor="text-red-400">
-            {alerts.length > 0 && (
-              <div className="space-y-1.5 mb-5">
-                <SectionLabel text="Alerts" />
+            {/* Column 1: Projects */}
+            <Column title="Projects" count={projects.length} icon={<Layers className="h-3.5 w-3.5" />}>
+              {isLoading && projects.length === 0 ? (
+                <LoadingRows count={3} />
+              ) : projects.length === 0 ? (
+                <EmptyState text="No projects yet" />
+              ) : (
                 <div className="stagger-children space-y-2">
-                  {visibleAlerts.map(a => (
-                    <AlertRow key={a.id} alert={a} onAck={() => acknowledgeAlert(a.id)} onResolve={() => resolveAlert(a.id)} onClick={() => openPanel("alert", a.id)} />
-                  ))}
-                  {alerts.length > 5 && (
+                  {visibleProjects.map(p => <ProjectCard key={p.id} project={p} lines={lines.filter(l => l.project_id === p.id)} onClick={() => openPanel("project", p.id)} />)}
+                  {projects.length > 5 && (
                     <button
-                      onClick={() => toggleExpand("alerts")}
+                      onClick={() => toggleExpand("projects")}
                       className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
                     >
-                      {expanded.alerts ? "Show Less" : `Show More Alerts (${alerts.length - 5} more)`}
+                      {expanded.projects ? "Show Less" : `Show More (${projects.length - 5} more)`}
                     </button>
                   )}
                 </div>
-              </div>
-            )}
-            {suggestions.length > 0 && (
-              <div className="space-y-1.5">
-                <SectionLabel text="AI Suggestions" />
+              )}
+            </Column>
+
+            {/* Column 2: Production & Machines */}
+            <Column title="Production" count={lines.length} icon={<Box className="h-3.5 w-3.5" />}>
+              {isLoading && lines.length === 0 ? (
+                <LoadingRows count={3} />
+              ) : lines.length === 0 ? (
+                <EmptyState text="No production lines" />
+              ) : (
                 <div className="stagger-children space-y-2">
-                  {visibleSuggestions.map(s => (
-                    <SuggestionRow key={s.id} suggestion={s} onApply={() => applySuggestion(s.id)} onClick={() => openPanel("suggestion", s.id)} />
+                  {visibleLines.map(l => (
+                    <LineCard key={l.id} line={l} machineCount={machines.filter(m => m.production_line_id === l.id).length} onClick={() => openPanel("line", l.id)} />
                   ))}
-                  {suggestions.length > 5 && (
+                  {lines.length > 5 && (
                     <button
-                      onClick={() => toggleExpand("suggestions")}
+                      onClick={() => toggleExpand("production")}
                       className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
                     >
-                      {expanded.suggestions ? "Show Less" : `Show More Suggestions (${suggestions.length - 5} more)`}
+                      {expanded.production ? "Show Less" : `Show More (${lines.length - 5} more)`}
                     </button>
                   )}
                 </div>
-              </div>
-            )}
-            {alerts.length === 0 && suggestions.length === 0 && (
-              isLoading ? <LoadingRows count={3} /> : <EmptyState text="All clear — no alerts" />
-            )}
-          </Column>
-        </div>
-      </main>
+              )}
+            </Column>
 
-      {/* ── Slide Over Panel ─────────────────────────────────── */}
-      <SlideOverPanel
-        isOpen={activePanel !== null}
-        onClose={closePanel}
-        onBack={goBack}
-        canGoBack={panelStack.length > 1}
-        title={
-          activePanel?.type === "project" ? "Project Details" :
-            activePanel?.type === "line" ? "Production Line Details" :
-              activePanel?.type === "machine" ? "Machine Details" :
-                activePanel?.type === "simulation" ? "Simulation Details" :
-                  activePanel?.type === "alert" ? "Alert Details" :
-                    activePanel?.type === "suggestion" ? "AI Suggestion" : ""
-        }
-        width="max-w-md"
-      >
-        {activePanel?.type === "project" && <ProjectPanel id={activePanel.id} openPanel={openPanel} />}
-        {activePanel?.type === "line" && <LinePanel id={activePanel.id} openPanel={openPanel} />}
-        {activePanel?.type === "machine" && <MachinePanel id={activePanel.id} openPanel={openPanel} />}
-        {activePanel?.type === "simulation" && <SimulationPanel id={activePanel.id} openPanel={openPanel} />}
-        {activePanel?.type === "alert" && <AlertPanel id={activePanel.id} openPanel={openPanel} />}
-        {activePanel?.type === "suggestion" && <SuggestionPanel id={activePanel.id} openPanel={openPanel} />}
-      </SlideOverPanel>
-    </div>
+            {/* Column 3: Simulations & KPIs */}
+            <Column title="Simulations" count={simulations.length} icon={<Activity className="h-3.5 w-3.5" />} badge={runningSims > 0 ? `${runningSims} running` : undefined}>
+              {isLoading && simulations.length === 0 ? (
+                <LoadingRows count={3} />
+              ) : simulations.length === 0 ? (
+                <EmptyState text="No simulations" />
+              ) : (
+                <div className="stagger-children space-y-2">
+                  {visibleSimulations.map(s => (
+                    <SimCard key={s.id} sim={s} onStart={() => startSimulation(s.id)} onStop={() => stopSimulation(s.id)} onComplete={() => completeSimulation(s.id)} onClick={() => openPanel("simulation", s.id)} />
+                  ))}
+                  {simulations.length > 5 && (
+                    <button
+                      onClick={() => toggleExpand("simulations")}
+                      className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                    >
+                      {expanded.simulations ? "Show Less" : `Show More (${simulations.length - 5} more)`}
+                    </button>
+                  )}
+                </div>
+              )}
+            </Column>
+
+            {/* Column 4: Alerts & AI */}
+            <Column title="Intelligence" count={alerts.length + suggestions.length} icon={<Brain className="h-3.5 w-3.5" />} badge={openAlerts > 0 ? `${openAlerts} open` : undefined} badgeColor="text-red-400">
+              {alerts.length > 0 && (
+                <div className="space-y-1.5 mb-5">
+                  <SectionLabel text="Alerts" />
+                  <div className="stagger-children space-y-2">
+                    {visibleAlerts.map(a => (
+                      <AlertRow key={a.id} alert={a} onAck={() => acknowledgeAlert(a.id)} onResolve={() => resolveAlert(a.id)} onClick={() => openPanel("alert", a.id)} />
+                    ))}
+                    {alerts.length > 5 && (
+                      <button
+                        onClick={() => toggleExpand("alerts")}
+                        className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                      >
+                        {expanded.alerts ? "Show Less" : `Show More Alerts (${alerts.length - 5} more)`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {suggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <SectionLabel text="AI Suggestions" />
+                  <div className="stagger-children space-y-2">
+                    {visibleSuggestions.map(s => (
+                      <SuggestionRow key={s.id} suggestion={s} onApply={() => applySuggestion(s.id)} onClick={() => openPanel("suggestion", s.id)} />
+                    ))}
+                    {suggestions.length > 5 && (
+                      <button
+                        onClick={() => toggleExpand("suggestions")}
+                        className="w-full py-2 text-[11px] font-semibold text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 bg-neutral-950/40 rounded-lg hover:bg-neutral-950/80 transition-all cursor-pointer"
+                      >
+                        {expanded.suggestions ? "Show Less" : `Show More Suggestions (${suggestions.length - 5} more)`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {alerts.length === 0 && suggestions.length === 0 && (
+                isLoading ? <LoadingRows count={3} /> : <EmptyState text="All clear — no alerts" />
+              )}
+            </Column>
+          </div>
+        </main>
+
+        {/* ── Slide Over Panel ─────────────────────────────────── */}
+        <SlideOverPanel
+          isOpen={activePanel !== null}
+          onClose={closePanel}
+          onBack={goBack}
+          canGoBack={panelStack.length > 1}
+          title={
+            activePanel?.type === "project" ? "Project Details" :
+              activePanel?.type === "line" ? "Production Line Details" :
+                activePanel?.type === "machine" ? "Machine Details" :
+                  activePanel?.type === "simulation" ? "Simulation Details" :
+                    activePanel?.type === "alert" ? "Alert Details" :
+                      activePanel?.type === "suggestion" ? "AI Suggestion" : ""
+          }
+          width="max-w-md"
+        >
+          {activePanel?.type === "project" && <ProjectPanel id={activePanel.id} openPanel={openPanel} />}
+          {activePanel?.type === "line" && <LinePanel id={activePanel.id} openPanel={openPanel} />}
+          {activePanel?.type === "machine" && <MachinePanel id={activePanel.id} openPanel={openPanel} />}
+          {activePanel?.type === "simulation" && <SimulationPanel id={activePanel.id} openPanel={openPanel} />}
+          {activePanel?.type === "alert" && <AlertPanel id={activePanel.id} openPanel={openPanel} />}
+          {activePanel?.type === "suggestion" && <SuggestionPanel id={activePanel.id} openPanel={openPanel} />}
+        </SlideOverPanel>
+      </div>
+    </Protect>
   );
 }
 

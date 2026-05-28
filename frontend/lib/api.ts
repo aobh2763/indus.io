@@ -15,6 +15,7 @@ import type {
   User,
   TokenResponse,
 } from "../types/dashboard";
+import { useAuthStore } from "~/features/auth/auth.store";
 
 // ── Axios Instance ──────────────────────────────────────
 const api = axios.create({
@@ -23,15 +24,18 @@ const api = axios.create({
 });
 
 // Add auth token to requests
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("indus_token");
+api.interceptors.request.use(
+  (request) => {
+    const token = useAuthStore.getState().token;
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      request.headers.Authorization = `Bearer ${token}`;
     }
-  }
-  return config;
-});
+
+    return request;
+  },
+  (error) => Promise.reject(error)
+);
 
 // ── Auth ────────────────────────────────────────────────
 export const authService = {
@@ -50,8 +54,11 @@ export const userService = {
 
 // ── Projects ────────────────────────────────────────────
 export const projectService = {
-  list: (skip = 0, limit = 100) =>
-    api.get<Project[]>("/projects/", { params: { skip, limit } }),
+  list: (skip = 0, limit = 100) => {
+    const res = api.get<Project[]>("/projects/", { params: { skip, limit } });
+    console.log('list.res: ', res);
+    return res;
+  },
   get: (id: string) => api.get<Project>(`/projects/${id}`),
   create: (data: { name: string; description?: string; visibility?: string }) =>
     api.post<Project>("/projects/", data),
