@@ -35,6 +35,8 @@ interface PipelineState {
   nodes: Node<MachineNodeData>[];
   selectedNodeId: string | null;
   isConfigPanelOpen: boolean;
+  isSimulationPanelOpen: boolean;
+  isMachineLibraryOpen: boolean;
   dragNDropPosition: XYPosition | null;
   dragNDropMachineName: string | null;
 
@@ -63,6 +65,8 @@ interface PipelineState {
   setDragNDropMachineName: (machineName: string | null) => void;
 
   setConfigPanelOpen: (open: boolean) => void;
+  setSimulationPanelOpen: (open: boolean) => void;
+  setMachineLibraryOpen: (open: boolean) => void;
   onConnect: OnConnect;
 }
 
@@ -94,6 +98,7 @@ function connectionToEdge(connection: ConnectionResponse): Edge {
     id: connection.id,
     source: connection.source_machine_id,
     target: connection.target_machine_id,
+    animated: true,
   };
 }
 
@@ -123,6 +128,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   edges: [],
   selectedNodeId: null,
   isConfigPanelOpen: false,
+  isSimulationPanelOpen: false,
+  isMachineLibraryOpen: false,
   dragNDropPosition: null,
   dragNDropMachineName: null,
 
@@ -231,6 +238,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         {
           ...connection,
           id: tempId,
+          animated: true,
         },
         get().edges
       ),
@@ -340,6 +348,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
       selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
       isConfigPanelOpen: get().selectedNodeId === nodeId ? false : get().isConfigPanelOpen,
+      isSimulationPanelOpen: false,
     });
 
     // Persist to backend — delete connections first, then machine
@@ -361,6 +370,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     set({
       selectedNodeId: nodeId,
       isConfigPanelOpen: nodeId !== null,
+      isSimulationPanelOpen: false,
     });
   },
 
@@ -384,7 +394,22 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   setConfigPanelOpen: (open) => {
     set({
       isConfigPanelOpen: open,
+      isSimulationPanelOpen: false,
       selectedNodeId: open ? get().selectedNodeId : null,
+    });
+  },
+
+  setSimulationPanelOpen: (open) => {
+    set({
+      isConfigPanelOpen: false,
+      isSimulationPanelOpen: open,
+      selectedNodeId: null,
+    });
+  },
+
+  setMachineLibraryOpen: (open) => {
+    set({
+      isMachineLibraryOpen: open,
     });
   },
 }));

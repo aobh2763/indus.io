@@ -13,6 +13,8 @@ import MachineNode from "~/features/machines/components/machines.node";
 import MachineList from "~/features/machines/components/machines.list";
 import ConfigPanel from "~/features/machines/components/machines.config";
 import { Loader2 } from "lucide-react";
+import { SimulationsControls } from "~/features/simulations/components/simulations.controls";
+import { SimulationsList } from "~/features/simulations/components/simulations.list";
 
 const PipelineBuilder = () => {
   const {
@@ -27,7 +29,6 @@ const PipelineBuilder = () => {
     isLoading,
   } = usePipelineStore();
 
-  // Load pipeline data from backend on mount
   useEffect(() => {
     loadPipeline(DEFAULT_LINE_ID);
   }, [loadPipeline]);
@@ -82,6 +83,11 @@ const PipelineBuilder = () => {
 
           <Panel position="center-right">
             <ConfigPanel />
+            <SimulationsList />
+          </Panel>
+
+          <Panel position="bottom-center">
+            <SimulationsControls />
           </Panel>
         </ReactFlow>
       </div>
