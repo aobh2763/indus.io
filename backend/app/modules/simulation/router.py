@@ -1,3 +1,4 @@
+from app.modules.production.models import Connection, Machine
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -14,6 +15,8 @@ from app.modules.simulation.engine import (
 from app.modules.simulation.schemas import (
     BatchSimulateRequest,
     BatchSimulateResponse,
+    ConnectionInput,
+    MachineInput,
     SimulationCreate,
     SimulationLogCreate,
     SimulationLogResponse,
@@ -67,6 +70,21 @@ def delete_simulation(simulation_id: str, db: Session = Depends(get_db), current
     if not sim:
         raise NotFoundError("Simulation")
 
+def map_machine_to_machine_input(machine: Machine) -> MachineInput:
+    return MachineInput(
+        id=machine.id,
+        name=machine.name,
+        process=machine.process,
+        subprocess=machine.subprocess,
+        parameters=machine.parameters or {},
+        input_attributes={attr.attribute_name: attr.value for attr in machine.attribute_values},
+    )
+
+def map_connection_to_connection_input(connection: Connection) -> ConnectionInput:
+    return ConnectionInput(
+        source_machine_id=connection.source_machine_id,
+        target_machine_id=connection.target_machine_id,
+    )
 
 # ── Engine actions ───────────────────────────────────────
 @router.post("/simulations/{simulation_id}/start", response_model=SimulationResponse, tags=["Simulation Engine"])
@@ -76,6 +94,27 @@ def start(simulation_id: str, db: Session = Depends(get_db), current_user: User 
         raise NotFoundError("Simulation")
     return start_simulation(db, sim)
 
+@router.post("/simulations/{simulation_id}/step", response_model=SimulationResponse, tags=["Simulation Engine"])
+def step(simulation_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sim = service.get_simulation_by_id(db, simulation_id)
+    if not sim:
+        raise NotFoundError("Simulation")
+    
+    if sim.status != "RUNNING":
+        raise HTTPException(status_code=400, detail="Simulation must be RUNNING to step.")
+    
+    request = BatchSimulateRequest(
+        production_line_id=sim.production_line_id,
+        machines=[map_machine_to_machine_input(m) for m in sim.production_line.machines],
+        connections=[map_connection_to_connection_input(c) for c in sim.production_line.connections],
+        steps=1,
+    )
+    
+    bach_result = run_batch(request)
+    
+    print("Batch result for step:", bach_result)
+    
+    return start_simulation(db, sim)
 
 @router.post("/simulations/{simulation_id}/stop", response_model=SimulationResponse, tags=["Simulation Engine"])
 def stop(simulation_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
