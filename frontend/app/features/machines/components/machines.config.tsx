@@ -200,7 +200,7 @@ const ConfigPanel: FC = () => {
   };
 
   return (
-    <div className="w-85 bg-card/80 backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
+    <div className="w-85 bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 shrink-0">
         <div className="flex items-center gap-3">

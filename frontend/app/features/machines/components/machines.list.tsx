@@ -138,7 +138,7 @@ const MachineList: FC = () => {
 
   return (
     <div className="relative">
-      <div className="bg-card/80 backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
+      <div className="bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-4 shrink-0">
           <h2 className="text-lg font-bold mb-3">

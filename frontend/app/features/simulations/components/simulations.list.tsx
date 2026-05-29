@@ -12,7 +12,7 @@ export function SimulationsList() {
   const { lineId, isSimulationPanelOpen } = usePipelineStore();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: simulations, isPending, isError } = useGetSimulations(lineId);
+  const { data: simulations, isPending, isError } = useGetSimulations(lineId || "");
 
   const filtered = useMemo(() => {
     if (!simulations) return [];
@@ -26,7 +26,7 @@ export function SimulationsList() {
   if (!isSimulationPanelOpen) return null;
 
   return (
-    <div className="w-85 bg-card/80 backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
+    <div className="w-85 bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
       <div className="p-4 shrink-0">
         <h2 className="text-lg font-bold mb-3">Simulation History</h2>
         <div className="relative">
