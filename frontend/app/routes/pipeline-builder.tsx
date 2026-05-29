@@ -1,4 +1,4 @@
-import { Navbar1 } from "~/components/navbar1";
+import Navbar from "~/components/navbar";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Protect } from "~/features/auth/components/protect";
 import PipelineBuilder from "~/features/pipeline/components/pipeline.canvas";
@@ -6,7 +6,7 @@ import PipelineBuilder from "~/features/pipeline/components/pipeline.canvas";
 export default function PipelineBuilderPage() {
   return (
     <Protect>
-      <Navbar1 />
+      <Navbar />
       <ReactFlowProvider>
         <PipelineBuilder />
       </ReactFlowProvider>

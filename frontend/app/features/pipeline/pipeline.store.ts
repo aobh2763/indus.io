@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { machinesApi } from "~/features/machines/machines.api";
 import { connectionsApi } from "~/features/connections/connections.api";
 import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "./pipeline.schema";
-import { DEFAULT_LINE_ID, getColorForProcess, getIconForProcess } from "./pipeline.schema";
+import { getColorForProcess, getIconForProcess } from "./pipeline.schema";
 import type { CreateMachineRequest } from "~/features/machines/machines.schema";
 import type { MachineResponse } from "~/features/machines/machines.schema";
 import type { ConnectionResponse } from "~/features/connections/connections.schema";
@@ -40,7 +40,7 @@ interface PipelineState {
   dragNDropPosition: XYPosition | null;
   dragNDropMachineName: string | null;
 
-  lineId: string;
+  lineId: string | null;
   isLoading: boolean;
 
   setLineId: (lineId: string) => void;
@@ -133,7 +133,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   dragNDropPosition: null,
   dragNDropMachineName: null,
 
-  lineId: DEFAULT_LINE_ID,
+  lineId: null,
   isLoading: false,
 
   setLineId: (lineId) => set({ lineId }),
@@ -230,17 +230,32 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
   onConnect: (connection) => {
     const { lineId } = get();
+    if (!lineId) return;
+
     const tempId = `e-${connection.source}-${connection.target}-${Date.now()}`;
 
-    // Optimistic: add edge locally with temp ID
+    // ── Enforce 1-in / 1-out constraint ──────────────────────────────
+    // Find edges that would violate the rule after this new connection.
+    const displaced = get().edges.filter(
+      (e) =>
+        e.source === connection.source ||   // source already has an outgoing edge
+        e.target === connection.target       // target already has an incoming edge
+    );
+
+    // Delete displaced edges from the backend before we overwrite local state.
+    for (const edge of displaced) {
+      connectionsApi.delete(edge.id).catch((err) => {
+        console.error("Failed to delete displaced connection:", err);
+      });
+    }
+    // ─────────────────────────────────────────────────────────────────
+
+    // Optimistic: remove displaced edges and add the new one.
+    const displacedIds = new Set(displaced.map((e) => e.id));
     set({
       edges: addEdge(
-        {
-          ...connection,
-          id: tempId,
-          animated: true,
-        },
-        get().edges
+        { ...connection, id: tempId, animated: true },
+        get().edges.filter((e) => !displacedIds.has(e.id))
       ),
     });
 
@@ -271,6 +286,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
   addNode: (machineConfig, position) => {
     const { lineId } = get();
+    if (!lineId) return;
+
     const tempId = `machine-${Date.now()}`;
 
     const newNode: MachineNode = {

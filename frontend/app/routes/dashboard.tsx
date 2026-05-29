@@ -13,6 +13,7 @@ import type { Project, ProductionLine, Alert, Suggestion, Simulation, Machine, K
 import { timeAgo } from "../../lib/utils";
 // ✅ Import your Protect wrapper
 import { Protect } from "~/features/auth/components/protect";
+import Navbar from "~/components/navbar";
 
 // ── Tiny helpers ────────────────────────────────────────
 
@@ -82,27 +83,7 @@ export default function Dashboard() {
     <Protect>
       <div className="min-h-screen bg-black text-neutral-200 font-sans">
         {/* ── Top Bar ──────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 border-b border-neutral-800 bg-black/80 backdrop-blur-md">
-          <div className="max-w-[1600px] mx-auto flex items-center justify-between h-12 px-5">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white tracking-tight">
-                <Factory className="h-4 w-4 text-white" />
-                indus.io
-              </Link>
-              <span className="text-neutral-700">/</span>
-              <span className="text-sm text-neutral-400">Dashboard</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => fetchDashboardData()} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors cursor-pointer">
-                <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
-                Sync
-              </button>
-              <Link to="/pipeline-builder" className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
-                Pipeline
-              </Link>
-            </div>
-          </div>
-        </header>
+        <Navbar />
 
         <main className="max-w-[1600px] mx-auto px-5 py-6">
           {/* ── Stats Strip ────────────────────────────────── */}

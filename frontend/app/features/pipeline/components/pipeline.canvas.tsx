@@ -5,33 +5,35 @@ import {
   type OnSelectionChangeFunc,
 } from "@xyflow/react";
 
+import { Loader2 } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { usePipelineStore } from "../pipeline.store";
-import { DEFAULT_LINE_ID } from "../pipeline.schema";
 import MachineNode from "~/features/machines/components/machines.node";
 import MachineList from "~/features/machines/components/machines.list";
 import ConfigPanel from "~/features/machines/components/machines.config";
-import { Loader2 } from "lucide-react";
-import { SimulationsControls } from "~/features/simulations/components/simulations.controls";
 import { SimulationsList } from "~/features/simulations/components/simulations.list";
+import { SimulationsControls } from "~/features/simulations/components/simulations.controls";
 
 const PipelineBuilder = () => {
   const {
     nodes,
     edges,
+    lineId,
+    isLoading,
     onConnect,
     onNodesChange,
     onEdgesChange,
     setSelectedNode,
     setDragNDropPosition,
     loadPipeline,
-    isLoading,
   } = usePipelineStore();
 
   useEffect(() => {
-    loadPipeline(DEFAULT_LINE_ID);
-  }, [loadPipeline]);
+    if (lineId) {
+      loadPipeline(lineId);
+    }
+  }, [lineId, loadPipeline]);
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(({ nodes: selectedNodes }) => {
     if (selectedNodes.length === 1) {
