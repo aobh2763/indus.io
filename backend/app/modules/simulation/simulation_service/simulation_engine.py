@@ -61,22 +61,6 @@ if str(_SIM_PKG_DIR) not in sys.path:
 # Import simulation modules with resilient fallbacks. Prefer relative imports
 # when the module is used as a package (`app.modules.simulation.simulation_service`),
 # then try the repository-level `simulation.*` package, then bare names.
-try:
-    from .printing.screen_printing import simulate_screen_printing
-    from .printing.rotary_printing import simulate_rotary_printing
-    from .knitting.warp_knitting import simulate_warp_knitting
-    from .weaving.dobby import simulate_dobby_weaving
-except Exception:
-    try:
-        from simulation.printing.screen_printing import simulate_screen_printing
-        from simulation.printing.rotary_printing import simulate_rotary_printing
-        from simulation.knitting.warp_knitting import simulate_warp_knitting
-        from simulation.weaving.dobby import simulate_dobby_weaving
-    except Exception:
-        from printing.screen_printing import simulate_screen_printing
-        from printing.rotary_printing import simulate_rotary_printing
-        from knitting.warp_knitting import simulate_warp_knitting
-        from weaving.dobby import simulate_dobby_weaving
 
 import dataclasses
 import uuid
@@ -196,6 +180,98 @@ except Exception:
             ReactiveDyeingParams,
             DyedFabricOutput as ReactiveDyedFabricOutput,
             simulate_reactive_dyeing,
+        )
+
+try:
+    from .weaving.dobby import (
+        InputYarn as DobbyInputYarn,
+        DobbyOperationalParams,
+        FabricQualityOutput as DobbyFabricQualityOutput,
+        simulate_dobby_weaving,
+    )
+except Exception:
+    try:
+        from simulation.weaving.dobby import (
+            InputYarn as DobbyInputYarn,
+            DobbyOperationalParams,
+            FabricQualityOutput as DobbyFabricQualityOutput,
+            simulate_dobby_weaving,
+        )
+    except Exception:
+        from weaving.dobby import (
+            InputYarn as DobbyInputYarn,
+            DobbyOperationalParams,
+            FabricQualityOutput as DobbyFabricQualityOutput,
+            simulate_dobby_weaving,
+        )
+
+try:
+    from .knitting.warp_knitting import (
+        InputWovenFabric as WarpKnittingInputFabric,
+        WarpKnittingOperationalParams,
+        WarpKnittedFabricOutput,
+        simulate_warp_knitting,
+    )
+except Exception:
+    try:
+        from simulation.knitting.warp_knitting import (
+            InputWovenFabric as WarpKnittingInputFabric,
+            WarpKnittingOperationalParams,
+            WarpKnittedFabricOutput,
+            simulate_warp_knitting,
+        )
+    except Exception:
+        from knitting.warp_knitting import (
+            InputWovenFabric as WarpKnittingInputFabric,
+            WarpKnittingOperationalParams,
+            WarpKnittedFabricOutput,
+            simulate_warp_knitting,
+        )
+
+try:
+    from .printing.rotary_printing import (
+        InputDyedFabric as RotaryInputDyedFabric,
+        RotaryPrintingOperationalParams,
+        RotaryPrintedFabricOutput,
+        simulate_rotary_printing,
+    )
+except Exception:
+    try:
+        from simulation.printing.rotary_printing import (
+            InputDyedFabric as RotaryInputDyedFabric,
+            RotaryPrintingOperationalParams,
+            RotaryPrintedFabricOutput,
+            simulate_rotary_printing,
+        )
+    except Exception:
+        from printing.rotary_printing import (
+            InputDyedFabric as RotaryInputDyedFabric,
+            RotaryPrintingOperationalParams,
+            RotaryPrintedFabricOutput,
+            simulate_rotary_printing,
+        )
+
+try:
+    from .printing.screen_printing import (
+        InputDyedFabric as ScreenPrintingInputDyedFabric,
+        ScreenPrintingOperationalParams,
+        PrintedFabricOutput as ScreenPrintedFabricOutput,
+        simulate_screen_printing,
+    )
+except Exception:
+    try:
+        from simulation.printing.screen_printing import (
+            InputDyedFabric as ScreenPrintingInputDyedFabric,
+            ScreenPrintingOperationalParams,
+            PrintedFabricOutput as ScreenPrintedFabricOutput,
+            simulate_screen_printing,
+        )
+    except Exception:
+        from printing.screen_printing import (
+            InputDyedFabric as ScreenPrintingInputDyedFabric,
+            ScreenPrintingOperationalParams,
+            PrintedFabricOutput as ScreenPrintedFabricOutput,
+            simulate_screen_printing,
         )
 
 
@@ -331,6 +407,7 @@ _REGISTRY: dict[tuple[str, str], Callable] = {
     ("dyeing",   "reactive dyeing"):      simulate_reactive_dyeing,
     # ("dyeing",   "vat dyeing"):           simulate_vat_dyeing,
     ("printing", "rotary printing"):      simulate_rotary_printing,
+    ("printing", "rotary screen printing"): simulate_rotary_printing,
     ("printing", "screen printing"):      simulate_screen_printing
 }
 
@@ -427,7 +504,7 @@ def _spinning_output_to_weaving_input(
         warp_yarn_hairiness_H=override_dict.get(
             "warp_yarn_hairiness_H", yarn_output.hairiness_H),
         warp_yarn_twist_t_per_m=override_dict.get(
-            "warp_yarn_twist_t_per_m", yarn_output.actual_twist_turns_per_m),
+            "warp_yarn_twist_t_per_m", getattr(yarn_output, "actual_twist_turns_per_m", getattr(yarn_output, "wrapping_twist_am", 500.0))),
         warp_yarn_type=override_dict.get("warp_yarn_type", fiber_type),
         # Weft defaults to same yarn unless overridden
         weft_yarn_count_tex=override_dict.get("weft_yarn_count_tex", tex),
@@ -439,41 +516,299 @@ def _spinning_output_to_weaving_input(
         weft_yarn_hairiness_H=override_dict.get(
             "weft_yarn_hairiness_H", yarn_output.hairiness_H),
         weft_yarn_twist_t_per_m=override_dict.get(
-            "weft_yarn_twist_t_per_m", yarn_output.actual_twist_turns_per_m),
+            "weft_yarn_twist_t_per_m", getattr(yarn_output, "actual_twist_turns_per_m", getattr(yarn_output, "wrapping_twist_am", 500.0))),
         weft_yarn_type=override_dict.get("weft_yarn_type", fiber_type),
     )
 
 
 def _weaving_output_to_knitting_input(
-    fabric_output: FabricQualityOutput,
+    fabric_output: Any,
     override_dict: dict,
 ) -> KnittingInputFabric:
     """
-    Bridge: Weaving Layer 4 (FabricQualityOutput) → Knitting Layer 2 (InputFabric).
-
-    Every field in InputFabric maps 1-to-1 onto FabricQualityOutput.
-    The override_dict allows the Production Manager to overwrite individual
-    values via the DB INPUT AttributeValue rows without re-running weaving.
+    Bridge: Weaving Layer 4 (FabricQualityOutput / DobbyFabricQualityOutput) → Knitting Layer 2 (InputFabric).
     """
     d = asdict(fabric_output)
     d.update(override_dict)           # DB overrides win
-    return KnittingInputFabric(**{
-        k: d[k] for k in KnittingInputFabric.__dataclass_fields__
-    })
+
+    fallbacks = {
+        "yarn_diameter_warp_mm": 0.2,
+        "yarn_diameter_weft_mm": 0.2,
+        "warp_cover_factor": 0.6,
+        "weft_cover_factor": 0.5,
+        "total_cover_factor": d.get("cloth_cover_factor", 0.8),
+        "warp_crimp_pct": d.get("warp_crimp_pct", 8.0),
+        "weft_crimp_pct": d.get("weft_crimp_pct", 7.0),
+        "crimp_balance": "balanced",
+        "fell_displacement_mm": 1.5,
+        "beat_up_force_cN_per_cm": 150.0,
+        "fabric_areal_weight_g_m2": d.get("fabric_weight_g_per_m2", 150.0),
+        "weft_tension_at_fell_cN": 20.0,
+        "warp_break_risk": d.get("warp_end_break_risk", "low"),
+        "weft_break_risk": d.get("weft_break_risk", "low"),
+        "cloth_defect_risk": "low",
+        "production_rate_m_per_min": d.get("actual_production_m_per_hour", 30.0) / 60.0,
+        "production_rate_m2_per_hour": (d.get("actual_production_m_per_hour", 30.0) * d.get("fabric_width_cm", 160.0) / 100.0),
+    }
+
+    kwargs = {}
+    for name in KnittingInputFabric.__dataclass_fields__:
+        if name in d:
+            kwargs[name] = d[name]
+        elif name in fallbacks:
+            kwargs[name] = fallbacks[name]
+        else:
+            kwargs[name] = 0.0
+
+    return KnittingInputFabric(**kwargs)
 
 
 def _weaving_output_to_reactive_input(
-    fabric_output: FabricQualityOutput,
+    fabric_output: Any,
     override_dict: dict,
 ) -> ReactiveDyeingInputFabric:
     """
-    Bridge: Weaving Layer 4 (FabricQualityOutput) → Reactive Dyeing Layer 2.
+    Bridge: Weaving Layer 4 (FabricQualityOutput / DobbyFabricQualityOutput) → Reactive Dyeing Layer 2.
     """
     d = asdict(fabric_output)
     d.update(override_dict)
-    return ReactiveDyeingInputFabric(**{
-        k: d[k] for k in ReactiveDyeingInputFabric.__dataclass_fields__
-    })
+
+    fallbacks = {
+        "yarn_diameter_warp_mm": 0.2,
+        "yarn_diameter_weft_mm": 0.2,
+        "warp_cover_factor": 0.6,
+        "weft_cover_factor": 0.5,
+        "total_cover_factor": d.get("cloth_cover_factor", 0.8),
+        "warp_crimp_pct": d.get("warp_crimp_pct", 8.0),
+        "weft_crimp_pct": d.get("weft_crimp_pct", 7.0),
+        "crimp_balance": "balanced",
+        "fell_displacement_mm": 1.5,
+        "beat_up_force_cN_per_cm": 150.0,
+        "fabric_areal_weight_g_m2": d.get("fabric_weight_g_per_m2", 150.0),
+        "weft_tension_at_fell_cN": 20.0,
+        "warp_break_risk": d.get("warp_end_break_risk", "low"),
+        "weft_break_risk": d.get("weft_break_risk", "low"),
+        "cloth_defect_risk": "low",
+        "production_rate_m_per_min": d.get("actual_production_m_per_hour", 30.0) / 60.0,
+        "production_rate_m2_per_hour": (d.get("actual_production_m_per_hour", 30.0) * d.get("fabric_width_cm", 160.0) / 100.0),
+    }
+
+    kwargs = {}
+    for name in ReactiveDyeingInputFabric.__dataclass_fields__:
+        if name in d:
+            kwargs[name] = d[name]
+        elif name in fallbacks:
+            kwargs[name] = fallbacks[name]
+        else:
+            kwargs[name] = 0.0
+
+    return ReactiveDyeingInputFabric(**kwargs)
+
+
+def _spinning_output_to_dobby_input(
+    yarn_output: YarnQualityOutput,
+    spinning_params: Any,
+    override_dict: dict,
+) -> DobbyInputYarn:
+    """
+    Bridge: Spinning Layer 4 (YarnQualityOutput) → Dobby Weaving Layer 2 (DobbyInputYarn).
+    """
+    tex = float(getattr(spinning_params, "yarn_count_tex", 20.0))
+    Ne  = float(getattr(spinning_params, "yarn_count_Ne", 30.0))
+    twist_factor = float(getattr(spinning_params, "twist_factor_am", 130.0))
+    
+    # Calculate English twist multiplier from metric twist factor
+    twist_mult_fallback = round(twist_factor / 32.57, 2)
+    
+    fiber_type = override_dict.get("fiber_type", "cotton")
+
+    return DobbyInputYarn(
+        yarn_count_tex=override_dict.get("yarn_count_tex", tex),
+        yarn_count_Ne=override_dict.get("yarn_count_Ne", Ne),
+        fiber_type=override_dict.get("fiber_type", fiber_type),
+        twist_multiplier=override_dict.get("twist_multiplier", twist_mult_fallback),
+        yarn_tenacity_cN_tex=override_dict.get("yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex),
+        yarn_evenness_CVm_pct=override_dict.get("yarn_evenness_CVm_pct", yarn_output.yarn_evenness_CVm_pct),
+        hairiness_H=override_dict.get("hairiness_H", yarn_output.hairiness_H),
+        neps_per_km=override_dict.get("neps_per_km", getattr(yarn_output, "neps_per_km", 50.0)),
+        warp_sizing_applied=override_dict.get("warp_sizing_applied", True),
+        size_add_on_pct=override_dict.get("size_add_on_pct", 10.0),
+        moisture_regain_pct=override_dict.get("moisture_regain_pct", 8.0),
+    )
+
+
+def _weaving_output_to_warp_knitting_input(
+    fabric_output: Any,
+    override_dict: dict,
+) -> WarpKnittingInputFabric:
+    """
+    Bridge: Weaving Layer 4 (FabricQualityOutput / DobbyFabricQualityOutput) → Warp Knitting Layer 2.
+    """
+    d = asdict(fabric_output)
+    d.update(override_dict)
+
+    fallbacks = {
+        "fabric_width_cm": d.get("fabric_width_cm", 160.0),
+        "fabric_weight_g_per_m2": d.get("fabric_weight_g_per_m2", d.get("fabric_areal_weight_g_m2", 150.0)),
+        "cloth_cover_factor": d.get("cloth_cover_factor", d.get("total_cover_factor", 0.8)),
+        "weft_crimp_pct": d.get("weft_crimp_pct", 8.0),
+        "warp_crimp_pct": d.get("warp_crimp_pct", 8.0),
+        "warp_yarn_quality_risk": d.get("warp_end_break_risk", d.get("warp_break_risk", "low")),
+        "weft_yarn_quality_risk": d.get("weft_break_risk", "low"),
+        "substrate_nep_visibility": d.get("expected_nep_visibility", "negligible"),
+        "substrate_regularity": d.get("pick_spacing_regularity", "excellent"),
+        "substrate_selvedge_quality": d.get("selvedge_quality", "clean"),
+        "upstream_process_efficiency_pct": d.get("loom_efficiency_pct", 85.0),
+        "upstream_feed_rate_m_per_hour": d.get("actual_production_m_per_hour", 15.0),
+        "yarn_count_dtex": 150.0,
+        "fiber_type": "polyester",
+        "yarn_tenacity_cN_tex": 35.0,
+        "yarn_evenness_CVm_pct": 1.5,
+        "yarn_hairiness_H": 1.0,
+    }
+
+    kwargs = {}
+    for name in WarpKnittingInputFabric.__dataclass_fields__:
+        if name in d:
+            kwargs[name] = d[name]
+        elif name in fallbacks:
+            kwargs[name] = fallbacks[name]
+        else:
+            kwargs[name] = 0.0
+
+    return WarpKnittingInputFabric(**kwargs)
+
+
+def _knitting_output_to_reactive_input(
+    knitting_output: Any,
+    override_dict: dict,
+) -> ReactiveDyeingInputFabric:
+    """
+    Bridge: Knitting Layer 4 (KnittedFabricOutput / WarpKnittedFabricOutput) → Reactive Dyeing Layer 2.
+    """
+    d = asdict(knitting_output)
+    d.update(override_dict)
+
+    weight = d.get("fabric_areal_weight_g_m2", d.get("fabric_weight_g_per_m2", 150.0))
+    prod_rate_m_h = d.get("production_rate_m_per_hour", d.get("actual_production_m_per_hour", 15.0))
+    width = d.get("fabric_width_finished_cm", 160.0)
+
+    fallbacks = {
+        "yarn_diameter_warp_mm": 0.2,
+        "yarn_diameter_weft_mm": 0.2,
+        "warp_cover_factor": 0.5,
+        "weft_cover_factor": 0.5,
+        "total_cover_factor": 0.7,
+        "warp_crimp_pct": 0.0,
+        "weft_crimp_pct": 0.0,
+        "crimp_balance": "balanced",
+        "fell_displacement_mm": 0.0,
+        "beat_up_force_cN_per_cm": 0.0,
+        "fabric_areal_weight_g_m2": weight,
+        "weft_tension_at_fell_cN": 0.0,
+        "warp_break_risk": "low",
+        "weft_break_risk": "low",
+        "cloth_defect_risk": d.get("barre_risk", "low"),
+        "production_rate_m_per_min": prod_rate_m_h / 60.0,
+        "production_rate_m2_per_hour": prod_rate_m_h * width / 100.0,
+    }
+
+    kwargs = {}
+    for name in ReactiveDyeingInputFabric.__dataclass_fields__:
+        if name in d:
+            kwargs[name] = d[name]
+        elif name in fallbacks:
+            kwargs[name] = fallbacks[name]
+        else:
+            kwargs[name] = 0.0
+
+    return ReactiveDyeingInputFabric(**kwargs)
+
+
+def _dyeing_output_to_rotary_printing_input(
+    dyeing_output: Any,
+    override_dict: dict,
+) -> RotaryInputDyedFabric:
+    """
+    Bridge: Reactive Dyeing Layer 4 (DyedFabricOutput) → Rotary Screen Printing Layer 2.
+    """
+    d = asdict(dyeing_output)
+    d.update(override_dict)
+
+    fallbacks = {
+        "fiber_type": "cotton",
+        "fabric_weight_g_per_m2": 150.0,
+        "fabric_cover_factor": 0.8,
+        "fabric_width_cm": 160.0,
+        "fabric_surface_texture": "smooth",
+        "substrate_pH": d.get("dye_bath_pH", 7.0),
+        "dye_exhaustion_pct": d.get("exhaustion_pct", 80.0),
+        "dye_fixation_pct": d.get("fixation_pct", 70.0),
+        "unfixed_hydrolysed_dye_pct": d.get("hydrolysis_pct", 30.0),
+        "residual_unfixed_dye_pct": d.get("unfixed_dye_on_fabric_pct", 10.0),
+        "ground_colour_yield": d.get("colour_yield_relative", 0.9),
+        "ground_wash_fastness": d.get("wash_fastness_rating", 4.0),
+        "ground_light_fastness": d.get("light_fastness_rating", 6.0),
+        "ground_levelness_risk": d.get("levelness_risk", "low"),
+        "ground_dye_penetration": d.get("dye_penetration_quality", "full"),
+        "upstream_water_L_per_kg": d.get("water_consumption_L_per_kg", 30.0),
+        "upstream_salt_g_per_kg": d.get("salt_load_g_per_kg", 50.0),
+        "substrate_damage_risk": "low",
+    }
+
+    kwargs = {}
+    for name in RotaryInputDyedFabric.__dataclass_fields__:
+        if name in d:
+            kwargs[name] = d[name]
+        elif name in fallbacks:
+            kwargs[name] = fallbacks[name]
+        else:
+            kwargs[name] = 0.0
+
+    return RotaryInputDyedFabric(**kwargs)
+
+
+def _dyeing_output_to_screen_printing_input(
+    dyeing_output: Any,
+    override_dict: dict,
+) -> ScreenPrintingInputDyedFabric:
+    """
+    Bridge: Reactive Dyeing Layer 4 (DyedFabricOutput) → Screen Printing Layer 2.
+    """
+    d = asdict(dyeing_output)
+    d.update(override_dict)
+
+    fallbacks = {
+        "fiber_type": "cotton",
+        "fabric_weight_g_per_m2": 150.0,
+        "fabric_cover_factor": 0.8,
+        "fabric_width_cm": 160.0,
+        "fabric_surface_texture": "smooth",
+        "substrate_pH": d.get("dye_bath_pH", 7.0),
+        "dye_exhaustion_pct": d.get("exhaustion_pct", 80.0),
+        "dye_fixation_pct": d.get("fixation_pct", 70.0),
+        "unfixed_hydrolysed_dye_pct": d.get("hydrolysis_pct", 30.0),
+        "residual_unfixed_dye_pct": d.get("unfixed_dye_on_fabric_pct", 10.0),
+        "ground_colour_yield": d.get("colour_yield_relative", 0.9),
+        "ground_wash_fastness": d.get("wash_fastness_rating", 4.0),
+        "ground_light_fastness": d.get("light_fastness_rating", 6.0),
+        "ground_levelness_risk": d.get("levelness_risk", "low"),
+        "ground_dye_penetration": d.get("dye_penetration_quality", "full"),
+        "upstream_water_L_per_kg": d.get("water_consumption_L_per_kg", 30.0),
+        "upstream_salt_g_per_kg": d.get("salt_load_g_per_kg", 50.0),
+        "substrate_damage_risk": "low",
+    }
+
+    kwargs = {}
+    for name in ScreenPrintingInputDyedFabric.__dataclass_fields__:
+        if name in d:
+            kwargs[name] = d[name]
+        elif name in fallbacks:
+            kwargs[name] = fallbacks[name]
+        else:
+            kwargs[name] = 0.0
+
+    return ScreenPrintingInputDyedFabric(**kwargs)
 
 
 # def _weaving_output_to_vat_input(
@@ -538,10 +873,18 @@ def _build_layer3(process: str, subprocess: str, params_dict: dict) -> Any:
         return _safe(AirjetOperationalParams, params_dict)
     if p == "weaving" and "plain" in s:
         return _safe(PlainWeavingParams, params_dict)
+    if p == "weaving" and "dobby" in s:
+        return _safe(DobbyOperationalParams, params_dict)
     if p == "knitting" and "weft" in s:
         return _safe(WeftKnittingParams, params_dict)
+    if p == "knitting" and "warp" in s:
+        return _safe(WarpKnittingOperationalParams, params_dict)
     if p in ("colouring", "dyeing") and "reactive" in s:
         return _safe(ReactiveDyeingParams, params_dict)
+    if p == "printing" and "rotary" in s:
+        return _safe(RotaryPrintingOperationalParams, params_dict)
+    if p == "printing" and "screen" in s and "rotary" not in s:
+        return _safe(ScreenPrintingOperationalParams, params_dict)
     # if p in ("colouring", "dyeing") and "vat" in s:
     #     return _safe(VatDyeingParams, params_dict)
 
@@ -648,21 +991,36 @@ def _bridge(
                 f"Upstream spinning node '{upstream_machine['name']}' has not "
                 "been simulated yet. Check topological order."
             )
-        return _spinning_output_to_weaving_input(
-            upstream_output, spinning_params, downstream_override
-        )
+        if "dobby" in dn_sub:
+            return _spinning_output_to_dobby_input(
+                upstream_output, spinning_params, downstream_override
+            )
+        else:
+            return _spinning_output_to_weaving_input(
+                upstream_output, spinning_params, downstream_override
+            )
 
     # ── Weaving → Knitting ───────────────────────────────────────────────────
     if "weaving" in up_proc and "knitting" in dn_proc:
-        return _weaving_output_to_knitting_input(upstream_output, downstream_override)
+        if "warp" in dn_sub:
+            return _weaving_output_to_warp_knitting_input(upstream_output, downstream_override)
+        else:
+            return _weaving_output_to_knitting_input(upstream_output, downstream_override)
 
     # ── Weaving → Reactive Dyeing ────────────────────────────────────────────
     if "weaving" in up_proc and "reactive" in dn_sub:
         return _weaving_output_to_reactive_input(upstream_output, downstream_override)
 
-    # ── Weaving → Vat Dyeing ─────────────────────────────────────────────────
-    # if "weaving" in up_proc and "vat" in dn_sub:
-    #     return _weaving_output_to_vat_input(upstream_output, downstream_override)
+    # ── Knitting → Reactive Dyeing ───────────────────────────────────────────
+    if "knitting" in up_proc and "reactive" in dn_sub:
+        return _knitting_output_to_reactive_input(upstream_output, downstream_override)
+
+    # ── Dyeing → Printing ────────────────────────────────────────────────────
+    if ("colouring" in up_proc or "dyeing" in up_proc) and "printing" in dn_proc:
+        if "rotary" in dn_sub:
+            return _dyeing_output_to_rotary_printing_input(upstream_output, downstream_override)
+        else:
+            return _dyeing_output_to_screen_printing_input(upstream_output, downstream_override)
 
     raise NotImplementedError(
         f"No bridge implemented for connection "
@@ -1039,6 +1397,15 @@ class SimulationEngine:
                 warp_output  = up_result.layer4_output
                 warp_machine = up_machine
 
+        if "dobby" in subprocess.lower():
+            if warp_output is None:
+                raise ValueError("Dobby Weaving node has multiple upstream nodes but could not find a warp source.")
+            return _spinning_output_to_dobby_input(
+                warp_output,
+                warp_machine["_layer3_instance"],
+                override_dict
+            )
+
         if warp_output is None or weft_output is None:
             raise ValueError(
                 "Weaving node has multiple upstream nodes but could not "
@@ -1085,15 +1452,15 @@ class SimulationEngine:
 if __name__ == "__main__":
     import pprint
 
-    # ── Build a 3-node chain: Rotor Spinning → Plain Weaving → Reactive Dyeing
+    # ── BUILD A 10-NODE COMPLEX PRODUCTION LINE CONTAINING ONE OF EACH MACHINE TYPE
 
-    m_spinning = {
+    # 1. Spinning Nodes
+    m_rotor_spinning = {
         "id": uuid.UUID("00000000-0000-0000-0000-000000000001"),
         "name": "Rotor Spinner R-01",
         "process": "Spinning",
         "subprocess": "Rotor Spinning",
         "parameters": {
-            # Layer 3 — RotorOperationalParams fields
             "rotor_diameter_mm": 33.0,
             "rotor_speed_rpm": 100_000,
             "twist_factor_am": 130.0,
@@ -1112,7 +1479,6 @@ if __name__ == "__main__":
             "operating_hours_since_maintenance": 600.0,
         },
         "input_attributes": {
-            # Layer 2 — RotorInputMaterial fields (raw material properties)
             "fiber_type": "cotton_carded",
             "fiber_length_mm": 27.0,
             "fiber_fineness_dtex": 1.7,
@@ -1121,16 +1487,55 @@ if __name__ == "__main__":
             "sliver_count_ktex": 4.5,
             "moisture_content_pct": 7.0,
             "trash_content_pct": 1.2,
+            "role": "weft",  # feed as weft to weaving
         },
     }
 
-    m_weaving = {
+    m_airjet_spinning = {
         "id": uuid.UUID("00000000-0000-0000-0000-000000000002"),
+        "name": "Airjet Spinner A-01",
+        "process": "Spinning",
+        "subprocess": "Airjet Spinning",
+        "parameters": {
+            "total_draft_ratio": 150.0,
+            "pre_draft_ratio": 1.8,
+            "break_draft_ratio": 1.5,
+            "main_draft_ratio": 45.0,
+            "draft_zone_distance_A_mm": 44.5,
+            "draft_zone_distance_B_mm": 49.0,
+            "air_pressure_bar": 5.0,
+            "distance_L_mm": 30.0,
+            "delivery_speed_m_min": 350.0,
+            "spinning_draft": 0.97,
+            "package_diameter_mm": 250.0,
+            "yarn_count_Ne": 30.0,
+            "yarn_count_tex": 19.7,
+            "ambient_temperature_C": 22.0,
+            "ambient_humidity_pct": 60.0,
+            "last_maintenance_date": "2025-10-01",
+            "maintenance_interval_hours": 2000.0,
+            "operating_hours_since_maintenance": 800.0,
+        },
+        "input_attributes": {
+            "fiber_type": "cotton_combed",
+            "fiber_length_mm": 33.0,
+            "fiber_fineness_dtex": 1.5,
+            "short_fiber_content_pct": 8.0,
+            "fiber_tensile_strength_cN_tex": 35.0,
+            "sliver_count_ktex": 3.0,
+            "moisture_content_pct": 6.5,
+            "trash_content_pct": 0.5,
+            "role": "warp",  # feed as warp to weaving
+        },
+    }
+
+    # 2. Weaving Nodes
+    m_plain_weaving = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000003"),
         "name": "Plain Loom W-01",
         "process": "Weaving",
         "subprocess": "Plain Weaving",
         "parameters": {
-            # Layer 3 — PlainWeavingParams fields
             "ends_per_cm": 30.0,
             "picks_per_cm": 28.0,
             "reed_width_cm": 160.0,
@@ -1147,16 +1552,115 @@ if __name__ == "__main__":
             "maintenance_interval_hours": 2000.0,
             "operating_hours_since_maintenance": 800.0,
         },
-        "input_attributes": {},   # fully derived from upstream spinning node
+        "input_attributes": {},
     }
 
-    m_dyeing = {
-        "id": uuid.UUID("00000000-0000-0000-0000-000000000003"),
+    m_dobby_weaving = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000004"),
+        "name": "Dobby Loom W-02",
+        "process": "Weaving",
+        "subprocess": "Dobby Weaving",
+        "parameters": {
+            "number_of_heald_shafts": 16,
+            "weave_repeat_ends": 8,
+            "weave_repeat_picks": 8,
+            "ends_per_cm_per_shaft": 2.0,
+            "shed_depth_mm": 80,
+            "shed_type": "open",
+            "dobby_type": "positive",
+            "loom_speed_picks_per_min": 320,
+            "weft_insertion_type": "rapier",
+            "reed_space_cm": 160.0,
+            "shuttle_mass_g": 0.0,
+            "warp_ends_per_cm": 32.0,
+            "weft_picks_per_cm": 28.0,
+            "float_length_warp": 2.5,
+            "float_length_weft": 2.5,
+            "interlacement_ratio": 0.5,
+            "warp_tension_cN_per_end": 20.0,
+            "let_off_type": "positive_automatic",
+            "take_up_picks_per_cm": 28.0,
+            "reed_count_dents_per_cm": 16.0,
+            "ends_per_dent": 2,
+            "temple_type": "roller",
+            "selvedge_type": "leno",
+            "ambient_temperature_C": 24.0,
+            "ambient_humidity_pct": 70.0,
+            "last_maintenance_date": "2025-10-01",
+            "maintenance_interval_hours": 2000.0,
+            "operating_hours_since_maintenance": 800.0,
+        },
+        "input_attributes": {},
+    }
+
+    # 3. Knitting Nodes
+    m_weft_knitting = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000005"),
+        "name": "Weft Knitter K-01",
+        "process": "Knitting",
+        "subprocess": "Weft Knitting",
+        "parameters": {
+            "machine_gauge_npi": 24,
+            "cylinder_diameter_inch": 26.0,
+            "number_of_feeds": 96,
+            "stitch_length_mm": 3.8,
+            "machine_rpm": 25.0,
+            "yarn_input_tension_cN": 3.5,
+            "take_down_tension_cN_per_cm": 2.0,
+            "needle_type": "latch_needle",
+            "structure_type": "plain_single_jersey",
+            "relaxation_state": "fully_relaxed",
+            "cleaning_interval_hours": 24.0,
+            "operating_hours_since_clean": 8.0,
+            "last_maintenance_date": "2025-10-01",
+            "maintenance_interval_hours": 1000.0,
+            "operating_hours_since_maintenance": 300.0,
+            "ambient_temperature_C": 22.0,
+            "ambient_humidity_pct": 65.0,
+        },
+        "input_attributes": {},
+    }
+
+    m_warp_knitting = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000006"),
+        "name": "Warp Knitter K-02",
+        "process": "Knitting",
+        "subprocess": "Warp Knitting",
+        "parameters": {
+            "machine_class": "tricot",
+            "gauge_E": 28,
+            "needle_type": "compound",
+            "knitting_width_cm": 330.0,
+            "number_of_guide_bars": 2,
+            "threading_density": "full",
+            "underlap_span_needles": 1,
+            "lapping_type": "locknit",
+            "overlap_direction": "closed_lap",
+            "pattern_control": "electronic",
+            "machine_speed_cpm": 2000.0,
+            "let_off_type": "positive_automatic",
+            "run_in_ratio_front_back": 0.75,
+            "warp_tension_cN_per_end": 5.0,
+            "take_down_tension_cN_per_cm": 15.0,
+            "stitch_length_mm": 1.6,
+            "sinker_depth_mm": 1.2,
+            "shed_swing_angle_deg": 130.0,
+            "ambient_temperature_C": 22.0,
+            "ambient_humidity_pct": 55.0,
+            "last_maintenance_date": "2025-10-01",
+            "maintenance_interval_hours": 1500.0,
+            "operating_hours_since_maintenance": 450.0,
+        },
+        "input_attributes": {},
+    }
+
+    # 4. Dyeing Nodes
+    m_dyeing_reactive_1 = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000007"),
         "name": "Jet Dyeing Machine D-01",
         "process": "Colouring",
         "subprocess": "Reactive Dyeing",
         "parameters": {
-            # Layer 3 — ReactiveDyeingParams fields
             "dye_type": "ME",
             "dye_concentration_owf_pct": 2.0,
             "salt_concentration_g_L": 50.0,
@@ -1175,25 +1679,176 @@ if __name__ == "__main__":
             "maintenance_interval_hours": 2000.0,
             "operating_hours_since_maintenance": 700.0,
         },
-        "input_attributes": {},   # fully derived from upstream weaving node
+        "input_attributes": {},
     }
 
-    machines = [m_spinning, m_weaving, m_dyeing]
+    m_dyeing_reactive_2 = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000008"),
+        "name": "Jigger Dyeing Machine D-02",
+        "process": "Colouring",
+        "subprocess": "Reactive Dyeing",
+        "parameters": {
+            "dye_type": "VS",
+            "dye_concentration_owf_pct": 1.5,
+            "salt_concentration_g_L": 40.0,
+            "alkali_type": "Na2CO3",
+            "alkali_concentration_g_L": 10.0,
+            "dyeing_temperature_C": 60.0,
+            "exhaustion_time_min": 35.0,
+            "fixation_time_min": 40.0,
+            "wash_off_time_min": 45.0,
+            "liquor_ratio": 5.0,
+            "machine_type": "jigger",
+            "water_hardness_ppm": 40.0,
+            "fabric_is_mercerized": True,
+            "fabric_is_scoured": True,
+            "ambient_temperature_C": 24.0,
+            "maintenance_interval_hours": 2000.0,
+            "operating_hours_since_maintenance": 300.0,
+        },
+        "input_attributes": {},
+    }
+
+    # 5. Printing Nodes
+    m_rotary_printing = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000009"),
+        "name": "Rotary Printer P-01",
+        "process": "Printing",
+        "subprocess": "Rotary Screen Printing",
+        "parameters": {
+            "printing_speed_m_per_hour": 2400.0,
+            "screen_working_width_cm": 180.0,
+            "number_of_screens": 8,
+            "screen_type": "lacquer_rotary",
+            "screen_mesh_holes_per_inch": 80,
+            "screen_open_area_pct": 11.0,
+            "screen_wall_thickness_mm": 0.08,
+            "screen_circumference_mm": 640.0,
+            "design_repeat_length_cm": 64.0,
+            "squeegee_type": "steel_blade",
+            "squeegee_blade_length_mm": 1700.0,
+            "squeegee_pressure_setting": "medium",
+            "squeegee_blade_curvature": "standard",
+            "blanket_type": "low_extensibility_synthetic",
+            "adhesive_type": "thermoplastic",
+            "independent_screen_speed_control": True,
+            "laser_registration": True,
+            "paste_pump_type": "peristaltic",
+            "level_control_type": "sensor_automatic",
+            "paste_distribution_quality": "uniform",
+            "colorant_type": "pigment",
+            "paste_colorant_conc_g_per_kg": 25.0,
+            "thickener_type": "synthetic_polyacrylic",
+            "thickener_concentration_pct": 2.5,
+            "paste_viscosity_Pa_s": 0.8,
+            "paste_yield_value": "short_flow",
+            "binder_concentration_pct": 12.0,
+            "urea_concentration_g_per_kg": 0.0,
+            "alkali_type": "none",
+            "alkali_concentration_g_per_kg": 0.0,
+            "design_coverage_pct": 45.0,
+            "fixation_method": "baking_hot_air",
+            "fixation_temperature_C": 150.0,
+            "fixation_time_min": 3.0,
+            "steamer_type": "roller_baker",
+            "dryer_capacity": "adequate",
+            "wash_off_applied": False,
+            "wash_off_temperature_C": 0.0,
+            "wash_off_stages": 0,
+            "counterflow_washing": False,
+            "ambient_temperature_C": 24.0,
+            "ambient_humidity_pct": 60.0,
+            "last_maintenance_date": "2025-10-01",
+            "maintenance_interval_hours": 2000.0,
+            "operating_hours_since_maintenance": 400.0,
+        },
+        "input_attributes": {},
+    }
+
+    m_screen_printing = {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000010"),
+        "name": "Flat Screen Printer P-02",
+        "process": "Printing",
+        "subprocess": "Screen Printing",
+        "parameters": {
+            "machine_type": "automatic_flat",
+            "printing_speed_m_per_hour": 450.0,
+            "number_of_colours": 6,
+            "screen_type": "flat_polyester_mesh",
+            "screen_mesh_threads_per_cm": 62.0,
+            "screen_open_area_pct": 35.0,
+            "screen_circumference_mm": 0.0,
+            "design_repeat_length_cm": 80.0,
+            "squeegee_type": "rubber_blade",
+            "squeegee_angle_deg": 75.0,
+            "squeegee_hardness_shore": 70,
+            "number_of_squeegee_passes": 2,
+            "flood_stroke": True,
+            "blanket_type": "low_extensibility_synthetic",
+            "adhesive_type": "water_based",
+            "off_contact_printing": True,
+            "paste_distribution_quality": "uniform",
+            "colorant_type": "reactive_dye",
+            "paste_colorant_concentration_g_per_kg": 30.0,
+            "thickener_type": "alginate",
+            "thickener_concentration_pct": 4.0,
+            "paste_viscosity_Pa_s": 1.2,
+            "paste_yield_value": "short_flow",
+            "binder_concentration_pct": 0.0,
+            "urea_concentration_g_per_kg": 150.0,
+            "alkali_type": "sodium_bicarbonate",
+            "alkali_concentration_g_per_kg": 20.0,
+            "design_coverage_pct": 30.0,
+            "fixation_method": "saturated_steam",
+            "fixation_temperature_C": 102.0,
+            "fixation_time_min": 10.0,
+            "steamer_type": "festoon",
+            "dryer_efficiency": "adequate",
+            "wash_off_applied": True,
+            "wash_off_temperature_C": 90.0,
+            "wash_off_stages": 8,
+            "counterflow_washing": True,
+            "ambient_temperature_C": 24.0,
+            "ambient_humidity_pct": 65.0,
+            "last_maintenance_date": "2025-10-01",
+            "maintenance_interval_hours": 1500.0,
+            "operating_hours_since_maintenance": 250.0,
+        },
+        "input_attributes": {},
+    }
+
+    machines = [
+        m_rotor_spinning, m_airjet_spinning,
+        m_plain_weaving, m_dobby_weaving,
+        m_weft_knitting, m_warp_knitting,
+        m_dyeing_reactive_1, m_dyeing_reactive_2,
+        m_rotary_printing, m_screen_printing
+    ]
 
     connections = [
-        {"source_machine_id": m_spinning["id"], "target_machine_id": m_weaving["id"]},
-        {"source_machine_id": m_weaving["id"],  "target_machine_id": m_dyeing["id"]},
+        # Branch 1: Spinner Rotor + Spinner Airjet -> Plain Loom -> Weft Knitter -> Dyeing 1 -> Rotary Printer -> Screen Printer
+        {"source_machine_id": m_rotor_spinning["id"], "target_machine_id": m_plain_weaving["id"]},
+        {"source_machine_id": m_airjet_spinning["id"], "target_machine_id": m_plain_weaving["id"]},
+        {"source_machine_id": m_plain_weaving["id"], "target_machine_id": m_weft_knitting["id"]},
+        {"source_machine_id": m_weft_knitting["id"], "target_machine_id": m_dyeing_reactive_1["id"]},
+        {"source_machine_id": m_dyeing_reactive_1["id"], "target_machine_id": m_rotary_printing["id"]},
+        {"source_machine_id": m_rotary_printing["id"], "target_machine_id": m_screen_printing["id"]},
+
+        # Branch 2: Spinner Airjet -> Dobby Loom -> Warp Knitter -> Dyeing 2
+        {"source_machine_id": m_airjet_spinning["id"], "target_machine_id": m_dobby_weaving["id"]},
+        {"source_machine_id": m_dobby_weaving["id"], "target_machine_id": m_warp_knitting["id"]},
+        {"source_machine_id": m_warp_knitting["id"], "target_machine_id": m_dyeing_reactive_2["id"]},
     ]
 
     engine = SimulationEngine()
     result = engine.run_from_dicts(machines, connections)
 
-    print("=" * 65)
-    print("FULL PRODUCTION LINE SIMULATION")
+    print("=" * 75)
+    print("FULL 10-NODE COMPLEX PRODUCTION LINE SIMULATION (ALL MACHINE TYPES)")
     print(f"  Line ID : {result.production_line_id}")
     print(f"  Success : {result.success}")
     print(f"  Order   : {[str(i)[-4:] for i in result.execution_order]}")
-    print("=" * 65)
+    print("=" * 75)
 
     for mid in result.execution_order:
         if mid not in result.machine_results:
@@ -1212,7 +1867,7 @@ if __name__ == "__main__":
         for w in result.global_warnings:
             print(f"  ! {w}")
 
-    print("\n" + "=" * 65)
+    print("\n" + "=" * 75)
     
     # Save the output format as requested by the user
     output_filepath = "simulation_output.json"
