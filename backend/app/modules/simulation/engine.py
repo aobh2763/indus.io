@@ -29,8 +29,13 @@ from app.core.permissions import SimulationStatus
 _SIM_PKG_DIR = Path(__file__).resolve().parents[4] / "simulation"
 if str(_SIM_PKG_DIR) not in sys.path:
     sys.path.insert(0, str(_SIM_PKG_DIR))
-
-from simulation_engine import SimulationEngine  # noqa: E402  (path-injection above)
+# Prefer a package-relative import when running inside the backend app.
+try:
+    from .simulation_service.simulation_engine import SimulationEngine
+except Exception:
+    # Fallback for environments where the standalone `simulation/` package
+    # exists at the injected path (legacy setups).
+    from simulation_service.simulation_engine import SimulationEngine  # noqa: E402
 
 
 # ── Status helpers ─────────────────────────────────────────────────

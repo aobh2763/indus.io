@@ -48,11 +48,35 @@ Supported subprocess keys (process → subprocess)
   Colouring   → Vat Dyeing              (vat_dyeing.py)
 """
 
-from simulation.printing.screen_printing import simulate_screen_printing
-from simulation.printing.rotary_printing import simulate_rotary_printing
-from simulation.knitting.warp_knitting import simulate_warp_knitting
-from simulation.weaving.dobby import simulate_dobby_weaving
 from __future__ import annotations
+
+# Make the standalone `simulation/` package importable when running from
+# the `backend/` folder (mirrors the shim used by the FastAPI bridge).
+import sys
+from pathlib import Path
+_SIM_PKG_DIR = Path(__file__).resolve().parents[5] / "simulation"
+if str(_SIM_PKG_DIR) not in sys.path:
+    sys.path.insert(0, str(_SIM_PKG_DIR))
+
+# Import simulation modules with resilient fallbacks. Prefer relative imports
+# when the module is used as a package (`app.modules.simulation.simulation_service`),
+# then try the repository-level `simulation.*` package, then bare names.
+try:
+    from .printing.screen_printing import simulate_screen_printing
+    from .printing.rotary_printing import simulate_rotary_printing
+    from .knitting.warp_knitting import simulate_warp_knitting
+    from .weaving.dobby import simulate_dobby_weaving
+except Exception:
+    try:
+        from simulation.printing.screen_printing import simulate_screen_printing
+        from simulation.printing.rotary_printing import simulate_rotary_printing
+        from simulation.knitting.warp_knitting import simulate_warp_knitting
+        from simulation.weaving.dobby import simulate_dobby_weaving
+    except Exception:
+        from printing.screen_printing import simulate_screen_printing
+        from printing.rotary_printing import simulate_rotary_printing
+        from knitting.warp_knitting import simulate_warp_knitting
+        from weaving.dobby import simulate_dobby_weaving
 
 import dataclasses
 import uuid
@@ -63,36 +87,116 @@ from typing import Any, Callable
 # ── Import simulation modules ────────────────────────────────────────────────
 # Each module exposes: one simulate_*() function + its dataclasses.
 # Adjust the import paths to match your project layout.
-from spinning.rotor import (
-    InputMaterial as RotorInputMaterial,
-    RotorOperationalParams,
-    YarnQualityOutput,
-    simulate_rotor_spinning,
-)
-from spinning.airjet import (
-    InputMaterial as AirjetInputMaterial,
-    AirjetOperationalParams,
-    YarnQualityOutput as AirjetYarnQualityOutput,
-    simulate_airjet_spinning,
-)
-from weaving.plain import (
-    InputYarns,
-    PlainWeavingParams,
-    FabricQualityOutput,
-    simulate_plain_weaving,
-)
-from knitting.weft_knitting import (
-    InputFabric as KnittingInputFabric,
-    WeftKnittingParams,
-    KnittedFabricOutput,
-    simulate_weft_knitting,
-)
-from coloring.reactive_dyeing import (
-    InputFabric as ReactiveDyeingInputFabric,
-    ReactiveDyeingParams,
-    DyedFabricOutput as ReactiveDyedFabricOutput,
-    simulate_reactive_dyeing,
-)
+try:
+    from .spinning.rotor import (
+        InputMaterial as RotorInputMaterial,
+        RotorOperationalParams,
+        YarnQualityOutput,
+        simulate_rotor_spinning,
+    )
+except Exception:
+    try:
+        from simulation.spinning.rotor import (
+            InputMaterial as RotorInputMaterial,
+            RotorOperationalParams,
+            YarnQualityOutput,
+            simulate_rotor_spinning,
+        )
+    except Exception:
+        from spinning.rotor import (
+            InputMaterial as RotorInputMaterial,
+            RotorOperationalParams,
+            YarnQualityOutput,
+            simulate_rotor_spinning,
+        )
+try:
+    from .spinning.airjet import (
+        InputMaterial as AirjetInputMaterial,
+        AirjetOperationalParams,
+        YarnQualityOutput as AirjetYarnQualityOutput,
+        simulate_airjet_spinning,
+    )
+except Exception:
+    try:
+        from simulation.spinning.airjet import (
+            InputMaterial as AirjetInputMaterial,
+            AirjetOperationalParams,
+            YarnQualityOutput as AirjetYarnQualityOutput,
+            simulate_airjet_spinning,
+        )
+    except Exception:
+        from spinning.airjet import (
+            InputMaterial as AirjetInputMaterial,
+            AirjetOperationalParams,
+            YarnQualityOutput as AirjetYarnQualityOutput,
+            simulate_airjet_spinning,
+        )
+try:
+    from .weaving.plain import (
+        InputYarns,
+        PlainWeavingParams,
+        FabricQualityOutput,
+        simulate_plain_weaving,
+    )
+except Exception:
+    try:
+        from simulation.weaving.plain import (
+            InputYarns,
+            PlainWeavingParams,
+            FabricQualityOutput,
+            simulate_plain_weaving,
+        )
+    except Exception:
+        from weaving.plain import (
+            InputYarns,
+            PlainWeavingParams,
+            FabricQualityOutput,
+            simulate_plain_weaving,
+        )
+try:
+    from .knitting.weft_knitting import (
+        InputFabric as KnittingInputFabric,
+        WeftKnittingParams,
+        KnittedFabricOutput,
+        simulate_weft_knitting,
+    )
+except Exception:
+    try:
+        from simulation.knitting.weft_knitting import (
+            InputFabric as KnittingInputFabric,
+            WeftKnittingParams,
+            KnittedFabricOutput,
+            simulate_weft_knitting,
+        )
+    except Exception:
+        from knitting.weft_knitting import (
+            InputFabric as KnittingInputFabric,
+            WeftKnittingParams,
+            KnittedFabricOutput,
+            simulate_weft_knitting,
+        )
+try:
+    from .coloring.reactive_dyeing import (
+        InputFabric as ReactiveDyeingInputFabric,
+        ReactiveDyeingParams,
+        DyedFabricOutput as ReactiveDyedFabricOutput,
+        simulate_reactive_dyeing,
+    )
+except Exception:
+    try:
+        from simulation.coloring.reactive_dyeing import (
+            InputFabric as ReactiveDyeingInputFabric,
+            ReactiveDyeingParams,
+            DyedFabricOutput as ReactiveDyedFabricOutput,
+            simulate_reactive_dyeing,
+        )
+    except Exception:
+        from coloring.reactive_dyeing import (
+            InputFabric as ReactiveDyeingInputFabric,
+            ReactiveDyeingParams,
+            DyedFabricOutput as ReactiveDyedFabricOutput,
+            simulate_reactive_dyeing,
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
