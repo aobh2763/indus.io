@@ -1,9 +1,15 @@
-FROM node:20-alpine
+FROM node:22-alpine
+
+# Enable corepack for pnpm support
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
-COPY package*.json ./
 
-RUN npm install
+# Copy dependency files first for better layer caching
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --frozen-lockfile
 
 COPY . .
-CMD [ "npm", "run", "dev"]
+
+CMD ["pnpm", "run", "dev"]
