@@ -103,14 +103,23 @@ def step(simulation_id: str, db: Session = Depends(get_db), current_user: User =
     if sim.status != "RUNNING":
         raise HTTPException(status_code=400, detail="Simulation must be RUNNING to step.")
     
+    seen = set()
+    unique_connections = []
+    for c in sim.production_line.connections:
+        key = (c.source_machine_id, c.target_machine_id)
+        if key not in seen:
+            seen.add(key)
+            unique_connections.append(c)
+
     request = BatchSimulateRequest(
         production_line_id=sim.production_line_id,
         machines=[map_machine_to_machine_input(m) for m in sim.production_line.machines],
-        connections=[map_connection_to_connection_input(c) for c in sim.production_line.connections],
+        connections=[map_connection_to_connection_input(c) for c in unique_connections],
         steps=1,
     )
     
     bach_result = run_batch(request)
+    service.save_simulation_frame(db, sim, bach_result["frames"][0])
     
     print("Batch result for step:", bach_result)
     
