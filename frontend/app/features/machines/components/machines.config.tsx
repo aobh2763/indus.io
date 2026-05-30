@@ -143,13 +143,13 @@ function AttributeSection({
   }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={true} onOpenChange={() => { }}>
       <CollapsibleTrigger className="flex items-center gap-2 w-full text-left mb-2 group">
-        {open ? (
+        {/*{open ? (
           <ChevronDown size={14} className="text-muted-foreground" />
         ) : (
           <ChevronRight size={14} className="text-muted-foreground" />
-        )}
+        )}*/}
         <span className="text-sm font-medium">{title}</span>
         <span className="text-[10px] text-muted-foreground ml-auto">
           {entries.length} attr{entries.length !== 1 ? "s" : ""}
@@ -261,7 +261,7 @@ const ConfigPanel: FC = () => {
 
           <Separator />
 
-          {(["inputs", "configs", "outputs"] as LayerKey[]).map((layer) => (
+          {(["configs"] as LayerKey[]).map((layer) => (
             <AttributeSection
               key={layer}
               layerKey={layer}
