@@ -16,8 +16,13 @@ from app.modules.telemetry import models as _telemetry_models  # noqa: F401
 from app.modules.intelligence import models as _intelligence_models  # noqa: F401
 from app.modules.monitoring import models as _monitoring_models  # noqa: F401
 
-# ── Create all tables ────────────────────────────────────
-Base.metadata.create_all(bind=engine)
+# ── Create all tables (attempt; continue if DB is not available)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as exc:
+    # Don't crash the whole app for local dev when Postgres isn't running.
+    # In production the DB should be available and this will succeed.
+    print("WARNING: could not create DB tables at startup:", exc)
 
 # ── FastAPI app ──────────────────────────────────────────
 app = FastAPI(

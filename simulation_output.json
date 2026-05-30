@@ -1,0 +1,299 @@
+{
+    "production_line_full_input": {
+        "00000000-0000-0000-0000-000000000001": {
+            "fiber_type": "cotton_carded",
+            "fiber_length_mm": 27.0,
+            "fiber_fineness_dtex": 1.7,
+            "short_fiber_content_pct": 14.0,
+            "fiber_tensile_strength_cN_tex": 28.0,
+            "sliver_count_ktex": 4.5,
+            "moisture_content_pct": 7.0,
+            "trash_content_pct": 1.2
+        },
+        "00000000-0000-0000-0000-000000000002": {
+            "fiber_type": "cotton_combed",
+            "fiber_length_mm": 33.0,
+            "fiber_fineness_dtex": 1.5,
+            "short_fiber_content_pct": 8.0,
+            "fiber_tensile_strength_cN_tex": 35.0,
+            "sliver_count_ktex": 3.0,
+            "moisture_content_pct": 6.5,
+            "trash_content_pct": 0.5
+        }
+    },
+    "links": [
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000001",
+            "target_machine": "00000000-0000-0000-0000-000000000003",
+            "states": [
+                {
+                    "actual_twist_turns_per_m": 757.6,
+                    "back_doubling_index": 3.84,
+                    "yarn_tenacity_cN_tex": 11.75,
+                    "yarn_evenness_CVm_pct": 11.4,
+                    "hairiness_H": 6.14,
+                    "neps_per_km": 99.0,
+                    "spinning_tension_cN": 15.0,
+                    "waste_fiber_pct": 4.5,
+                    "ends_down_risk": "medium",
+                    "production_rate_g_rotor_h": 233.6,
+                    "warnings": "CRITICAL: Rotor peripheral speed (172.8 m/s) exceeds the safe maximum of ~160 m/s. Rotor integrity and bearing life are at risk. Reduce rotor speed or use a smaller diameter rotor."
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000002",
+            "target_machine": "00000000-0000-0000-0000-000000000003",
+            "states": [
+                {
+                    "wrapping_twist_am": 170.3,
+                    "wrapping_fiber_pct": 29.1,
+                    "yarn_tenacity_cN_tex": 14.31,
+                    "yarn_evenness_CVm_pct": 11.2,
+                    "hairiness_H": 3.88,
+                    "neps_per_km": 157.0,
+                    "spinning_tension_cN": 8.66,
+                    "waste_fiber_pct": 8.0,
+                    "ends_down_risk": "low",
+                    "production_rate_g_spi_h": 413.7,
+                    "warnings": "Wrapping twist (170.3 am) is outside optimal range (140-160 am). Adjust air pressure or delivery speed for best strength."
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000003",
+            "target_machine": "00000000-0000-0000-0000-000000000005",
+            "states": [
+                {
+                    "yarn_diameter_warp_mm": 0.1642,
+                    "yarn_diameter_weft_mm": 0.201,
+                    "warp_cover_factor": 0.4926,
+                    "weft_cover_factor": 0.5628,
+                    "total_cover_factor": 0.7782,
+                    "warp_crimp_pct": 125.9,
+                    "weft_crimp_pct": 150.22,
+                    "crimp_balance": "balanced",
+                    "fell_displacement_mm": 7.15,
+                    "beat_up_force_cN_per_cm": 403.1,
+                    "fabric_areal_weight_g_m2": 340.2,
+                    "weft_tension_at_fell_cN": 208.9,
+                    "warp_break_risk": "low",
+                    "weft_break_risk": "medium",
+                    "cloth_defect_risk": "low",
+                    "production_rate_m_per_min": 0.0786,
+                    "production_rate_m2_per_hour": 7.54,
+                    "warnings": "Fractional weft cover (0.563) is approaching the practical weaving limit. Greenwood & Cowhig found ~0.58 to be the maximum achievable for 16-tex acetate; similar limits apply to other materials. Weaving resistance will be very high. Consider reducing picks/cm or switching to a finer weft. (Marks & Robinson, Fig. 6.3, p. 144); Weft tension at fell (209 cN) exceeds 30% of weft breaking force (347 cN). Weft-cutting is likely, especially at the selvedges where temple restraint is reduced and end spacing is tighter. 'It usually happens in or near the selvedges.' (Marks & Robinson, p. 142); Fell displacement at beat-up (7.2 mm) is very large. Bumping conditions are likely. The cloth becomes momentarily slack as the reed drives the fell to maximum displacement. Increase basic warp tension to restore normal weaving conditions. (Marks & Robinson, Section 6.1.4, p. 146)"
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000005",
+            "target_machine": "00000000-0000-0000-0000-000000000007",
+            "states": [
+                {
+                    "yarn_count_tex": 29.51,
+                    "yarn_count_Ne": 20.0,
+                    "tightness_factor": 1.43,
+                    "courses_per_cm": 0.57,
+                    "wales_per_cm": 0.44,
+                    "stitch_density_per_cm2": 0.25,
+                    "loop_shape_factor": 1.31,
+                    "fabric_areal_weight_g_m2": 0.3,
+                    "width_relaxation_pct": 36.9,
+                    "length_relaxation_pct": 7.7,
+                    "total_needles": 1960.0,
+                    "courses_per_minute": 2400.0,
+                    "fabric_production_rate_m_min": 42.1053,
+                    "fabric_production_rate_m2_hr": 5241.37,
+                    "fabric_width_m": 2.075,
+                    "needle_break_risk": "low",
+                    "yarn_break_risk": "medium",
+                    "fabric_defect_risk": "low",
+                    "pilling_propensity": "low",
+                    "warnings": "Yarn count Ne 20.0 is too coarse for E24 gauge. Minimum recommended: Ne 21. Coarse yarns will not fit between needles \u2192 needle breakage and missed stitches. (Spencer p. 63: NeB = G\u00b2/18 \u2192 32 Ne for this gauge)"
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000007",
+            "target_machine": "00000000-0000-0000-0000-000000000009",
+            "states": [
+                {
+                    "dye_bath_pH": 10.7,
+                    "exhaustion_pct": 61.0,
+                    "fixation_pct": 49.1,
+                    "hydrolysis_pct": 50.9,
+                    "unfixed_dye_on_fabric_pct": 11.9,
+                    "colour_yield_relative": 0.491,
+                    "wash_fastness_rating": 2.0,
+                    "light_fastness_rating": 4.7,
+                    "rubbing_fastness_dry": 3.2,
+                    "rubbing_fastness_wet": 2.7,
+                    "levelness_risk": "low",
+                    "dye_penetration_quality": "full",
+                    "water_consumption_L_per_kg": 20.6,
+                    "salt_load_g_per_kg": 500.0,
+                    "total_process_time_min": 125.0,
+                    "energy_relative": 0.34,
+                    "effluent_dye_load_pct": 50.9,
+                    "unlevel_dyeing_risk": "low",
+                    "fabric_damage_risk": "low",
+                    "warnings": "Fixation (49.1%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.; Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4\u20135. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.; Effluent dye load (50.9% of applied dye) is very high. Conventional reactive dyeing discharges 20\u201340% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation."
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000009",
+            "target_machine": "00000000-0000-0000-0000-000000000010",
+            "states": [
+                {
+                    "paste_volume_applied_g_per_m2": 26.0,
+                    "paste_penetration_depth": "partial",
+                    "colour_yield_pct": 84.5,
+                    "sharpness_of_mark": "excellent",
+                    "saw_tooth_risk": "minor",
+                    "registration_accuracy": "excellent",
+                    "stripe_fault_risk": "low",
+                    "colour_crushing_risk": "low",
+                    "paste_level_instability_risk": "low",
+                    "screen_creasing_risk": "medium",
+                    "repeat_fitting_quality": "excellent",
+                    "print_wash_fastness": 4.2,
+                    "print_light_fastness": 7.0,
+                    "print_rub_fastness_dry": 4.2,
+                    "print_rub_fastness_wet": 3.5,
+                    "colour_yield_relative": 0.845,
+                    "estimated_fixation_pct": 92.0,
+                    "unfixed_dye_staining_risk": "low",
+                    "binder_crosslink_quality": "good",
+                    "total_water_L_per_kg": 20.6,
+                    "total_effluent_dye_load_pct": 25.4,
+                    "energy_index": 0.6,
+                    "effective_production_m_per_hour": 2172.0,
+                    "machine_efficiency_pct": 90.5,
+                    "warnings": "Residual unfixed dye from dyeing stage (11.9%) is high. This dye will become mobile during steaming and bleed into printed areas, causing contamination of white grounds and reduced colour definition (Miles Ch. 8.5.3). Improve dyeing wash-off."
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000002",
+            "target_machine": "00000000-0000-0000-0000-000000000004",
+            "states": [
+                {
+                    "wrapping_twist_am": 170.3,
+                    "wrapping_fiber_pct": 29.1,
+                    "yarn_tenacity_cN_tex": 14.31,
+                    "yarn_evenness_CVm_pct": 11.2,
+                    "hairiness_H": 3.88,
+                    "neps_per_km": 157.0,
+                    "spinning_tension_cN": 8.66,
+                    "waste_fiber_pct": 8.0,
+                    "ends_down_risk": "low",
+                    "production_rate_g_spi_h": 413.7,
+                    "warnings": "Wrapping twist (170.3 am) is outside optimal range (140-160 am). Adjust air pressure or delivery speed for best strength."
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000004",
+            "target_machine": "00000000-0000-0000-0000-000000000006",
+            "states": [
+                {
+                    "fabric_width_cm": 152.2,
+                    "weft_crimp_pct": 4.9,
+                    "warp_crimp_pct": 2.9,
+                    "fabric_weight_g_per_m2": 122.7,
+                    "cloth_cover_factor": 1.025,
+                    "warp_end_break_risk": "low",
+                    "weft_break_risk": "low",
+                    "shedding_quality": "good",
+                    "beat_up_resistance": "easy",
+                    "expected_nep_visibility": "visible_defects",
+                    "pick_spacing_regularity": "excellent",
+                    "selvedge_quality": "acceptable",
+                    "theoretical_production_m_per_hour": 685.7,
+                    "loom_efficiency_pct": 82.0,
+                    "actual_production_m_per_hour": 562.3,
+                    "warnings": ""
+                }
+            ]
+        },
+        {
+            "source_machine": "00000000-0000-0000-0000-000000000006",
+            "target_machine": "00000000-0000-0000-0000-000000000008",
+            "states": [
+                {
+                    "fabric_width_finished_cm": 297.0,
+                    "courses_per_cm": 9.06,
+                    "wales_per_cm": 12.25,
+                    "stitch_density_per_cm2": 111.0,
+                    "fabric_weight_g_per_m2": 53.3,
+                    "tightness_factor": 2.421,
+                    "loop_formation_quality": "good",
+                    "yarn_tension_balance": "balanced",
+                    "underlap_regularity": "uniform",
+                    "fabric_stability": "stable",
+                    "surface_nep_visibility": "negligible",
+                    "barre_risk": "low",
+                    "selvedge_security": "secure",
+                    "cover_adequacy": "excellent",
+                    "extensibility_rating": "high",
+                    "fabric_curling_tendency": "mild",
+                    "theoretical_production_m_per_hour": 132.5,
+                    "machine_efficiency_pct": 90.0,
+                    "actual_production_m_per_hour": 119.2,
+                    "warnings": "Tightness Factor (2.42) is very high. The fabric will be very dense, stiff, and difficult to form on the needle bar. Consider increasing stitch length or using finer yarn to reduce TF below 1.8."
+                }
+            ]
+        }
+    ],
+    "production_line_full_output": {
+        "00000000-0000-0000-0000-000000000008": {
+            "dye_bath_pH": 10.6,
+            "exhaustion_pct": 45.0,
+            "fixation_pct": 31.5,
+            "hydrolysis_pct": 68.5,
+            "unfixed_dye_on_fabric_pct": 13.5,
+            "colour_yield_relative": 0.415,
+            "wash_fastness_rating": 2.0,
+            "light_fastness_rating": 4.0,
+            "rubbing_fastness_dry": 2.8,
+            "rubbing_fastness_wet": 2.3,
+            "levelness_risk": "low",
+            "dye_penetration_quality": "full",
+            "water_consumption_L_per_kg": 18.8,
+            "salt_load_g_per_kg": 200.0,
+            "total_process_time_min": 120.0,
+            "energy_relative": 0.31,
+            "effluent_dye_load_pct": 68.5,
+            "unlevel_dyeing_risk": "low",
+            "fabric_damage_risk": "low",
+            "warnings": "Fixation (31.5%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.; Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4\u20135. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.; Effluent dye load (68.5% of applied dye) is very high. Conventional reactive dyeing discharges 20\u201340% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation."
+        }
+    },
+    "errors_warnings": [
+        "[Rotor Spinner R-01] 1 warning(s): CRITICAL: Rotor peripheral speed (172.8 m/s) exceeds the safe maximum of ~160 m/s. Rotor integrity and bearing life are at risk. Reduce rotor speed or use a smaller diameter rotor.",
+        "[Airjet Spinner A-01] 1 warning(s): Wrapping twist (170.3 am) is outside optimal range (140-160 am). Adjust air pressure or delivery speed for best strength.",
+        "[Plain Loom W-01] 3 warning(s): Fractional weft cover (0.563) is approaching the practical weaving limit. Greenwood & Cowhig found ~0.58 to be the maximum achievable for 16-tex acetate; similar limits apply to other materials. Weaving resistance will be very high. Consider reducing picks/cm or switching to a finer weft. (Marks & Robinson, Fig. 6.3, p. 144); Weft tension at fell (209 cN) exceeds 30% of weft breaking force (347 cN). Weft-cutting is likely, especially at the selvedges where temple restraint is reduced and end spacing is tighter. 'It usually happens in or near the selvedges.' (Marks & Robinson, p. 142); Fell displacement at beat-up (7.2 mm) is very large. Bumping conditions are likely. The cloth becomes momentarily slack as the reed drives the fell to maximum displacement. Increase basic warp tension to restore normal weaving conditions. (Marks & Robinson, Section 6.1.4, p. 146)",
+        "[Weft Knitter K-01] 1 warning(s): Yarn count Ne 20.0 is too coarse for E24 gauge. Minimum recommended: Ne 21. Coarse yarns will not fit between needles \u2192 needle breakage and missed stitches. (Spencer p. 63: NeB = G\u00b2/18 \u2192 32 Ne for this gauge)",
+        "[Warp Knitter K-02] 1 warning(s): Tightness Factor (2.42) is very high. The fabric will be very dense, stiff, and difficult to form on the needle bar. Consider increasing stitch length or using finer yarn to reduce TF below 1.8.",
+        "[Jet Dyeing Machine D-01] 3 warning(s): Fixation (49.1%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.; Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4\u20135. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.; Effluent dye load (50.9% of applied dye) is very high. Conventional reactive dyeing discharges 20\u201340% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation.",
+        "[Jigger Dyeing Machine D-02] 3 warning(s): Fixation (31.5%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.; Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4\u20135. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.; Effluent dye load (68.5% of applied dye) is very high. Conventional reactive dyeing discharges 20\u201340% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation.",
+        "[Rotary Printer P-01] 1 warning(s): Residual unfixed dye from dyeing stage (11.9%) is high. This dye will become mobile during steaming and bleed into printed areas, causing contamination of white grounds and reduced colour definition (Miles Ch. 8.5.3). Improve dyeing wash-off.",
+        "[Flat Screen Printer P-02] SIMULATION ERROR: No bridge implemented for connection 'Printing/Rotary Screen Printing' \u2192 'Printing/Screen Printing'. Add a bridge function in simulation_engine.py.",
+        "CRITICAL: Rotor peripheral speed (172.8 m/s) exceeds the safe maximum of ~160 m/s. Rotor integrity and bearing life are at risk. Reduce rotor speed or use a smaller diameter rotor.",
+        "Wrapping twist (170.3 am) is outside optimal range (140-160 am). Adjust air pressure or delivery speed for best strength.",
+        "Fractional weft cover (0.563) is approaching the practical weaving limit. Greenwood & Cowhig found ~0.58 to be the maximum achievable for 16-tex acetate; similar limits apply to other materials. Weaving resistance will be very high. Consider reducing picks/cm or switching to a finer weft. (Marks & Robinson, Fig. 6.3, p. 144)",
+        "Weft tension at fell (209 cN) exceeds 30% of weft breaking force (347 cN). Weft-cutting is likely, especially at the selvedges where temple restraint is reduced and end spacing is tighter. 'It usually happens in or near the selvedges.' (Marks & Robinson, p. 142)",
+        "Fell displacement at beat-up (7.2 mm) is very large. Bumping conditions are likely. The cloth becomes momentarily slack as the reed drives the fell to maximum displacement. Increase basic warp tension to restore normal weaving conditions. (Marks & Robinson, Section 6.1.4, p. 146)",
+        "Yarn count Ne 20.0 is too coarse for E24 gauge. Minimum recommended: Ne 21. Coarse yarns will not fit between needles \u2192 needle breakage and missed stitches. (Spencer p. 63: NeB = G\u00b2/18 \u2192 32 Ne for this gauge)",
+        "Tightness Factor (2.42) is very high. The fabric will be very dense, stiff, and difficult to form on the needle bar. Consider increasing stitch length or using finer yarn to reduce TF below 1.8.",
+        "Fixation (49.1%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.",
+        "Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4\u20135. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.",
+        "Effluent dye load (50.9% of applied dye) is very high. Conventional reactive dyeing discharges 20\u201340% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation.",
+        "Fixation (31.5%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.",
+        "Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4\u20135. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.",
+        "Effluent dye load (68.5% of applied dye) is very high. Conventional reactive dyeing discharges 20\u201340% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation.",
+        "Residual unfixed dye from dyeing stage (11.9%) is high. This dye will become mobile during steaming and bleed into printed areas, causing contamination of white grounds and reduced colour definition (Miles Ch. 8.5.3). Improve dyeing wash-off."
+    ]
+}
