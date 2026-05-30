@@ -97,6 +97,10 @@ export default function Dashboard() {
                 <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
                 Sync
               </button>
+              <Link to="/projects-management" className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
+                <Layers className="h-3 w-3" />
+                Projects
+              </Link>
               <Link to="/pipeline-builder" className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
                 Pipeline
               </Link>
