@@ -18,8 +18,9 @@ A B2B platform for simulating, managing and optimising industrial production lin
 3. Generate a secret key and paste it in .env
 
 4. Start the services <br />
-`docker compose up --build`
+`docker compose up -d --build`
 
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5174
 - Backend API: http://localhost:8000
 - API docs: http://localhost:8000/docs
+- Adminer (DB UI): http://localhost:8081

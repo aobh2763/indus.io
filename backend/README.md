@@ -57,3 +57,18 @@ Once the containers are running, you can access the interactive API documentatio
 
 ### Database Initialization
 The database tables are automatically created on startup via SQLAlchemy (`Base.metadata.create_all`). The Graph Workspace (`indus_production`) is initialized using the custom SQL script in `app/db/init_graph.sql`.
+
+### Seeding Textile Mock Data
+Make sure the Docker database and backend are running first:
+
+```bash
+docker compose up -d
+```
+
+Then run the seed script directly inside the backend container:
+
+```bash
+docker compose exec backend python -m app.db.seed_textile --force
+```
+
+If the seed fails with a connection error, make sure your `.env` is configured correctly and the containers are running.
