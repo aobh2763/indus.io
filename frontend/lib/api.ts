@@ -15,9 +15,7 @@ import type {
   User,
   TokenResponse,
 } from "../types/dashboard";
-import { useAuthStore } from "~/features/auth/auth.store";
 
-// ── Axios Instance ──────────────────────────────────────
 const api = axios.create({
   baseURL: "http://localhost:8000/api/v1",
   headers: { "Content-Type": "application/json" },
@@ -26,6 +24,7 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use(
   (request) => {
+    const { useAuthStore } = require("~/features/auth/auth.store");
     const token = useAuthStore.getState().token;
 
     if (token) {
@@ -36,7 +35,6 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 // ── Auth ────────────────────────────────────────────────
 export const authService = {
   login: (email: string, password: string) =>

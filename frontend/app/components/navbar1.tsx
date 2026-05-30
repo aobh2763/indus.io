@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import { useAuthStore } from "~/features/auth/auth.store"; // adjust path as needed
+import { useAuthStore } from "~/features/auth/auth.store"; 
 
 import {
   Accordion,
