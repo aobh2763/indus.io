@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy import Integer, UniqueConstraint, select, func
 
-from app.modules.simulation.models import Simulation, SimulationLog
+from app.modules.simulation.models import Simulation, SimulationLog, SimulationStep
 from app.modules.simulation.schemas import (
     SimulationCreate,
     SimulationLogCreate,
@@ -76,3 +77,20 @@ def create_log(db: Session, sim_id: uuid.UUID, data: SimulationLogCreate) -> Sim
     db.commit()
     db.refresh(log)
     return log
+
+def save_simulation_frame(db: Session, sim: Simulation, frame_data: dict) -> SimulationLog:
+    log = SimulationStep(
+        simulation_id=sim.id,
+        step=get_next_step(db, sim.id),
+        frame_data=frame_data,)
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+def get_next_step(db: Session, simulation_id: uuid.UUID) -> int:
+    count = db.query(func.count(SimulationStep.id)) \
+        .filter(SimulationStep.simulation_id == simulation_id) \
+        .scalar()
+
+    return count or 0
