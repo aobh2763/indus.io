@@ -13,8 +13,8 @@ from app.modules.monitoring.router import router as monitoring_router
 api_router = APIRouter(prefix="/api/v1")
 
 api_router.include_router(identity_router)
-api_router.include_router(project_router)
 api_router.include_router(project_access_router)
+api_router.include_router(project_router)
 api_router.include_router(production_router)
 api_router.include_router(simulation_router)
 api_router.include_router(analytics_router)

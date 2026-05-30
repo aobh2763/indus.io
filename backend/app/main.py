@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -19,6 +20,11 @@ from app.modules.monitoring import models as _monitoring_models  # noqa: F401
 # ── Create all tables (attempt; continue if DB is not available)
 try:
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE project_access ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACCEPTED'"))
+        connection.execute(text("ALTER TABLE project_access ADD COLUMN IF NOT EXISTS invited_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL"))
+        connection.execute(text("ALTER TABLE project_access ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP WITH TIME ZONE NULL"))
+        connection.execute(text("UPDATE project_access SET status = 'ACCEPTED' WHERE status IS NULL"))
 except Exception as exc:
     # Don't crash the whole app for local dev when Postgres isn't running.
     # In production the DB should be available and this will succeed.
@@ -55,7 +61,7 @@ app = FastAPI(
 # ── CORS ─────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

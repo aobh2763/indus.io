@@ -16,6 +16,7 @@ class KPICreate(BaseModel):
 
 class KPIUpdate(BaseModel):
     name: Optional[str] = None
+    machine_id: Optional[uuid.UUID] = None
     formula: Optional[str] = None
     target_value: Optional[float] = None
     unit: Optional[str] = None
