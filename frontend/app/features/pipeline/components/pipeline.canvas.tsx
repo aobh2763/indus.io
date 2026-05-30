@@ -21,6 +21,7 @@ const PipelineBuilder = () => {
     edges,
     lineId,
     isLoading,
+    isReadOnly,
     onConnect,
     onNodesChange,
     onEdgesChange,
@@ -70,6 +71,10 @@ const PipelineBuilder = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onSelectionChange={onSelectionChange}
+          nodesDraggable={!isReadOnly}
+          nodesConnectable={!isReadOnly}
+          edgesReconnectable={!isReadOnly}
+          elementsSelectable
 
           fitView
           style={{ background: "#000" }}
@@ -80,8 +85,16 @@ const PipelineBuilder = () => {
           <Background />
 
           <Panel position="center-left">
-            <MachineList />
+            {!isReadOnly && <MachineList />}
           </Panel>
+
+          {isReadOnly && (
+            <Panel position="top-center">
+              <div className="rounded-lg border border-neutral-800 bg-black/80 px-3 py-1.5 text-xs text-neutral-300 shadow-lg">
+                View-only pipeline
+              </div>
+            </Panel>
+          )}
 
           <Panel position="center-right">
             <ConfigPanel />

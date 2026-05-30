@@ -4,8 +4,10 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import NotFoundError
 from app.modules.analytics.models import KPI, KPIValue
 from app.modules.analytics.schemas import KPICreate, KPIUpdate, KPIValueCreate
+from app.modules.production.models import Machine, ProductionLine
 
 
 # ── KPIs ─────────────────────────────────────────────────
@@ -18,6 +20,15 @@ def get_kpi_by_id(db: Session, kpi_id: uuid.UUID) -> Optional[KPI]:
 
 
 def create_kpi(db: Session, line_id: uuid.UUID, data: KPICreate) -> KPI:
+    line = db.query(ProductionLine).filter(ProductionLine.id == line_id, ProductionLine.deleted_at.is_(None)).first()
+    if not line:
+        raise NotFoundError("Production line")
+
+    if data.machine_id:
+        machine = db.query(Machine).filter(Machine.id == data.machine_id, Machine.deleted_at.is_(None)).first()
+        if not machine or machine.production_line_id != line.id:
+            raise NotFoundError("Machine in production line")
+
     kpi = KPI(
         production_line_id=line_id,
         machine_id=data.machine_id,
@@ -37,6 +48,10 @@ def update_kpi(db: Session, kpi_id: uuid.UUID, data: KPIUpdate) -> Optional[KPI]
     if not kpi:
         return None
     for field, value in data.model_dump(exclude_unset=True).items():
+        if field == "machine_id" and value is not None:
+            machine = db.query(Machine).filter(Machine.id == value, Machine.deleted_at.is_(None)).first()
+            if not machine or machine.production_line_id != kpi.production_line_id:
+                raise NotFoundError("Machine in production line")
         setattr(kpi, field, value)
     db.commit()
     db.refresh(kpi)

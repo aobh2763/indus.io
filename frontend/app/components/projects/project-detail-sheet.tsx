@@ -5,6 +5,7 @@ import {
   Globe,
   Lock,
   Shield,
+  Copy,
   Trash2,
 } from 'lucide-react';
 
@@ -84,6 +85,8 @@ export function ProjectDetailSheet() {
   const p = selectedProject;
   const isDeleting = deleteProject.isPending;
   const isPublic = p.visibility === 'PUBLIC';
+  const canEditPipeline = p.current_user_access_level === 'OWNER' || p.current_user_access_level === 'COLLABORATOR';
+  const canManageProject = p.current_user_access_level === 'OWNER';
 
   const fmt = (date: Date | string) =>
     new Intl.DateTimeFormat('en-US', {
@@ -146,6 +149,24 @@ export function ProjectDetailSheet() {
             />
 
             <DetailRow
+              icon={<Shield className="h-4 w-4" />}
+              label="Your Access"
+              value={p.current_user_access_level ?? (isPublic ? 'Public viewer' : 'No direct access')}
+            />
+
+            <DetailRow
+              icon={<Copy className="h-4 w-4" />}
+              label="Clone Permission"
+              value={p.current_user_can_clone || p.current_user_access_level === 'OWNER' ? 'Allowed' : 'Not allowed'}
+            />
+
+            <DetailRow
+              icon={<Edit2 className="h-4 w-4" />}
+              label="Pipeline Access"
+              value={canEditPipeline ? 'Can modify original pipeline' : 'View only'}
+            />
+
+            <DetailRow
               icon={<CalendarDays className="h-4 w-4" />}
               label="Created"
               value={fmt(p.created_at)}
@@ -176,58 +197,73 @@ export function ProjectDetailSheet() {
 
         {/* ── Footer actions ───────────────────────────────────────────────── */}
         <div className="px-6 py-4 flex flex-col gap-2">
-          <Button
-            variant="default"
-            className="w-full justify-start gap-2"
-            onClick={() => openEditDialog(p)}
-          >
-            <Edit2 className="h-4 w-4" />
-            Edit Project
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2"
-            onClick={() => openAccessDialog(p)}
-          >
-            <Shield className="h-4 w-4" />
-            Manage Access
-          </Button>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          {canManageProject && (
+            <>
               <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                disabled={isDeleting}
+                variant="default"
+                className="w-full justify-start gap-2"
+                onClick={() => openEditDialog(p)}
               >
-                <Trash2 className="h-4 w-4" />
-                Delete Project
+                <Edit2 className="h-4 w-4" />
+                Edit Project
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete "{p.name}"?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. The project and all its
-                  associated data will be permanently removed.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => {
-                    deleteProject.mutate(p.id, {
-                      onSuccess: () => selectProject(null),
-                    });
-                  }}
-                >
-                  Delete Project
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => openAccessDialog(p)}
+              >
+                <Shield className="h-4 w-4" />
+                Manage Access
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Project
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete "{p.name}"?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. The project and all its
+                      associated data will be permanently removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => {
+                        deleteProject.mutate(p.id, {
+                          onSuccess: () => selectProject(null),
+                        });
+                      }}
+                    >
+                      Delete Project
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+
+          {!canManageProject && (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              disabled
+            >
+              <Shield className="h-4 w-4" />
+              Project settings are owner-only
+            </Button>
+          )}
         </div>
       </SheetContent>
     </Sheet>

@@ -15,6 +15,8 @@ import {
   RadialBar,
   Legend,
 } from "recharts";
+import { Link } from "react-router";
+import { ArrowUpRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import type { KPI, KPIValue, Machine, SensorData } from "../../../types/dashboard";
@@ -38,6 +40,8 @@ const MACHINE_COLORS: Record<string, string> = {
   assembler: "#EC4899",
 };
 
+const lowerIsBetterTerms = ["defect", "scrap", "waste", "reject", "downtime", "error", "loss"];
+
 const tooltipStyle = {
   contentStyle: {
     borderRadius: "12px",
@@ -59,6 +63,34 @@ function generateMockKpiTimeSeries() {
     oee: 55 + Math.random() * 35 + i * 2,
     throughput: 100 + Math.random() * 80 + i * 10,
     quality: 85 + Math.random() * 12,
+  }));
+}
+
+function formatNumber(value?: number | null) {
+  if (value == null || Number.isNaN(value)) return "N/A";
+  return new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: Math.abs(value) < 10 ? 2 : 0,
+  }).format(value);
+}
+
+function isLowerBetter(kpi: KPI) {
+  const text = `${kpi.name} ${kpi.formula ?? ""}`.toLowerCase();
+  return lowerIsBetterTerms.some((term) => text.includes(term));
+}
+
+function getKpiStatus(kpi: KPI, value?: number | null) {
+  if (value == null || kpi.target_value == null) return "No target";
+  const healthy = isLowerBetter(kpi) ? value <= kpi.target_value : value >= kpi.target_value;
+  return healthy ? "On target" : "Watch";
+}
+
+function buildPrimaryKpiTrend(kpi: KPI | undefined, values: KPIValue[]) {
+  if (!kpi || values.length === 0) return null;
+
+  return values.slice(-12).map((item) => ({
+    time: new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    value: item.value,
+    target: kpi.target_value ?? undefined,
   }));
 }
 
@@ -118,25 +150,38 @@ function generateRadialData(machines: Machine[]) {
 }
 
 export function KpiCharts({ kpis, kpiValues, machines, sensorData }: KpiChartsProps) {
-  const timeSeriesData = generateMockKpiTimeSeries();
+  const primaryKpi = kpis[0];
+  const primaryValues = primaryKpi ? kpiValues[primaryKpi.id] ?? [] : [];
+  const primaryTrendData = buildPrimaryKpiTrend(primaryKpi, primaryValues);
+  const timeSeriesData: Array<Record<string, string | number | undefined>> = primaryTrendData ?? generateMockKpiTimeSeries();
   const barData = generateMachineBarData(machines);
   const pieData = generatePieData(machines);
   const radialData = generateRadialData(machines);
+  const kpiCards = kpis.slice(0, 4).map((kpi) => {
+    const values = kpiValues[kpi.id] ?? [];
+    const current = values.at(-1)?.value ?? null;
+    const status = getKpiStatus(kpi, current);
+    return { kpi, current, status };
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      {/* ── Card 1: Performance Trends Area Chart ── */}
+      {/* ── Card 1: KPI Trends Area Chart ── */}
       <Card className="bg-neutral-950 border-neutral-800">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white text-sm font-semibold">Performance Trends</CardTitle>
-              <CardDescription className="text-neutral-500 text-xs">Real-time OEE, Throughput & Quality</CardDescription>
+              <CardTitle className="text-white text-sm font-semibold">KPI Trends</CardTitle>
+              <CardDescription className="text-neutral-500 text-xs">
+                {primaryKpi ? `${primaryKpi.name} history and target` : "Seed data appears when KPIs are available"}
+              </CardDescription>
             </div>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">Live</span>
+            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
+              {primaryTrendData ? "Live" : "Preview"}
+            </span>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timeSeriesData} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
@@ -154,10 +199,53 @@ export function KpiCharts({ kpis, kpiValues, machines, sensorData }: KpiChartsPr
                 <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#737373" }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#737373" }} />
                 <Tooltip {...tooltipStyle} />
-                <Area type="monotone" dataKey="oee" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gradOee)" name="OEE (%)" />
-                <Area type="monotone" dataKey="throughput" stroke="#3b82f6" strokeWidth={1.5} fillOpacity={1} fill="url(#gradThroughput)" name="Throughput" />
+                {primaryTrendData ? (
+                  <>
+                    <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gradOee)" name={primaryKpi?.unit ? `${primaryKpi.name} (${primaryKpi.unit})` : primaryKpi?.name} />
+                    {primaryKpi?.target_value != null && <Area type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={1.5} fillOpacity={0} name="Target" />}
+                  </>
+                ) : (
+                  <>
+                    <Area type="monotone" dataKey="oee" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gradOee)" name="OEE (%)" />
+                    <Area type="monotone" dataKey="throughput" stroke="#3b82f6" strokeWidth={1.5} fillOpacity={1} fill="url(#gradThroughput)" name="Throughput" />
+                  </>
+                )}
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {kpiCards.length === 0 ? (
+              <div className="sm:col-span-2 text-xs text-neutral-500 border border-dashed border-neutral-800 rounded-lg p-4 text-center">
+                No KPIs defined yet
+              </div>
+            ) : (
+              kpiCards.map(({ kpi, current, status }) => (
+                <Link
+                  key={kpi.id}
+                  to={`/kpi/${kpi.id}`}
+                  className="group/kpi rounded-lg border border-neutral-800 bg-black/30 p-3 hover:border-neutral-700 hover:bg-neutral-900 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-white truncate">{kpi.name}</p>
+                      <p className="text-[11px] text-neutral-500 mt-1">
+                        Target {formatNumber(kpi.target_value)} {kpi.unit}
+                      </p>
+                    </div>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-neutral-600 group-hover/kpi:text-neutral-300 shrink-0" />
+                  </div>
+                  <div className="flex items-end justify-between gap-3 mt-3">
+                    <span className="text-lg font-semibold text-white tabular-nums">
+                      {formatNumber(current)}
+                      {current != null && kpi.unit && <span className="text-xs text-neutral-500 ml-1">{kpi.unit}</span>}
+                    </span>
+                    <span className={`text-[10px] font-medium ${status === "Watch" ? "text-amber-400" : status === "On target" ? "text-emerald-400" : "text-neutral-500"}`}>
+                      {status}
+                    </span>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

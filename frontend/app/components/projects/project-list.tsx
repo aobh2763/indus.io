@@ -13,14 +13,14 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   const { openCreateDialog, resetFilters } = useProjectUIStore();
 
   return (
-    <div className="col-span-full flex flex-col items-center justify-center rounded-xl border border-dashed py-16 px-4 text-center">
-      <div className="mb-4 rounded-full bg-muted p-3">
-        <FolderOpen className="h-6 w-6 text-muted-foreground" />
+    <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed border-neutral-800 py-16 px-4 text-center">
+      <div className="mb-4 rounded-full bg-neutral-900 p-3">
+        <FolderOpen className="h-6 w-6 text-neutral-600" />
       </div>
       {hasFilters ? (
         <>
-          <p className="font-medium text-sm">No projects match your filters</p>
-          <p className="mt-1 text-xs text-muted-foreground max-w-[240px]">
+          <p className="font-medium text-sm text-white">No projects match your filters</p>
+          <p className="mt-1 text-xs text-neutral-500 max-w-[240px]">
             Try adjusting your search or changing the visibility filter.
           </p>
           <Button
@@ -35,8 +35,8 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
         </>
       ) : (
         <>
-          <p className="font-medium text-sm">No projects yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="font-medium text-sm text-white">No projects yet</p>
+          <p className="mt-1 text-xs text-neutral-500">
             Create your first project to get started.
           </p>
           <Button size="sm" className="mt-4" onClick={openCreateDialog}>
@@ -57,7 +57,7 @@ export function ProjectList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-950/60 p-3">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -65,7 +65,7 @@ export function ProjectList() {
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
             placeholder="Search projects…"
-            className="pl-8"
+            className="border-neutral-800 bg-black/40 pl-8 text-neutral-200"
           />
           {filters.search && (
             <button
@@ -116,7 +116,7 @@ export function ProjectList() {
 
       {/* ── Results count ──────────────────────────────────────────────────── */}
       {!isLoading && projects.length > 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-neutral-500">
           Showing {projects.length} project{projects.length !== 1 ? 's' : ''}
           {hasActiveFilters ? ' matching your filters' : ''}
         </p>

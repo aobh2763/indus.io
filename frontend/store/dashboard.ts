@@ -129,6 +129,18 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         } catch { /* skip */ }
       }
 
+      const kpiValueEntries = await Promise.all(
+        allKpis.map(async (kpi) => {
+          const res = await kpiService.getValues(kpi.id).catch(() => ({ data: [] as KPIValue[] }));
+          return [
+            kpi.id,
+            [...res.data].sort(
+              (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+            ),
+          ] as const;
+        })
+      );
+
       set({
         projects,
         alerts,
@@ -137,6 +149,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         simulations: allSimulations,
         suggestions: allSuggestions,
         kpis: allKpis,
+        kpiValues: Object.fromEntries(kpiValueEntries),
         isLoading: false,
       });
     } catch (err: any) {

@@ -63,6 +63,7 @@ const Navbar1 = ({
     { title: "Dashboard", url: "/" },
     { title: "Projects", url: "/projects-management" },
     { title: "Pipeline", url: "/pipeline-builder" },
+    { title: "KPIs", url: "/kpis" },
   ],
   auth = {
     login: { title: "Login", url: "/login" },

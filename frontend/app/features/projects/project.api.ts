@@ -9,6 +9,8 @@ import {
   updateProjectAccessRequestSchema,
   projectAccessResponseSchema,
   projectAccessListResponseSchema,
+  projectNotificationResponseSchema,
+  projectNotificationListResponseSchema,
   type CreateProjectRequest,
   type UpdateProjectRequest,
   type ProjectResponse,
@@ -17,6 +19,8 @@ import {
   type UpdateProjectAccessRequest,
   type ProjectAccessResponse,
   type ProjectAccessListResponse,
+  type ProjectNotificationResponse,
+  type ProjectNotificationListResponse,
 } from './project.schema';
 
 export const projectsApi = {
@@ -33,6 +37,11 @@ export const projectsApi = {
   create: async (data: CreateProjectRequest): Promise<ProjectResponse> => {
     createProjectRequestSchema.parse(data);
     const res = await api.post(API_PREFIX + '/projects', data);
+    return projectResponseSchema.parse(res.data);
+  },
+
+  clone: async (id: string): Promise<ProjectResponse> => {
+    const res = await api.post(API_PREFIX + '/projects/' + id + '/clone');
     return projectResponseSchema.parse(res.data);
   },
 
@@ -67,5 +76,31 @@ export const projectAccessApi = {
 
   revoke: async (access_id: string): Promise<void> => {
     await api.delete(API_PREFIX + '/projects/access/' + access_id);
+  },
+
+  invitations: async (): Promise<ProjectAccessListResponse> => {
+    const res = await api.get(API_PREFIX + '/projects/me/invitations');
+    return projectAccessListResponseSchema.parse(res.data);
+  },
+
+  accept: async (access_id: string): Promise<ProjectAccessResponse> => {
+    const res = await api.post(API_PREFIX + '/projects/access/' + access_id + '/accept');
+    return projectAccessResponseSchema.parse(res.data);
+  },
+
+  decline: async (access_id: string): Promise<void> => {
+    await api.post(API_PREFIX + '/projects/access/' + access_id + '/decline');
+  },
+};
+
+export const projectNotificationsApi = {
+  getList: async (): Promise<ProjectNotificationListResponse> => {
+    const res = await api.get(API_PREFIX + '/projects/notifications');
+    return projectNotificationListResponseSchema.parse(res.data);
+  },
+
+  markRead: async (notification_id: string): Promise<ProjectNotificationResponse> => {
+    const res = await api.post(API_PREFIX + '/projects/notifications/' + notification_id + '/read');
+    return projectNotificationResponseSchema.parse(res.data);
   },
 };

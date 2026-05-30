@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { machinesApi } from "~/features/machines/machines.api";
 import { connectionsApi } from "~/features/connections/connections.api";
-import type { MachineProcess, MachineTypeConfig, ProcessAttributes } from "./pipeline.schema";
+import type { AttributeInstance, MachineProcess, MachineTypeConfig, ProcessAttributes } from "./pipeline.schema";
 import { getColorForProcess, getIconForProcess } from "./pipeline.schema";
 import type { CreateMachineRequest } from "~/features/machines/machines.schema";
 import type { MachineResponse } from "~/features/machines/machines.schema";
@@ -42,8 +42,10 @@ interface PipelineState {
 
   lineId: string | null;
   isLoading: boolean;
+  isReadOnly: boolean;
 
   setLineId: (lineId: string) => void;
+  setReadOnly: (isReadOnly: boolean) => void;
   loadPipeline: (lineId: string) => Promise<void>;
 
   setEdges: (edges: Edge[]) => void;
@@ -72,6 +74,82 @@ interface PipelineState {
 
 // ── Helpers ─────────────────────────────────────────────
 
+function emptyAttributes(): ProcessAttributes {
+  return {
+    inputs: {},
+    configs: {},
+    outputs: {},
+  };
+}
+
+function inferAttributeType(value: unknown): AttributeInstance["definition"]["type"] {
+  if (typeof value === "number") return "number";
+  if (typeof value === "boolean") return "boolean";
+  return "string";
+}
+
+function titleFromKey(key: string) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function normalizeAttributeMap(value: unknown): Record<string, AttributeInstance> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, raw]) => {
+      if (
+        raw &&
+        typeof raw === "object" &&
+        "definition" in raw &&
+        "value" in raw &&
+        (raw as AttributeInstance).definition
+      ) {
+        return [key, raw as AttributeInstance];
+      }
+
+      return [
+        key,
+        {
+          definition: {
+            id: key,
+            name: titleFromKey(key),
+            type: inferAttributeType(raw),
+          },
+          value: raw,
+        },
+      ];
+    })
+  );
+}
+
+function normalizeProcessAttributes(parameters: unknown): ProcessAttributes {
+  if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) {
+    return emptyAttributes();
+  }
+
+  const maybeGrouped = parameters as Partial<Record<keyof ProcessAttributes, unknown>>;
+  const hasGroupedShape =
+    "inputs" in maybeGrouped ||
+    "configs" in maybeGrouped ||
+    "outputs" in maybeGrouped;
+
+  if (hasGroupedShape) {
+    return {
+      inputs: normalizeAttributeMap(maybeGrouped.inputs),
+      configs: normalizeAttributeMap(maybeGrouped.configs),
+      outputs: normalizeAttributeMap(maybeGrouped.outputs),
+    };
+  }
+
+  return {
+    inputs: {},
+    configs: normalizeAttributeMap(parameters),
+    outputs: {},
+  };
+}
+
 /** Convert a backend MachineResponse into a ReactFlow MachineNode */
 function machineToNode(machine: MachineResponse): MachineNode {
   return {
@@ -83,11 +161,7 @@ function machineToNode(machine: MachineResponse): MachineNode {
       process: (machine.process ?? "spinning") as MachineProcess,
       color: getColorForProcess(machine.process ?? ""),
       icon: machine.icon ?? getIconForProcess(machine.process ?? ""),
-      attributes: (machine.parameters as unknown as ProcessAttributes) ?? {
-        inputs: {},
-        configs: {},
-        outputs: {},
-      },
+      attributes: normalizeProcessAttributes(machine.parameters),
     },
   };
 }
@@ -135,8 +209,10 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
   lineId: null,
   isLoading: false,
+  isReadOnly: false,
 
   setLineId: (lineId) => set({ lineId }),
+  setReadOnly: (isReadOnly) => set({ isReadOnly }),
 
   loadPipeline: async (lineId) => {
     set({ isLoading: true, lineId });
@@ -161,6 +237,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   setEdges: (edges) => set({ edges }),
 
   onNodesChange: (changes) => {
+    if (get().isReadOnly) return;
+
     set({
       nodes: applyNodeChanges(changes, get().nodes) as MachineNode[],
     });
@@ -212,6 +290,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   onEdgesChange: (changes) => {
+    if (get().isReadOnly) return;
+
     // Before applying, track edges that are being removed
     for (const change of changes) {
       if (change.type === "remove") {
@@ -229,6 +309,11 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   onConnect: (connection) => {
+    if (get().isReadOnly) {
+      toast.error("You can view this pipeline, but you cannot modify it");
+      return;
+    }
+
     const { lineId } = get();
     if (!lineId) return;
 
@@ -285,6 +370,11 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   addNode: (machineConfig, position) => {
+    if (get().isReadOnly) {
+      toast.error("You can view this pipeline, but you cannot modify it");
+      return;
+    }
+
     const { lineId } = get();
     if (!lineId) return;
 
@@ -329,6 +419,11 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   updateNodeData: (nodeId, data) => {
+    if (get().isReadOnly) {
+      toast.error("You can view this pipeline, but you cannot modify it");
+      return;
+    }
+
     // Optimistic: update locally
     set({
       nodes: get().nodes.map((node) =>
@@ -354,6 +449,11 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   removeNode: (nodeId) => {
+    if (get().isReadOnly) {
+      toast.error("You can view this pipeline, but you cannot modify it");
+      return;
+    }
+
     // Capture edges to delete before removing from state
     const edgesToDelete = get().edges.filter(
       (edge) => edge.source === nodeId || edge.target === nodeId

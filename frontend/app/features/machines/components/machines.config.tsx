@@ -26,6 +26,20 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 type LayerKey = "inputs" | "configs" | "outputs";
 
+const EMPTY_ATTRIBUTES: ProcessAttributes = {
+  inputs: {},
+  configs: {},
+  outputs: {},
+};
+
+function ensureAttributes(attributes?: Partial<ProcessAttributes> | null): ProcessAttributes {
+  return {
+    inputs: attributes?.inputs ?? {},
+    configs: attributes?.configs ?? {},
+    outputs: attributes?.outputs ?? {},
+  };
+}
+
 const LAYER_LABELS: Record<LayerKey, { title: string; description: string }> = {
   inputs: { title: "Inputs", description: "Input material attributes" },
   configs: { title: "Configuration", description: "Configurable parameters" },
@@ -36,10 +50,12 @@ function AttributeField({
   attrKey,
   attr,
   onChange,
+  disabled = false,
 }: {
   attrKey: string;
   attr: AttributeInstance;
   onChange: (key: string, value: any) => void;
+  disabled?: boolean;
 }) {
   const { definition, value } = attr;
 
@@ -50,6 +66,7 @@ function AttributeField({
         <Checkbox
           checked={!!value}
           onCheckedChange={(checked) => onChange(attrKey, checked)}
+          disabled={disabled}
         />
       </div>
     );
@@ -59,7 +76,7 @@ function AttributeField({
     return (
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{definition.name}</Label>
-        <Select value={value} onValueChange={(v) => onChange(attrKey, v)}>
+        <Select value={String(value ?? "")} onValueChange={(v) => onChange(attrKey, v)} disabled={disabled}>
           <SelectTrigger className="h-8 text-sm">
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
@@ -86,6 +103,7 @@ function AttributeField({
       <Input
         type={definition.type === "number" ? "number" : "text"}
         value={value}
+        disabled={disabled}
         onChange={(e) =>
           onChange(
             attrKey,
@@ -104,13 +122,15 @@ function AttributeSection({
   layerKey,
   attributes,
   onChange,
+  disabled = false,
 }: {
   layerKey: LayerKey;
-  attributes: Record<string, AttributeInstance>;
+  attributes?: Record<string, AttributeInstance>;
   onChange: (layer: LayerKey, key: string, value: any) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(true);
-  const entries = Object.entries(attributes);
+  const entries = Object.entries(attributes ?? {});
   const { title } = LAYER_LABELS[layerKey];
 
   if (entries.length === 0) {
@@ -142,6 +162,7 @@ function AttributeSection({
             attrKey={key}
             attr={attr}
             onChange={(k, v) => onChange(layerKey, k, v)}
+            disabled={disabled}
           />
         ))}
       </CollapsibleContent>
@@ -157,20 +178,17 @@ const ConfigPanel: FC = () => {
     getSelectedNode,
     updateNodeData,
     removeNode,
+    isReadOnly,
   } = usePipelineStore();
 
-  const [localAttributes, setLocalAttributes] = useState<ProcessAttributes>({
-    inputs: {},
-    configs: {},
-    outputs: {},
-  });
+  const [localAttributes, setLocalAttributes] = useState<ProcessAttributes>(EMPTY_ATTRIBUTES);
   const [localLabel, setLocalLabel] = useState("");
 
   const selectedNode = getSelectedNode();
 
   useEffect(() => {
     if (selectedNode) {
-      setLocalAttributes(selectedNode.data.attributes);
+      setLocalAttributes(ensureAttributes(selectedNode.data.attributes));
       setLocalLabel(selectedNode.data.label);
     }
   }, [selectedNode]);
@@ -193,8 +211,8 @@ const ConfigPanel: FC = () => {
     setLocalAttributes((prev) => ({
       ...prev,
       [layer]: {
-        ...prev[layer],
-        [key]: { ...prev[layer][key], value },
+        ...(prev[layer] ?? {}),
+        [key]: { ...(prev[layer]?.[key] ?? {}), value },
       },
     }));
   };
@@ -237,6 +255,7 @@ const ConfigPanel: FC = () => {
             <Input
               value={localLabel}
               onChange={(e) => setLocalLabel(e.target.value)}
+              disabled={isReadOnly}
             />
           </div>
 
@@ -248,6 +267,7 @@ const ConfigPanel: FC = () => {
               layerKey={layer}
               attributes={localAttributes[layer]}
               onChange={handleAttributeChange}
+              disabled={isReadOnly}
             />
           ))}
         </div>
@@ -257,14 +277,22 @@ const ConfigPanel: FC = () => {
 
       {/* Footer */}
       <div className="p-4 flex gap-2 shrink-0">
-        <Button variant="outline" onClick={handleDelete} className="gap-2">
-          <Trash2 size={16} />
-          Delete
-        </Button>
-        <Button onClick={handleSave} className="flex-1 gap-2">
-          <Save size={16} />
-          Save
-        </Button>
+        {isReadOnly ? (
+          <Button variant="outline" onClick={() => setConfigPanelOpen(false)} className="flex-1">
+            Close
+          </Button>
+        ) : (
+          <>
+            <Button variant="outline" onClick={handleDelete} className="gap-2">
+              <Trash2 size={16} />
+              Delete
+            </Button>
+            <Button onClick={handleSave} className="flex-1 gap-2">
+              <Save size={16} />
+              Save
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

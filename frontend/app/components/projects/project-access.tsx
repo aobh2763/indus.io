@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from '~/components/ui/alert-dialog';
 import { Avatar, AvatarFallback } from '~/components/ui/avatar';
+import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
   Dialog,
@@ -57,8 +58,15 @@ const ACCESS_LEVEL_LABEL: Record<AccessLevel, string> = {
   COLLABORATOR: 'Collaborator',
   VIEWER: 'Viewer',
 };
+
+const ACCESS_LEVEL_DESCRIPTION: Record<AccessLevel, string> = {
+  OWNER: 'Full control: project settings, access management, and cloning.',
+  COLLABORATOR: 'Can work on the project and production setup.',
+  SUPERVISOR: 'Operational oversight role for monitoring and review.',
+  VIEWER: 'Read-only access to project information.',
+};
 interface GrantFormState {
-  userId: string;
+  recipient: string;
   accessLevel: AccessLevel;
   canClone: boolean;
 }
@@ -66,7 +74,7 @@ interface GrantFormState {
 function GrantAccessForm({ projectId }: { projectId: string }) {
   const grantAccess = useGrantProjectAccess(projectId);
   const [form, setForm] = useState<GrantFormState>({
-    userId: '',
+    recipient: '',
     accessLevel: 'VIEWER',
     canClone: false,
   });
@@ -75,15 +83,18 @@ function GrantAccessForm({ projectId }: { projectId: string }) {
   const isSubmitting = grantAccess.isPending;
 
   const handleGrant = () => {
-    if (!form.userId.trim()) return;
+    const recipient = form.recipient.trim();
+    if (!recipient) return;
+
     const dto: CreateProjectAccessRequest = {
-      user_id: form.userId.trim(),
+      ...(recipient.includes('@') ? { email: recipient } : { user_id: recipient }),
       access_level: form.accessLevel,
       can_clone: form.canClone,
     };
+
     grantAccess.mutate(dto, {
       onSuccess: () => {
-        setForm({ userId: '', accessLevel: 'VIEWER', canClone: false });
+        setForm({ recipient: '', accessLevel: 'VIEWER', canClone: false });
         setExpanded(false);
       },
     });
@@ -98,28 +109,27 @@ function GrantAccessForm({ projectId }: { projectId: string }) {
         onClick={() => setExpanded(true)}
       >
         <UserPlus className="mr-2 h-4 w-4" />
-        Grant Access to a User
+        Invite Contributor
       </Button>
     );
   }
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+    <div className="rounded-lg border border-neutral-800 bg-black/30 p-4 space-y-4">
       <p className="text-sm font-medium flex items-center gap-2">
-        <Plus className="h-4 w-4" /> Grant New Access
+        <Plus className="h-4 w-4" /> Invite Contributor
       </p>
 
-      {/* User ID input */}
       <div className="grid gap-1.5">
         <Label htmlFor="access-uid" className="text-xs text-muted-foreground">
-          User ID (UUID)
+          Contributor email or user ID
         </Label>
         <Input
           id="access-uid"
-          value={form.userId}
-          onChange={(e) => setForm((f) => ({ ...f, userId: e.target.value }))}
-          placeholder="550e8400-e29b-41d4-a716-446655440000"
-          className="font-mono text-xs"
+          value={form.recipient}
+          onChange={(e) => setForm((f) => ({ ...f, recipient: e.target.value }))}
+          placeholder="amina.haddad@indus.example"
+          className="text-xs"
         />
       </div>
       <div className="flex gap-3">
@@ -131,14 +141,14 @@ function GrantAccessForm({ projectId }: { projectId: string }) {
               setForm((f) => ({ ...f, accessLevel: v as AccessLevel }))
             }
           >
-            <SelectTrigger>
+          <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="VIEWER">Viewer – read-only</SelectItem>
-              <SelectItem value="COLLABORATOR">Collaborator – can modify</SelectItem>
-              <SelectItem value="SUPERVISOR">Supervisor – supervise</SelectItem>
-              <SelectItem value="OWNER">Owner – full control</SelectItem>
+              <SelectItem value="VIEWER">Viewer - read-only</SelectItem>
+              <SelectItem value="COLLABORATOR">Collaborator - can modify</SelectItem>
+              <SelectItem value="SUPERVISOR">Supervisor - monitor/review</SelectItem>
+              <SelectItem value="OWNER">Owner - full control</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -166,10 +176,10 @@ function GrantAccessForm({ projectId }: { projectId: string }) {
         <Button
           size="sm"
           onClick={handleGrant}
-          disabled={isSubmitting || !form.userId.trim()}
+          disabled={isSubmitting || !form.recipient.trim()}
         >
           {isSubmitting && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-          Grant Access
+          Invite Contributor
         </Button>
       </div>
     </div>
@@ -191,7 +201,7 @@ export function ProjectAccessDialog() {
       open={isAccessDialogOpen}
       onOpenChange={(o) => !o && closeAccessDialog()}
     >
-      <DialogContent className="sm:max-w-[580px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="border-neutral-800 bg-neutral-950 text-neutral-200 sm:max-w-[820px] max-h-[84vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
@@ -202,7 +212,14 @@ export function ProjectAccessDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <Separator />
+        <div className="grid grid-cols-1 gap-2 rounded-lg border border-neutral-800 bg-black/30 p-3 text-xs text-neutral-500 sm:grid-cols-2">
+          {(Object.keys(ACCESS_LEVEL_DESCRIPTION) as AccessLevel[]).map((level) => (
+            <div key={level}>
+              <span className="font-medium text-neutral-300">{ACCESS_LEVEL_LABEL[level]}</span>
+              <span className="ml-1">{ACCESS_LEVEL_DESCRIPTION[level]}</span>
+            </div>
+          ))}
+        </div>
 
         {/* Member table */}
         {isLoading ? (
@@ -225,6 +242,7 @@ export function ProjectAccessDialog() {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Level</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-center">Clone</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -232,17 +250,21 @@ export function ProjectAccessDialog() {
             <TableBody>
               {accessList.map((entry) => (
                 <TableRow key={entry.id}>
-                  {/* Avatar + truncated UUID */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-7 w-7">
                         <AvatarFallback className="text-xs">
-                          {entry.user_id.slice(0, 2).toUpperCase()}
+                          {(entry.user_name || entry.user_email || entry.user_id).slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-mono text-xs text-muted-foreground truncate max-w-[120px]">
-                        {entry.user_id}
-                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {entry.user_name || entry.user_email || 'Unknown user'}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground max-w-[170px]">
+                          {entry.user_email || entry.user_id}
+                        </p>
+                      </div>
                     </div>
                   </TableCell>
 
@@ -270,6 +292,19 @@ export function ProjectAccessDialog() {
                     </Select>
                   </TableCell>
 
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={
+                        entry.status === 'ACCEPTED'
+                          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                          : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
+                      }
+                    >
+                      {entry.status}
+                    </Badge>
+                  </TableCell>
+
                   {/* Clone toggle */}
                   <TableCell className="text-center">
                     <Switch
@@ -280,7 +315,7 @@ export function ProjectAccessDialog() {
                           data: { can_clone: v },
                         })
                       }
-                      disabled={isMutating}
+                      disabled={isMutating || entry.status !== 'ACCEPTED'}
                       className="scale-90"
                     />
                   </TableCell>
@@ -302,9 +337,9 @@ export function ProjectAccessDialog() {
                           <AlertDialogTitle>Revoke Access</AlertDialogTitle>
                           <AlertDialogDescription>
                             This will remove all permissions for user{' '}
-                            <code className="font-mono text-xs">
-                              {entry.user_id}
-                            </code>
+                            <span className="font-medium">
+                              {entry.user_email || entry.user_name || entry.user_id}
+                            </span>
                             . They will lose access to this project immediately.
                           </AlertDialogDescription>
                         </AlertDialogHeader>

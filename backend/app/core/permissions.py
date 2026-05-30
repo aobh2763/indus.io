@@ -27,6 +27,12 @@ class AccessLevel(str, Enum):
     COLLABORATOR = "COLLABORATOR"
 
 
+class AccessStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    DECLINED = "DECLINED"
+
+
 class Visibility(str, Enum):
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
