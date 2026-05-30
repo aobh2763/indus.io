@@ -1,6 +1,7 @@
 import { Factory } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { ProjectNotificationBell } from "~/components/projects/project-notification-bell";
 import { useAuthStore } from "~/features/auth/auth.store";
 
 export default function Navbar() {
@@ -12,9 +13,11 @@ export default function Navbar() {
     if (pathname === "/") setCurrentPage("dashboard");
     else if (pathname === "/projects-management") setCurrentPage("projects");
     else if (pathname === "/pipeline-builder") setCurrentPage("pipeline");
+    else if (pathname === "/kpis" || pathname.startsWith("/kpi/")) setCurrentPage("kpis");
   }, [pathname]);
 
   const isPipeline = currentPage === "pipeline";
+  const isKpis = currentPage === "kpis";
   const initials = user?.name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
@@ -39,24 +42,32 @@ export default function Navbar() {
           <span className="text-[13px] text-neutral-400">
             {currentPage === "dashboard" ? "Dashboard"
               : currentPage === "projects" ? "Projects"
-                : "Pipeline builder"}
+                : currentPage === "kpis" ? "KPIs"
+                  : "Pipeline builder"}
           </span>
         </div>
 
         {/* Right: nav + user */}
         <div className="flex items-center gap-1.5">
-          {!isPipeline ? (
-            <NavLink to={currentPage === "projects" ? "/" : "/projects-management"}>
-              {currentPage === "dashboard" ? "Projects" : "Dashboard"}
-            </NavLink>
+          {!isPipeline && !isKpis ? (
+            <>
+              <NavLink to={currentPage === "projects" ? "/" : "/projects-management"}>
+                {currentPage === "dashboard" ? "Projects" : "Dashboard"}
+              </NavLink>
+              <NavLink to="/kpis">KPIs</NavLink>
+            </>
           ) : (
             <>
               <NavLink to="/">Dashboard</NavLink>
               <NavLink to="/projects-management">Projects</NavLink>
+              {!isKpis && <NavLink to="/kpis">KPIs</NavLink>}
+              {isKpis && <NavLink to="/pipeline-builder">Pipeline</NavLink>}
             </>
           )}
 
           <div className="w-px h-4 bg-neutral-800 mx-1" />
+
+          {user && <ProjectNotificationBell />}
 
           {/* User pill */}
           <button className="flex items-center gap-2 pl-1.5 pr-3 py-1 text-[12px] text-neutral-400 hover:text-white hover:border-neutral-700 rounded-[7px] hover:bg-neutral-900 transition-colors">
