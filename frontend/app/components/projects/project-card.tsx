@@ -40,6 +40,10 @@ import { Skeleton } from '~/components/ui/skeleton';
 import { useProjectUIStore } from '../../features/projects/project.store';
 import { useDeleteProject } from '../../features/projects/project.hooks';
 import type { ProjectResponse } from '../../features/projects/project.schema';
+import { productionLinesApi } from '~/features/pipeline/pipeline.api';
+import { PipelineStatus } from '~/features/pipeline/pipeline.schema';
+import { useNavigate } from 'react-router';
+import { usePipelineStore } from '~/features/pipeline/pipeline.store';
 
 
 interface ProjectCardProps {
@@ -47,6 +51,9 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project: p }: ProjectCardProps) {
+  const navigate = useNavigate();
+  const { setLineId } = usePipelineStore();
+
   const { selectProject, openEditDialog, openAccessDialog } = useProjectUIStore();
   const deleteProject = useDeleteProject();
 
@@ -56,6 +63,28 @@ export function ProjectCard({ project: p }: ProjectCardProps) {
 
   const isPublic = p.visibility === 'PUBLIC';
 
+  async function handleOpenInPipelineEditor(project: ProjectResponse) {
+    let pId: string | null = null;
+    const productionLines = await productionLinesApi.get(project.id);
+
+    if (productionLines.length === 0) {
+      const productionLine = await productionLinesApi.create(project.id, {
+        name: "default",
+        status: PipelineStatus.DRAFT,
+      });
+
+      pId = productionLine.id;
+    } else {
+      const sorted = productionLines.sort((a, b) => Number(a.id > b.id));
+      pId = sorted[0].id;
+    }
+
+    if (pId) {
+      setLineId(pId);
+      navigate('/pipeline-builder');
+    }
+  }
+
   return (
     <Card
       className={[
@@ -63,9 +92,11 @@ export function ProjectCard({ project: p }: ProjectCardProps) {
         'hover:shadow-md hover:-translate-y-0.5',
         'border-border/60 hover:border-border',
       ].join(' ')}
-      onClick={() => selectProject(p)}
     >
-      <CardHeader className="pb-3">
+      <CardHeader
+        className="pb-3"
+        onClick={() => selectProject(p)}
+      >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <Avatar className="h-9 w-9 shrink-0">
@@ -174,11 +205,18 @@ export function ProjectCard({ project: p }: ProjectCardProps) {
       </CardContent>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <CardFooter className="pt-0 pb-3">
+      <CardFooter className='flex justify-between'>
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <CalendarDays className="h-3 w-3" />
           <span>Created {formattedDate}</span>
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleOpenInPipelineEditor(p)}
+        >
+          Open in pipeline editor
+        </Button>
       </CardFooter>
     </Card>
   );

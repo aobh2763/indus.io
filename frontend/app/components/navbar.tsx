@@ -1,65 +1,91 @@
-import { Button } from "./ui/button";
 import { Factory } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useAuthStore } from "~/features/auth/auth.store";
 
 export default function Navbar() {
-  const { logout } = useAuthStore();
   const { pathname } = useLocation();
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const { user, logout } = useAuthStore();
+  const [currentPage, setCurrentPage] = useState("dashboard");
 
   useEffect(() => {
-    if (pathname === '/') {
-      setCurrentPage('dashboard');
-    } else if (pathname === '/projects-management') {
-      setCurrentPage('projects');
-    } else if (pathname === '/pipeline-builder') {
-      setCurrentPage('pipeline');
-    }
+    if (pathname === "/") setCurrentPage("dashboard");
+    else if (pathname === "/projects-management") setCurrentPage("projects");
+    else if (pathname === "/pipeline-builder") setCurrentPage("pipeline");
   }, [pathname]);
 
+  const isPipeline = currentPage === "pipeline";
+  const initials = user?.name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+
   return (
-    <header className={`${currentPage === 'pipeline' ? 'fixed w-full' : 'sticky'} top-0 z-50 border-b border-neutral-800 bg-black/80 backdrop-blur-md`}>
-      < div className="max-w-[1600px] mx-auto flex items-center justify-between h-12 px-5">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white tracking-tight">
-            <Factory className="h-4 w-4 text-white" />
-            indus.io
+    <header
+      className={`${isPipeline ? "fixed w-full" : "sticky"} top-0 z-50 border-b border-neutral-800/60 bg-black/75 backdrop-blur-xl`}
+    >
+      <div className="max-w-[1600px] mx-auto flex items-center justify-between h-12 px-5">
+
+        {/* Left: brand + breadcrumb */}
+        <div className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex items-center justify-center w-[26px] h-[26px] rounded-[6px]">
+              <Factory className="h-3.5 w-3.5" />
+            </div>
+            <span className="text-[13px] font-medium text-white tracking-tight">
+              indus.io
+            </span>
           </Link>
-          <span className="text-neutral-700">/</span>
-          <span className="text-sm text-neutral-400">
-            {currentPage === 'dashboard' ?
-              <>Dashboard</> :
-              currentPage === 'projects' ? <>Projects</> : <>Pipeline Builder</>
-            }
+
+          <div className="w-px h-3.5 bg-neutral-700" />
+
+          <span className="text-[13px] text-neutral-400">
+            {currentPage === "dashboard" ? "Dashboard"
+              : currentPage === "projects" ? "Projects"
+                : "Pipeline builder"}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {currentPage !== 'pipeline' ?
-            <Link to={currentPage === 'projects' ? '/' : '/projects-management'} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
-              {currentPage === 'dashboard' ? <>Projects</> : <>Dashboard</>}
-            </Link>
-            :
+
+        {/* Right: nav + user */}
+        <div className="flex items-center gap-1.5">
+          {!isPipeline ? (
+            <NavLink to={currentPage === "projects" ? "/" : "/projects-management"}>
+              {currentPage === "dashboard" ? "Projects" : "Dashboard"}
+            </NavLink>
+          ) : (
             <>
-              <Link to='/' className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
-                Dashboard
-              </Link>
-              <Link to='/projects-management' className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors">
-                Projects
-              </Link>
+              <NavLink to="/">Dashboard</NavLink>
+              <NavLink to="/projects-management">Projects</NavLink>
             </>
-          }
-          <Button
-            size='sm'
+          )}
+
+          <div className="w-px h-4 bg-neutral-800 mx-1" />
+
+          {/* User pill */}
+          <button className="flex items-center gap-2 pl-1.5 pr-3 py-1 text-[12px] text-neutral-400 hover:text-white hover:border-neutral-700 rounded-[7px] hover:bg-neutral-900 transition-colors">
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-neutral-800 text-neutral-300 text-[10px] font-medium">
+              {initials}
+            </span>
+            {user?.name}
+          </button>
+
+          {/* Logout */}
+          <button
             onClick={logout}
-            variant="outline"
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-400 hover:text-white border border-neutral-800 rounded-md hover:border-neutral-700 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] text-neutral-500 hover:text-red-400 border border-neutral-800 hover:border-red-900 hover:bg-red-950/40 rounded-[7px] transition-colors"
           >
             Logout
-          </Button>
+          </button>
         </div>
       </div>
-    </header >
+    </header>
+  );
+}
+
+function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] text-neutral-400 hover:text-white border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900 rounded-[7px] transition-colors"
+    >
+      {children}
+    </Link>
   );
 }

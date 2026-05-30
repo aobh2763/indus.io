@@ -15,6 +15,7 @@ import type {
   User,
   TokenResponse,
 } from "../types/dashboard";
+import { useAuthStore } from "~/features/auth/auth.store";
 
 const api = axios.create({
   baseURL: "http://localhost:8000/api/v1",
@@ -24,7 +25,6 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use(
   (request) => {
-    const { useAuthStore } = require("~/features/auth/auth.store");
     const token = useAuthStore.getState().token;
 
     if (token) {

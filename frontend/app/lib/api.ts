@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from 'axios';
+import { useAuthStore } from '../features/auth/auth.store';
 
 export const API_PREFIX = '/api/v1';
 
@@ -13,7 +14,6 @@ const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
   (request) => {
-    const { useAuthStore } = require('../features/auth/auth.store');
     const token = useAuthStore.getState().token;
 
     if (token) {
