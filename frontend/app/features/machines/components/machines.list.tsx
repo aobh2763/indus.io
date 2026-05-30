@@ -7,11 +7,10 @@ import { AVAILABLE_MACHINES } from "~/features/pipeline/pipeline.schema";
 import { useState, useMemo, useCallback, type FC, useEffect } from "react";
 import type { MachineTypeConfig } from "~/features/pipeline/pipeline.schema";
 
+import { Search } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea } from "~/components/ui/scroll-area";
-
-import { Search } from "lucide-react";
 
 interface DraggableMachineProps {
   onMouseLeave: () => void;
@@ -98,6 +97,7 @@ const MachineList: FC = () => {
     addNode,
     getDragNDropPosition,
     setDragNDropPosition,
+    isMachineLibraryOpen,
   } = usePipelineStore();
 
   const { screenToFlowPosition } = useReactFlow();
@@ -134,9 +134,11 @@ const MachineList: FC = () => {
     ]
   );
 
+  if (!isMachineLibraryOpen) return null;
+
   return (
     <div className="relative">
-      <div className="bg-card/80 backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
+      <div className="bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-4 shrink-0">
           <h2 className="text-lg font-bold mb-3">

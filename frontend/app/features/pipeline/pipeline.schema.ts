@@ -1,8 +1,5 @@
-import { Factory, type LucideIcon, Bot, Hammer, Move3d, Scan, Wrench, Zap } from "lucide-react";
 import z from "zod";
-
-export const DEFAULT_PROJECT_ID = "9a93ef27-b031-44f7-a650-b22a18dead47";
-export const DEFAULT_LINE_ID = "1db1f20c-ac09-40d9-bb48-0e4545bd3c3c";
+import { Factory, type LucideIcon, Bot, Hammer, Move3d, Scan, Wrench, Zap } from "lucide-react";
 
 export const ICON_MAP: Record<string, LucideIcon> = {
   Factory,
@@ -327,9 +324,15 @@ export const AVAILABLE_MACHINES: MachineTypeConfig[] = [
   },
 ];
 
+export enum PipelineStatus {
+  DRAFT = "DRAFT",
+  RUNNING = "RUNNING",
+  ARCHIVED = "ARCHIVED",
+}
+
 export const createProductionLineRequestSchema = z.object({
   name: z.string(),
-  status: z.string(),
+  status: z.enum(PipelineStatus),
 });
 export type CreateProductionLineRequest = z.infer<
   typeof createProductionLineRequestSchema
