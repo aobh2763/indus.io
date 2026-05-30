@@ -1,4 +1,5 @@
 import { Layers, Lock, Eye, Clock, Box, Play, Square, Check, Activity, AlertTriangle, Brain } from "lucide-react";
+import { Link } from "react-router";
 import { useDashboardStore } from "../../../store/dashboard";
 import { timeAgo } from "../../../lib/utils";
 
@@ -122,12 +123,12 @@ export function LinePanel({ id, openPanel }: { id: string; openPanel: (type: any
             <div className="text-xs text-neutral-500 border border-dashed border-neutral-800 rounded-lg p-4 text-center">No KPIs defined</div>
           ) : (
             lineKpis.map(k => (
-              <div key={k.id} className="p-3 border border-neutral-800 rounded-lg bg-neutral-950/50 flex items-center justify-between">
+              <Link key={k.id} to={`/kpi/${k.id}`} className="p-3 border border-neutral-800 rounded-lg bg-neutral-950/50 hover:bg-neutral-900 transition-colors flex items-center justify-between">
                 <div>
                   <span className="text-sm text-neutral-200 font-medium">{k.name}</span>
-                  {k.target_value && <p className="text-[11px] text-neutral-500">Target: {k.target_value} {k.unit}</p>}
+                  {k.target_value != null && <p className="text-[11px] text-neutral-500">Target: {k.target_value} {k.unit}</p>}
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
