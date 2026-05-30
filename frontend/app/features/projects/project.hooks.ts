@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { projectsApi, projectAccessApi } from './project.api';
+import { useAuthStore } from '~/features/auth/auth.store';
+import { projectsApi, projectAccessApi, projectNotificationsApi } from './project.api';
 import type {
   CreateProjectRequest,
   UpdateProjectRequest,
@@ -13,6 +14,10 @@ export const projectKeys = {
   all: ['projects'] as const,
   detail: (id: string) => ['projects', id] as const,
   access: (projectId: string) => ['projects', projectId, 'access'] as const,
+  invitationsRoot: ['projects', 'me', 'invitations'] as const,
+  invitations: (userId?: string | null) => ['projects', 'me', 'invitations', userId ?? 'anonymous'] as const,
+  notificationsRoot: ['projects', 'notifications'] as const,
+  notifications: (userId?: string | null) => ['projects', 'notifications', userId ?? 'anonymous'] as const,
 };
 
 export const useGetProjects = () => {
@@ -43,6 +48,23 @@ export const useCreateProject = () => {
 
     onError: () => {
       toast.error('Failed to create project');
+    },
+  });
+};
+
+export const useCloneProject = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => projectsApi.clone(id),
+
+    onSuccess: (project) => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      toast.success(`Cloned ${project.name}`);
+    },
+
+    onError: () => {
+      toast.error('Failed to clone project');
     },
   });
 };
@@ -91,6 +113,28 @@ export const useGetProjectAccess = (projectId: string) => {
   });
 };
 
+export const useGetProjectInvitations = () => {
+  const userId = useAuthStore((state) => state.user?.id);
+
+  return useQuery({
+    queryKey: projectKeys.invitations(userId),
+    queryFn: () => projectAccessApi.invitations(),
+    enabled: !!userId,
+    refetchInterval: 15000,
+  });
+};
+
+export const useGetProjectNotifications = () => {
+  const userId = useAuthStore((state) => state.user?.id);
+
+  return useQuery({
+    queryKey: projectKeys.notifications(userId),
+    queryFn: () => projectNotificationsApi.getList(),
+    enabled: !!userId,
+    refetchInterval: 15000,
+  });
+};
+
 export const useGrantProjectAccess = (projectId: string) => {
   const queryClient = useQueryClient();
 
@@ -100,11 +144,61 @@ export const useGrantProjectAccess = (projectId: string) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.access(projectId) });
-      toast.success('Access granted successfully');
+      queryClient.invalidateQueries({ queryKey: projectKeys.notificationsRoot });
+      toast.success('Invitation sent. It stays pending until accepted.');
     },
 
     onError: () => {
       toast.error('Failed to grant access');
+    },
+  });
+};
+
+export const useAcceptProjectInvitation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (accessId: string) => projectAccessApi.accept(accessId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.invitationsRoot });
+      queryClient.invalidateQueries({ queryKey: projectKeys.notificationsRoot });
+      toast.success('Invitation accepted');
+    },
+
+    onError: () => {
+      toast.error('Failed to accept invitation');
+    },
+  });
+};
+
+export const useDeclineProjectInvitation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (accessId: string) => projectAccessApi.decline(accessId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.invitationsRoot });
+      queryClient.invalidateQueries({ queryKey: projectKeys.notificationsRoot });
+      toast.success('Invitation declined');
+    },
+
+    onError: () => {
+      toast.error('Failed to decline invitation');
+    },
+  });
+};
+
+export const useMarkProjectNotificationRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) => projectNotificationsApi.markRead(notificationId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.notificationsRoot });
     },
   });
 };

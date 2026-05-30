@@ -19,21 +19,21 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, description, loading }: StatCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card className="rounded-lg border-neutral-800 bg-neutral-950">
+      <CardHeader className="flex flex-row items-center justify-between pb-1">
+        <CardTitle className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
           {title}
         </CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
+        <div className="text-neutral-500">{icon}</div>
       </CardHeader>
       <CardContent>
         {loading ? (
           <Skeleton className="h-8 w-16" />
         ) : (
           <>
-            <div className="text-3xl font-bold tabular-nums">{value}</div>
+            <div className="text-3xl font-semibold tabular-nums text-white">{value}</div>
             {description && (
-              <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+              <p className="mt-1 text-xs text-neutral-500">{description}</p>
             )}
           </>
         )}
@@ -60,7 +60,7 @@ export function ProjectStats() {
   const privateCount = projects.filter((p) => p.visibility === 'PRIVATE').length;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-px overflow-hidden rounded-lg bg-neutral-800 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Total Projects"
         value={total}
