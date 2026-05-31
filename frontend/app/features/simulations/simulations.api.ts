@@ -61,4 +61,11 @@ export const simulationsApi = {
   getSteps: async (id: string): Promise<void> => {
     await api.post(API_PREFIX + '/simulations/' + id + '/step');
   },
+
+  explain: async (warning: string): Promise<string> => {
+    const res = await api.get(API_PREFIX + '/ai-agents/explain', {
+      params: { warning },
+    });
+    return res.data;
+  }
 };

@@ -74,18 +74,3 @@ app.include_router(api_router)
 @app.get("/", tags=["Health"])
 def root():
     return {"status": "ok", "app": settings.APP_NAME, "version": settings.APP_VERSION}
-
-
-@app.get("/test-agent", tags=["Testing"])
-def testagent():
-    print("STEP 1: endpoint hit")
-
-    from app.modules.simulation.agent import test_agent
-
-    print("STEP 2: imported test_agent")
-
-    test_agent()
-
-    print("STEP 3: finished test_agent")
-
-    return {"status": "done"}

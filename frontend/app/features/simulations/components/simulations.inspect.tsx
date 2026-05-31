@@ -1,6 +1,9 @@
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { STEP, type SimulationResponse, SimulationStatus } from "../simulations.schema";
+import { simulationsApi } from "../simulations.api";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 import {
   Accordion,
@@ -92,27 +95,122 @@ function RecordCard({ id, data, label }: { id: string; data: Record<string, unkn
   );
 }
 
-function WarningBlock({ text }: { text: string }) {
-  return (
-    <div className="flex flex-col items-start rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
-      
-      {/* Warning text */}
-      <p className="text-[11px] text-amber-300/80 leading-snug text-justify">
-        {text}
-      </p>
+function ExplainModal({ text, onClose }: { text: string; onClose: () => void }) {
+  const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [explanation, setExplanation] = useState<string>("");
 
-      {/* Explain button */}
-      <Button
-        size="sm"
-        variant="ghost"
-        className="self-end h-6 px-2 text-[10px] text-violet-300 hover:text-violet-200 hover:bg-violet-500/10 shrink-0"
-        onClick={() => {
-          console.log("Explain warning:", text);
-        }}
+  // Kick off the API call on mount
+  useState(() => {
+    simulationsApi.explain(text)
+      .then((result: string) => {
+        setExplanation(result);
+        setStatus("done");
+      })
+      .catch(() => {
+        setExplanation("Something went wrong fetching the explanation.");
+        setStatus("error");
+      });
+  });
+
+  return (
+    // Backdrop
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Modal box — stop clicks bubbling to backdrop */}
+      <div
+        className="relative w-full max-w-md mx-4 rounded-xl bg-zinc-900 border border-amber-500/20 shadow-2xl p-5"
+        onClick={(e) => e.stopPropagation()}
       >
-        Explain ✨
-      </Button>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-semibold uppercase tracking-widest text-amber-400/80">
+            AI Explanation
+          </span>
+          <button
+            onClick={onClose}
+            className="text-zinc-500 hover:text-zinc-300 transition-colors text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Original warning */}
+        <p className="text-[11px] text-zinc-500 italic mb-4 border-l-2 border-amber-500/30 pl-2">
+          {text}
+        </p>
+
+        {/* Content area */}
+        {status === "loading" ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <svg
+              className="animate-spin h-7 w-7 text-violet-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <span className="text-xs text-zinc-500">Thinking…</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {/* Scrollable explanation */}
+            <div className="max-h-64 overflow-y-auto pr-1">
+              <div className="max-h-60 overflow-y-auto">
+                <div className="text-xs text-zinc-300 leading-relaxed prose prose-invert prose-xs max-w-none
+                  prose-p:my-1 prose-headings:text-zinc-200 prose-strong:text-zinc-200
+                  prose-code:text-violet-300 prose-code:bg-zinc-800 prose-code:px-1 prose-code:rounded
+                  prose-ul:my-1 prose-li:my-0">
+                  <ReactMarkdown>{explanation}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
+
+            {/* Always visible footer button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full h-8 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 border border-zinc-700 hover:border-zinc-500 transition-all"
+              onClick={onClose}
+            >
+              Got it
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function WarningBlock({ text }: { text: string }) {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <div className="flex flex-col items-start rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
+        {/* Warning text */}
+        <p className="text-[11px] text-amber-300/80 leading-snug text-justify">
+          {text}
+        </p>
+
+        {/* Explain button */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="self-end h-6 px-2 text-[10px] text-violet-300 hover:text-violet-200 hover:bg-violet-500/10 shrink-0"
+          onClick={() => setShowModal(true)}
+        >
+          Explain ✨
+        </Button>
+      </div>
+
+      {showModal && (
+        <ExplainModal text={text} onClose={() => setShowModal(false)} />
+      )}
+    </>
   );
 }
 
