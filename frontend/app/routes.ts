@@ -13,5 +13,6 @@ export default [
   route("/pipeline-builder", "routes/pipeline-builder.tsx"),
   route("/projects-management", "routes/projects-management.tsx"),
   route("/kpis", "routes/kpis.tsx"),
-  route("/kpi/:kpiId", "routes/kpi-details.tsx")
+  route("/kpi/:kpiId", "routes/kpi-details.tsx"),
+  route("/scanner", "routes/scanner.tsx")
 ] satisfies RouteConfig;

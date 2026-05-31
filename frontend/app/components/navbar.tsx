@@ -1,4 +1,4 @@
-import { Factory } from "lucide-react";
+import { Factory, Camera } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { ProjectNotificationBell } from "~/components/projects/project-notification-bell";
@@ -14,6 +14,7 @@ export default function Navbar() {
     else if (pathname === "/projects-management") setCurrentPage("projects");
     else if (pathname === "/pipeline-builder") setCurrentPage("pipeline");
     else if (pathname === "/kpis" || pathname.startsWith("/kpi/")) setCurrentPage("kpis");
+    else if (pathname === "/scanner") setCurrentPage("scanner");
   }, [pathname]);
 
   const isPipeline = currentPage === "pipeline";
@@ -43,12 +44,18 @@ export default function Navbar() {
             {currentPage === "dashboard" ? "Dashboard"
               : currentPage === "projects" ? "Projects"
                 : currentPage === "kpis" ? "KPIs"
-                  : "Pipeline builder"}
+                  : currentPage === "scanner" ? "AI Scanner"
+                    : "Pipeline builder"}
           </span>
         </div>
 
         {/* Right: nav + user */}
         <div className="flex items-center gap-1.5">
+          <NavLink to="/scanner">
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <Camera className="h-3.5 w-3.5" /> Scanner
+            </span>
+          </NavLink>
           {!isPipeline && !isKpis ? (
             <>
               <NavLink to={currentPage === "projects" ? "/" : "/projects-management"}>
