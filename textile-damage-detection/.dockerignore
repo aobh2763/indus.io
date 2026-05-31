@@ -1,0 +1,15 @@
+train/
+valid/
+test/
+runs/
+*.cache
+*.mp4
+*.avi
+*.mov
+*.mkv
+yolo*.pt
+__pycache__/
+*.pyc
+.venv/
+.scanner-source
+.scanner-model
