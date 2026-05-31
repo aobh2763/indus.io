@@ -4,6 +4,7 @@
 
 # React Router
 /.react-router/
+/.react-router.blocked-*/
 /build/
 
 # pnpm store

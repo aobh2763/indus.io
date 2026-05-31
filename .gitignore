@@ -14,6 +14,20 @@ dist/
 # Docker
 *.log
 
+# Scanner runtime and training artifacts
+textile-damage-detection/.scanner-*
+textile-damage-detection/__pycache__/
+textile-damage-detection/train/
+textile-damage-detection/valid/
+textile-damage-detection/test/
+textile-damage-detection/runs/
+textile-damage-detection/*.cache
+textile-damage-detection/*.pt
+
+# Lock files (generated per machine)
+frontend/package-lock.json
+backend/requirements.txt
+
 # OS
 .DS_Store
 Thumbs.db

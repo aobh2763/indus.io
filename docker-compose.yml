@@ -41,12 +41,37 @@ services:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  scanner:
+    build:
+      context: ./textile-damage-detection
+      dockerfile: Dockerfile
+    ports:
+      - "8012:8002"
+    environment:
+      - MODEL_PATH=textile_defect_model.pt
+      - CONFIDENCE_THRESHOLD=0.5
+    volumes:
+      - ./textile-damage-detection:/app:Z
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8002/health', timeout=2)\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     depends_on:
       - backend
+      - scanner
+    environment:
+      - VITE_SCANNER_URL=http://localhost:8012
     ports:
       - "5173:5173"
     volumes:
