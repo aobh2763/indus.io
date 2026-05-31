@@ -53,4 +53,12 @@ export const simulationsApi = {
   delete: async (id: string): Promise<void> => {
     await api.delete(API_PREFIX + '/simulations/' + id);
   },
+
+  step: async (id: string): Promise<void> => {
+    await api.post(API_PREFIX + '/simulations/' + id + '/step');
+  },
+
+  getSteps: async (id: string): Promise<void> => {
+    await api.post(API_PREFIX + '/simulations/' + id + '/step');
+  },
 };

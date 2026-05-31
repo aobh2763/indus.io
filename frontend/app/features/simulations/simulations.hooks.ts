@@ -103,3 +103,31 @@ export const useDeleteSimulation = () => {
     },
   });
 };
+
+export const useGetSimulationSteps = (id: string) => {
+  return useQuery({
+    queryKey: [id],
+    queryFn: () => simulationsApi.getSteps(id),
+    enabled: !!id,
+  });
+};
+
+export const useSimulationStep = (id: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => simulationsApi.step(id),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [id],
+      });
+
+      toast.success("Simulation deleted successfully");
+    },
+
+    onError: () => {
+      toast.error("Failed to delete simulation");
+    },
+  });
+};

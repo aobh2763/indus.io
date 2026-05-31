@@ -61,7 +61,6 @@ export default function Navbar() {
               <NavLink to="/">Dashboard</NavLink>
               <NavLink to="/projects-management">Projects</NavLink>
               {!isKpis && <NavLink to="/kpis">KPIs</NavLink>}
-              {isKpis && <NavLink to="/pipeline-builder">Pipeline</NavLink>}
             </>
           )}
 

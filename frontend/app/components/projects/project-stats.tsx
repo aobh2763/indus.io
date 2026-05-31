@@ -60,7 +60,7 @@ export function ProjectStats() {
   const privateCount = projects.filter((p) => p.visibility === 'PRIVATE').length;
 
   return (
-    <div className="grid gap-px overflow-hidden rounded-lg bg-neutral-800 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-px overflow-hidden rounded-lg md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Total Projects"
         value={total}
