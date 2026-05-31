@@ -27,7 +27,16 @@ class SimulationResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+    
 
+class SimulationStepSchema(BaseModel):
+    simulation_id: uuid.UUID
+    step: int
+    frame_data: dict
+
+    model_config = {
+        "from_attributes": True
+    }
 
 # ── Simulation Log ───────────────────────────────────────
 class SimulationLogCreate(BaseModel):

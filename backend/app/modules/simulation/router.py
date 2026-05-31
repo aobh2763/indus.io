@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from app.modules.production.models import Connection, Machine
+from app.modules.simulation.models import SimulationStep
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -21,6 +24,7 @@ from app.modules.simulation.schemas import (
     SimulationLogCreate,
     SimulationLogResponse,
     SimulationResponse,
+    SimulationStepSchema,
     SimulationUpdate,
 )
 
@@ -140,6 +144,40 @@ def complete(simulation_id: str, db: Session = Depends(get_db), current_user: Us
         raise NotFoundError("Simulation")
     return complete_simulation(db, sim)
 
+
+@router.get("/simulations/{simulation_id}/steps", response_model=list[SimulationStepSchema], tags=["Simulation Engine"])
+def get_steps(simulation_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sim = service.get_simulation_by_id(db, simulation_id)
+    if not sim:
+        raise NotFoundError("Simulation")
+    return service.get_steps_by_simulation(db, sim.id)
+
+
+@router.get("/simulations/{simulation_id}/steps/{step_number}", response_model=SimulationStepSchema, tags=["Simulation Engine"])
+def get_step(simulation_id: str, step_number: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sim = service.get_simulation_by_id(db, simulation_id)
+    if not sim:
+        raise NotFoundError("Simulation")
+    step = service.get_simulation_step(db, sim.id, step_number)
+    if not step:
+        raise NotFoundError("Simulation Step")
+    return step
+
+
+@router.get("/simulations/{simulation_id}/steps/{from_step}/{to_step}", response_model=list[SimulationStepSchema], tags=["Simulation Engine"])
+def get_steps_from_to(simulation_id: str, from_step: int, to_step: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sim = service.get_simulation_by_id(db, simulation_id)
+    if not sim:
+        raise NotFoundError("Simulation")
+    return service.get_steps_from_to(db, sim.id, from_step, to_step)
+
+
+@router.get("/simulations/{simulation_id}/steps/time/{from_datetime}/{to_datetime}", response_model=list[SimulationStepSchema], tags=["Simulation Engine"])
+def get_steps_between(simulation_id: str, from_datetime: datetime, to_datetime: datetime, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sim = service.get_simulation_by_id(db, simulation_id)
+    if not sim:
+        raise NotFoundError("Simulation")
+    return service.get_steps_between(db, sim.id, from_datetime, to_datetime)
 
 # ── Batch Simulation ────────────────────────────────────────────────
 @router.post(

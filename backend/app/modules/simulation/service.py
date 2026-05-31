@@ -78,15 +78,17 @@ def create_log(db: Session, sim_id: uuid.UUID, data: SimulationLogCreate) -> Sim
     db.refresh(log)
     return log
 
+
 def save_simulation_frame(db: Session, sim: Simulation, frame_data: dict) -> SimulationLog:
-    log = SimulationStep(
+    step = SimulationStep(
         simulation_id=sim.id,
         step=get_next_step(db, sim.id),
         frame_data=frame_data,)
-    db.add(log)
+    db.add(step)
     db.commit()
-    db.refresh(log)
-    return log
+    db.refresh(step)
+    return step
+
 
 def get_next_step(db: Session, simulation_id: uuid.UUID) -> int:
     count = db.query(func.count(SimulationStep.id)) \
@@ -94,3 +96,34 @@ def get_next_step(db: Session, simulation_id: uuid.UUID) -> int:
         .scalar()
 
     return count or 0
+
+
+# ── Simulation Steps ──────────────────────────────────────
+def get_steps_by_simulation(db: Session, sim_id: uuid.UUID):
+    return db.query(SimulationStep).filter(SimulationStep.simulation_id == sim_id).all()
+
+
+def get_simulation_step(db: Session, sim_id: uuid.UUID, step_number: int):
+    return db.query(SimulationStep).filter(
+        SimulationStep.simulation_id == sim_id,
+        SimulationStep.step == step_number
+    ).first()
+
+
+def get_steps_from_to(db: Session, sim_id: uuid.UUID, from_step: int, to_step: int):
+    return db.query(SimulationStep).filter(
+        SimulationStep.simulation_id == sim_id,
+        SimulationStep.step >= from_step,
+        SimulationStep.step <= to_step
+    ).all()
+
+
+def get_steps_between(db: Session, sim_id: uuid.UUID, from_datetime: datetime, to_datetime: datetime):
+    if from_datetime > to_datetime:
+        raise ValueError("from_datetime must be less than or equal to to_datetime")
+    
+    return db.query(SimulationStep).filter(
+        SimulationStep.simulation_id == sim_id,
+        SimulationStep.created_at >= from_datetime,
+        SimulationStep.created_at <= to_datetime
+    ).all()

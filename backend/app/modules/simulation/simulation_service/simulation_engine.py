@@ -80,7 +80,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.spinning.rotor import (
+        from simulation.spinning.rotor import ( # type: ignore
             InputMaterial as RotorInputMaterial,
             RotorOperationalParams,
             YarnQualityOutput,
@@ -102,7 +102,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.spinning.airjet import (
+        from simulation.spinning.airjet import ( # type: ignore
             InputMaterial as AirjetInputMaterial,
             AirjetOperationalParams,
             YarnQualityOutput as AirjetYarnQualityOutput,
@@ -124,7 +124,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.weaving.plain import (
+        from simulation.weaving.plain import ( # type: ignore
             InputYarns,
             PlainWeavingParams,
             FabricQualityOutput,
@@ -146,7 +146,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.knitting.weft_knitting import (
+        from simulation.knitting.weft_knitting import ( # type: ignore
             InputFabric as KnittingInputFabric,
             WeftKnittingParams,
             KnittedFabricOutput,
@@ -168,7 +168,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.coloring.reactive_dyeing import (
+        from simulation.coloring.reactive_dyeing import ( # type: ignore
             InputFabric as ReactiveDyeingInputFabric,
             ReactiveDyeingParams,
             DyedFabricOutput as ReactiveDyedFabricOutput,
@@ -191,7 +191,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.weaving.dobby import (
+        from simulation.weaving.dobby import ( # type: ignore
             InputYarn as DobbyInputYarn,
             DobbyOperationalParams,
             FabricQualityOutput as DobbyFabricQualityOutput,
@@ -214,7 +214,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.knitting.warp_knitting import (
+        from simulation.knitting.warp_knitting import ( # type: ignore
             InputWovenFabric as WarpKnittingInputFabric,
             WarpKnittingOperationalParams,
             WarpKnittedFabricOutput,
@@ -237,7 +237,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.printing.rotary_printing import (
+        from simulation.printing.rotary_printing import ( # type: ignore
             InputDyedFabric as RotaryInputDyedFabric,
             RotaryPrintingOperationalParams,
             RotaryPrintedFabricOutput,
@@ -260,7 +260,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.printing.screen_printing import (
+        from simulation.printing.screen_printing import ( # type: ignore
             InputDyedFabric as ScreenPrintingInputDyedFabric,
             ScreenPrintingOperationalParams,
             PrintedFabricOutput as ScreenPrintedFabricOutput,
@@ -1077,7 +1077,7 @@ def persist_layer4_to_db(
     This function is intentionally kept ORM-library-agnostic in signature;
     fill in the body with your actual SQLAlchemy / async session calls.
     """
-    from app.db.models import AttributeDefinition, MachineAttributeValue  # noqa: F401
+    from app.db.models import AttributeDefinition, MachineAttributeValue  # type: ignore
     from datetime import datetime, timezone
 
     for attr_name, value in flat_output.items():
@@ -1285,7 +1285,7 @@ class SimulationEngine:
           MachineAttributeValue.
         """
         # pyrefly: ignore [missing-import]
-        from app.db.models import (  # noqa: F401
+        from app.db.models import (  # type: ignore
             ProductionLine,
             Machine,
             Connection,
@@ -1402,7 +1402,7 @@ class SimulationEngine:
                 raise ValueError("Dobby Weaving node has multiple upstream nodes but could not find a warp source.")
             return _spinning_output_to_dobby_input(
                 warp_output,
-                warp_machine["_layer3_instance"],
+                warp_machine["_layer3_instance"], # type: ignore
                 override_dict
             )
 
@@ -1415,14 +1415,14 @@ class SimulationEngine:
         # Build warp InputYarns from warp spinning node
         warp_input = _spinning_output_to_weaving_input(
             warp_output,
-            warp_machine["_layer3_instance"],
+            warp_machine["_layer3_instance"], # type: ignore
             {k: v for k, v in override_dict.items() if "warp" in k},
         )
 
         # Build weft InputYarns from weft spinning node
         weft_input = _spinning_output_to_weaving_input(
             weft_output,
-            weft_machine["_layer3_instance"],
+            weft_machine["_layer3_instance"], # type: ignore
             {k: v for k, v in override_dict.items() if "weft" in k},
         )
 
