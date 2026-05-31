@@ -5,7 +5,7 @@ description = "The backend for the Production Line Simulation Platform \"indus.i
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "uvicorn[standard] (>=0.44.0,<1.0.0)",
     "fastapi (>=0.135.3,<0.136.0)",
@@ -17,7 +17,10 @@ dependencies = [
     "sqlalchemy (>=2.0.49,<3.0.0)",
     "sqlmodel (>=0.0.38,<0.0.39)",
     "psycopg2-binary (>=2.9.11,<3.0.0)",
-    "email-validator (>=2.0.0,<3.0.0)"
+    "email-validator (>=2.0.0,<3.0.0)",
+    "langchain (>=1.3.2,<2.0.0)",
+    "langchain-openrouter (>=0.2.3,<0.3.0)",
+    "langchain-core (>=1.4.0,<2.0.0)"
 ]
 
 [build-system]

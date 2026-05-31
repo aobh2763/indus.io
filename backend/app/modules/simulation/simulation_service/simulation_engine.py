@@ -847,6 +847,7 @@ def _build_layer3(process: str, subprocess: str, params_dict: dict) -> Any:
 
     def _safe(cls, data: dict):
         """Build cls from data dict, raising a helpful error on missing keys."""
+        data = data["machine_parameters"] if "machine_parameters" in data else data
         fields = cls.__dataclass_fields__
         kwargs = {}
         missing = []
