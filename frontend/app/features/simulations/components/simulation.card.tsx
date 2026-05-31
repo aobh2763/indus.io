@@ -1,5 +1,6 @@
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { useSimulationStore } from "../simulations.store";
 import { Activity, Play, Square, Eye, Trash2, Loader2 } from "lucide-react";
 import { useDeleteSimulation, useUpdateSimulation } from "../simulations.hooks";
 import { SimulationStatus, type SimulationResponse } from "../simulations.schema";
@@ -12,14 +13,27 @@ export function SimulationCard({ data }: SimulationCardProps) {
   const updateSimulation = useUpdateSimulation();
   const deleteSimulation = useDeleteSimulation();
   const isRunning = data.status === SimulationStatus.RUNNING;
+  const { startSimulation, stopSimulation } = useSimulationStore();
+
+  const { setInspectedSimulationId } = useSimulationStore();
 
   const handleToggle = () => {
+    const newStatus = isRunning ? SimulationStatus.STOPPED : SimulationStatus.RUNNING;
+
+    if (newStatus === SimulationStatus.RUNNING) {
+      startSimulation(data.id);
+    } else {
+      stopSimulation(data.id);
+    }
+
     updateSimulation.mutate({
       id: data.id,
-      data: {
-        status: isRunning ? SimulationStatus.STOPPED : SimulationStatus.RUNNING,
-      },
+      data: { status: newStatus },
     });
+  };
+
+  const handleInspect = () => {
+    setInspectedSimulationId(data.id);
   };
 
   const handleDelete = () => {
@@ -58,14 +72,17 @@ export function SimulationCard({ data }: SimulationCardProps) {
           {isRunning ? "Stop" : "Start"}
         </Button>
 
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-7 gap-1.5 text-xs px-2.5"
-        >
-          <Eye className="h-3 w-3" />
-          Inspect
-        </Button>
+        {data.status === SimulationStatus.RUNNING &&
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-7 gap-1.5 text-xs px-2.5"
+            onClick={handleInspect}
+          >
+            <Eye className="h-3 w-3" />
+            Inspect
+          </Button>
+        }
 
         <Button
           size="sm"

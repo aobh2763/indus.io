@@ -25,3 +25,136 @@ export type SimulationResponse = z.infer<typeof simulationResponseSchema>;
 
 export const simulationListResponseSchema = z.array(simulationResponseSchema);
 export type SimulationListResponse = z.infer<typeof simulationListResponseSchema>;
+
+export const STEP = {
+  "production_line_id": "00000000-0000-0000-0000-000000000000",
+  "steps_requested": 1,
+  "steps_completed": 1,
+  "frames": [
+    {
+      "step": 0,
+      "success": true,
+      "production_line_full_input": {
+        "00000000-0000-0000-0000-000000000001": {
+          "fiber_type": "cotton_carded",
+          "fiber_length_mm": 27,
+          "fiber_fineness_dtex": 1.7,
+          "short_fiber_content_pct": 14,
+          "fiber_tensile_strength_cN_tex": 28,
+          "sliver_count_ktex": 4.5,
+          "moisture_content_pct": 7,
+          "trash_content_pct": 1.2
+        }
+      },
+      "production_line_full_output": {
+        "00000000-0000-0000-0000-000000000003": {
+          "dye_bath_pH": 10.7,
+          "exhaustion_pct": 59.8,
+          "fixation_pct": 48.2,
+          "hydrolysis_pct": 51.8,
+          "unfixed_dye_on_fabric_pct": 11.6,
+          "colour_yield_relative": 0.416,
+          "wash_fastness_rating": 2,
+          "light_fastness_rating": 4.7,
+          "rubbing_fastness_dry": 3.2,
+          "rubbing_fastness_wet": 2.7,
+          "levelness_risk": "low",
+          "dye_penetration_quality": "partial",
+          "water_consumption_L_per_kg": 20.8,
+          "salt_load_g_per_kg": 500,
+          "total_process_time_min": 125,
+          "energy_relative": 0.34,
+          "effluent_dye_load_pct": 51.8,
+          "unlevel_dyeing_risk": "low",
+          "fabric_damage_risk": "low",
+          "warnings": "Fixation (48.2%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.; Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4–5. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.; Effluent dye load (51.8% of applied dye) is very high. Conventional reactive dyeing discharges 20–40% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation."
+        }
+      },
+      "links": [
+        {
+          "source_machine": "00000000-0000-0000-0000-000000000001",
+          "target_machine": "00000000-0000-0000-0000-000000000002",
+          "states": [
+            {
+              "actual_twist_turns_per_m": 757.6,
+              "back_doubling_index": 3.84,
+              "yarn_tenacity_cN_tex": 11.75,
+              "yarn_evenness_CVm_pct": 11.4,
+              "hairiness_H": 6.14,
+              "neps_per_km": 99,
+              "spinning_tension_cN": 15,
+              "waste_fiber_pct": 4.5,
+              "ends_down_risk": "medium",
+              "production_rate_g_rotor_h": 233.6,
+              "warnings": "CRITICAL: Rotor peripheral speed (172.8 m/s) exceeds the safe maximum of ~160 m/s. Rotor integrity and bearing life are at risk. Reduce rotor speed or use a smaller diameter rotor."
+            }
+          ]
+        },
+        {
+          "source_machine": "00000000-0000-0000-0000-000000000002",
+          "target_machine": "00000000-0000-0000-0000-000000000003",
+          "states": [
+            {
+              "yarn_diameter_warp_mm": 0.201,
+              "yarn_diameter_weft_mm": 0.201,
+              "warp_cover_factor": 0.603,
+              "weft_cover_factor": 0.5628,
+              "total_cover_factor": 0.8264,
+              "warp_crimp_pct": 152.56,
+              "weft_crimp_pct": 182.02,
+              "crimp_balance": "balanced",
+              "fell_displacement_mm": 7.15,
+              "beat_up_force_cN_per_cm": 603.6,
+              "fabric_areal_weight_g_m2": 456.5,
+              "weft_tension_at_fell_cN": 208.9,
+              "warp_break_risk": "low",
+              "weft_break_risk": "medium",
+              "cloth_defect_risk": "low",
+              "production_rate_m_per_min": 0.0786,
+              "production_rate_m2_per_hour": 7.54,
+              "warnings": "Fractional weft cover (0.563) is approaching the practical weaving limit. Greenwood & Cowhig found ~0.58 to be the maximum achievable for 16-tex acetate; similar limits apply to other materials. Weaving resistance will be very high. Consider reducing picks/cm or switching to a finer weft. (Marks & Robinson, Fig. 6.3, p. 144); Weft tension at fell (209 cN) exceeds 30% of weft breaking force (347 cN). Weft-cutting is likely, especially at the selvedges where temple restraint is reduced and end spacing is tighter. 'It usually happens in or near the selvedges.' (Marks & Robinson, p. 142); Fell displacement at beat-up (7.2 mm) is very large. Bumping conditions are likely. The cloth becomes momentarily slack as the reed drives the fell to maximum displacement. Increase basic warp tension to restore normal weaving conditions. (Marks & Robinson, Section 6.1.4, p. 146)"
+            }
+          ]
+        }
+      ],
+      "errors_warnings": [
+        "[Rotor Spinner R-01] 1 warning(s): CRITICAL: Rotor peripheral speed (172.8 m/s) exceeds the safe maximum of ~160 m/s. Rotor integrity and bearing life are at risk. Reduce rotor speed or use a smaller diameter rotor.",
+        "[Plain Loom W-01] 3 warning(s): Fractional weft cover (0.563) is approaching the practical weaving limit. Greenwood & Cowhig found ~0.58 to be the maximum achievable for 16-tex acetate; similar limits apply to other materials. Weaving resistance will be very high. Consider reducing picks/cm or switching to a finer weft. (Marks & Robinson, Fig. 6.3, p. 144); Weft tension at fell (209 cN) exceeds 30% of weft breaking force (347 cN). Weft-cutting is likely, especially at the selvedges where temple restraint is reduced and end spacing is tighter. 'It usually happens in or near the selvedges.' (Marks & Robinson, p. 142); Fell displacement at beat-up (7.2 mm) is very large. Bumping conditions are likely. The cloth becomes momentarily slack as the reed drives the fell to maximum displacement. Increase basic warp tension to restore normal weaving conditions. (Marks & Robinson, Section 6.1.4, p. 146)",
+        "[Jet Dyeing Machine D-01] 3 warning(s): Fixation (48.2%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.; Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4–5. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.; Effluent dye load (51.8% of applied dye) is very high. Conventional reactive dyeing discharges 20–40% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation.",
+        "CRITICAL: Rotor peripheral speed (172.8 m/s) exceeds the safe maximum of ~160 m/s. Rotor integrity and bearing life are at risk. Reduce rotor speed or use a smaller diameter rotor.",
+        "Fractional weft cover (0.563) is approaching the practical weaving limit. Greenwood & Cowhig found ~0.58 to be the maximum achievable for 16-tex acetate; similar limits apply to other materials. Weaving resistance will be very high. Consider reducing picks/cm or switching to a finer weft. (Marks & Robinson, Fig. 6.3, p. 144)",
+        "Weft tension at fell (209 cN) exceeds 30% of weft breaking force (347 cN). Weft-cutting is likely, especially at the selvedges where temple restraint is reduced and end spacing is tighter. 'It usually happens in or near the selvedges.' (Marks & Robinson, p. 142)",
+        "Fell displacement at beat-up (7.2 mm) is very large. Bumping conditions are likely. The cloth becomes momentarily slack as the reed drives the fell to maximum displacement. Increase basic warp tension to restore normal weaving conditions. (Marks & Robinson, Section 6.1.4, p. 146)",
+        "Fixation (48.2%) is below the minimum acceptable threshold of 60%. Mahapatra 13.2: 'Only 70% of the dye is fixed onto the fibre' under conventional conditions. Values below 60% indicate a process error (wrong alkali, temperature, or time). Wash fastness will be unacceptably poor.",
+        "Predicted wash fastness (2.0) is below commercial minimum (3.5). Reactive dyes should deliver rating 4–5. [Mahapatra 13.12] Causes: inadequate fixation, insufficient wash-off, or residual unfixed dye. Review alkali pH, temperature, and wash-off sequence.",
+        "Effluent dye load (51.8% of applied dye) is very high. Conventional reactive dyeing discharges 20–40% of applied dye in effluent. Mahapatra 13.22: 'The demand for Right-First Dyeing is increasing.' Consider bifunctional or trifunctional dyes with higher fixation."
+      ]
+    }
+  ]
+}
+
+export const simulationLinkSchema = z.object({
+  source_machine: z.string(),
+  target_machine: z.string(),
+  states: z.array(z.record(z.string(), z.unknown())),
+});
+
+export const simulationFrameSchema = z.object({
+  step: z.number(),
+  success: z.boolean(),
+  production_line_full_input: z.record(z.string(), z.record(z.string(), z.unknown())),
+  production_line_full_output: z.record(z.string(), z.record(z.string(), z.unknown())),
+  links: z.array(simulationLinkSchema),
+  errors_warnings: z.array(z.string()),  // fixed typo
+});
+
+export const simulationStepSchema = z.object({
+  production_line_id: z.string(),
+  steps_requested: z.number(),
+  steps_completed: z.number(),
+  frames: z.array(simulationFrameSchema),
+});
+
+export type SimulationLink = z.infer<typeof simulationLinkSchema>;
+export type SimulationFrame = z.infer<typeof simulationFrameSchema>;
+export type SimulationStep = z.infer<typeof simulationStepSchema>;

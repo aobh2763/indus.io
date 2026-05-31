@@ -7,11 +7,14 @@ import { Separator } from "~/components/ui/separator";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useState, useMemo } from "react";
+import { useSimulationStore } from "../simulations.store";
+import { SimulationInspect } from "./simulations.inspect";
 
 export function SimulationsList() {
   const { lineId, isSimulationPanelOpen } = usePipelineStore();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { inspectedSimulationId } = useSimulationStore();
   const { data: simulations, isPending, isError } = useGetSimulations(lineId || "");
 
   const filtered = useMemo(() => {
@@ -24,6 +27,11 @@ export function SimulationsList() {
   }, [simulations, searchQuery]);
 
   if (!isSimulationPanelOpen) return null;
+
+  const sim = filtered.find(s => s.id === inspectedSimulationId);
+  if (sim) {
+    return <SimulationInspect data={sim} />
+  }
 
   return (
     <div className="w-85 bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
