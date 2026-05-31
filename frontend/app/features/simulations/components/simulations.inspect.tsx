@@ -87,26 +87,31 @@ function RecordCard({ id, data, label }: { id: string; data: Record<string, unkn
         {Object.entries(data).map(([k, v]) =>
           k !== "warnings" ? <AttributeRow key={k} label={k} value={v} /> : null
         )}
-        {typeof data.warnings === "string" && data.warnings && (
-          <div className="py-2">
-            <WarningBlock text={data.warnings} />
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
 function WarningBlock({ text }: { text: string }) {
-  const warnings = text.split(";").map(s => s.trim()).filter(Boolean);
   return (
-    <div className="space-y-1.5">
-      {warnings.map((w, i) => (
-        <div key={i} className="flex gap-2 rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
-          {/*<AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />*/}
-          <p className="text-[11px] text-amber-300/80">{w}</p>
-        </div>
-      ))}
+    <div className="flex flex-col items-start rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
+      
+      {/* Warning text */}
+      <p className="text-[11px] text-amber-300/80 leading-snug text-justify">
+        {text}
+      </p>
+
+      {/* Explain button */}
+      <Button
+        size="sm"
+        variant="ghost"
+        className="self-end h-6 px-2 text-[10px] text-violet-300 hover:text-violet-200 hover:bg-violet-500/10 shrink-0"
+        onClick={() => {
+          console.log("Explain warning:", text);
+        }}
+      >
+        Explain ✨
+      </Button>
     </div>
   );
 }
@@ -126,11 +131,6 @@ function LinkCard({ link }: { link: (typeof STEP.frames)[0]["links"][0] }) {
         <div key={i} className="px-3 divide-y divide-border/60">
           {Object.entries(state).map(([k, v]) =>
             k !== "warnings" ? <AttributeRow key={k} label={k} value={v} /> : null
-          )}
-          {typeof state.warnings === "string" && state.warnings && (
-            <div className="py-2">
-              <WarningBlock text={state.warnings} />
-            </div>
           )}
         </div>
       ))}
@@ -196,6 +196,22 @@ function FrameSection({ frame }: { frame: (typeof STEP.frames)[0] }) {
             ))}
           </AccordionContent>
         </AccordionItem>
+
+        {/* Warnings */}
+        <AccordionItem value="warnings" className="border-0">
+          <AccordionTrigger className="py-1.5 px-3 rounded-md bg-muted/30 hover:bg-muted/60 text-[11px] font-semibold text-muted-foreground tracking-wider hover:no-underline [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground/50">
+            Warnings
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 space-y-2 pb-0 overflow-visible">
+            <div className="flex flex-col gap-2 rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
+              {(frame.errors_warnings ?? [])
+                .filter((w) => w?.[0] !== '[')
+                .map((w: string, i: number) => (
+                  <WarningBlock key={i} text={w} />
+                ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
       </Accordion>
     </div>
   );
@@ -207,7 +223,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
   const simulationStep = STEP;
   const allWarnings = simulationStep.frames.flatMap(f => f.errors_warnings ?? []);
   const criticalCount = allWarnings.filter(w => w.toLowerCase().startsWith("critical")).length;
-  const warnCount = allWarnings.length - criticalCount;
+  const warnCount = allWarnings.filter((w) => w?.[0] !== '[').length;
 
   return (
     <div className="w-85 bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
@@ -242,7 +258,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
         {[
           { label: "Steps", value: `${simulationStep.steps_completed}/${simulationStep.steps_requested}` },
           { label: "Frames", value: simulationStep.frames.length },
-          { label: "Warnings", value: allWarnings.length },
+          { label: "Warnings", value: warnCount },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-md bg-muted/20 border border-border px-2.5 py-1.5 text-center">
             <p className="text-sm">{label}</p>
@@ -273,7 +289,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
 
       {/* Scrollable body */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-4 space-y-6">
+        <div className="h-full min-h-0 p-4 space-y-6">
           {simulationStep.frames.map((frame, i) => (
             <FrameSection key={i} frame={frame} />
           ))}

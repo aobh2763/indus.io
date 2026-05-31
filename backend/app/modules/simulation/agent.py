@@ -81,7 +81,7 @@ def test_agent():
     
     result = agent.invoke({
         "messages": [
-            {"role": "user", "content": "Briefly, how does the coloring machine work? And what kind of knitting machines do we have?"}
+            {"role": "user", "content": ""}
         ]
     })
     
