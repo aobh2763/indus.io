@@ -56,11 +56,11 @@ interface Navbar1Props {
 
 const Navbar1 = ({
   logo = {
-    url: "/",
+    url: "/dashboard",
     title: "Indus.io",
   },
   menu = [
-    { title: "Dashboard", url: "/" },
+    { title: "Dashboard", url: "/dashboard" },
     { title: "Projects", url: "/projects-management" },
     { title: "Pipeline", url: "/pipeline-builder" },
     { title: "KPIs", url: "/kpis" },

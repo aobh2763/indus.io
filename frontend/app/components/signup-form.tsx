@@ -27,7 +27,7 @@ export function SignupForm({
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [isAuthenticated]);
 

@@ -24,7 +24,7 @@ export default function Register() {
       // Auto-login after register
       const res = await authService.login(email, password);
       localStorage.setItem("indus_token", res.data.access_token);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Registration failed");
     } finally {

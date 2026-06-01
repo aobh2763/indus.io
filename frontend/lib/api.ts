@@ -180,4 +180,10 @@ export const alertService = {
   resolve: (id: string) => api.post<Alert>(`/alerts/${id}/resolve`),
 };
 
+// ── System ──────────────────────────────────────────────
+export const systemService = {
+  getStats: () =>
+    api.get<{ projects: number; lines: number; machines: number; open_alerts: number }>("/system/stats"),
+};
+
 export default api;

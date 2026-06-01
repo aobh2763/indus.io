@@ -26,3 +26,11 @@ api.interceptors.request.use(
 );
 
 export default api;
+
+// ── System (public) ─────────────────────────────────────
+export const systemService = {
+  getStats: () =>
+    api.get<{ projects: number; lines: number; machines: number; open_alerts: number }>(
+      "/api/v1/system/stats"
+    ),
+};

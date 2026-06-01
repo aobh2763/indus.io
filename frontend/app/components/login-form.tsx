@@ -25,7 +25,7 @@ export function LoginForm({
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [isAuthenticated]);
 
@@ -34,7 +34,7 @@ export function LoginForm({
     setError(null)
     try {
       await login({ email, password })
-      navigate("/")
+      navigate("/dashboard")
     } catch (err) {
       console.error(err);
       setError("Invalid email or password. Please try again.")

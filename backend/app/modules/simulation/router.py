@@ -125,9 +125,6 @@ def step(simulation_id: str, db: Session = Depends(get_db), current_user: User =
     bach_result = run_batch(request)
     service.save_simulation_frame(db, sim, bach_result["frames"][0])
     
-    
-    print("Batch result for step:", bach_result)
-    
     return start_simulation(db, sim)
 
 @router.post("/simulations/{simulation_id}/stop", response_model=SimulationResponse, tags=["Simulation Engine"])

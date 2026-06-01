@@ -183,7 +183,7 @@ export default function KpiDetails() {
             <AlertTriangle className="mx-auto h-9 w-9 text-amber-400 mb-4" />
             <h1 className="text-xl font-semibold text-white">{error ?? "KPI not found"}</h1>
             <p className="text-sm text-neutral-500 mt-2">The KPI may have been removed or your session no longer has access.</p>
-            <Button className="mt-5" variant="outline" onClick={() => navigate("/")}>
+            <Button className="mt-5" variant="outline" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="h-4 w-4" />
               Dashboard
             </Button>
@@ -199,7 +199,7 @@ export default function KpiDetails() {
         <header className="sticky top-0 z-50 border-b border-neutral-800 bg-black/80 backdrop-blur-md">
           <div className="max-w-[1440px] mx-auto h-12 px-5 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Link to="/dashboard" className="flex items-center gap-2 text-sm font-semibold text-white">
                 <Factory className="h-4 w-4" />
                 indus.io
               </Link>

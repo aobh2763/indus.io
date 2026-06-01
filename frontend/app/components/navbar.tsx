@@ -10,7 +10,7 @@ export default function Navbar() {
   const [currentPage, setCurrentPage] = useState("dashboard");
 
   useEffect(() => {
-    if (pathname === "/") setCurrentPage("dashboard");
+    if (pathname === "/dashboard") setCurrentPage("dashboard");
     else if (pathname === "/projects-management") setCurrentPage("projects");
     else if (pathname === "/pipeline-builder") setCurrentPage("pipeline");
     else if (pathname === "/kpis" || pathname.startsWith("/kpi/")) setCurrentPage("kpis");
@@ -56,7 +56,7 @@ export default function Navbar() {
               <Camera className="h-3.5 w-3.5" /> Scanner
             </span>
           </NavLink>
-          <NavLink to="/">
+          <NavLink to="/dashboard">
             <span className="flex items-center gap-1.5 text-red-400">
               <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
             </span>

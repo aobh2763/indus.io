@@ -9,6 +9,7 @@ from app.modules.analytics.router import router as analytics_router
 from app.modules.telemetry.router import router as telemetry_router
 from app.modules.intelligence.router import router as intelligence_router
 from app.modules.monitoring.router import router as monitoring_router
+from app.modules.system.router import router as system_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -21,3 +22,4 @@ api_router.include_router(analytics_router)
 api_router.include_router(telemetry_router)
 api_router.include_router(intelligence_router)
 api_router.include_router(monitoring_router)
+api_router.include_router(system_router)

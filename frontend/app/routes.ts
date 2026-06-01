@@ -6,7 +6,8 @@ const { route } = "route" in routeHelpers && typeof routeHelpers.route === "func
   : (routeHelpers as unknown as { default: typeof routeHelpers }).default;
 
 export default [
-  route("/", "routes/dashboard.tsx"),
+  route("/", "routes/landing.tsx"),
+  route("/dashboard", "routes/dashboard.tsx"),
   route("/login", "routes/login.tsx"),
   route("/signup", "routes/signup.tsx"),
   route("/register", "routes/register.tsx"),
