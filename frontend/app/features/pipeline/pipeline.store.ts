@@ -19,6 +19,7 @@ import {
   type XYPosition,
   type NodeChange,
 } from "@xyflow/react";
+import { persist } from "zustand/middleware";
 
 export interface MachineNodeData extends Record<string, unknown> {
   icon: string;
@@ -248,337 +249,345 @@ const positionTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
 // ── Store ───────────────────────────────────────────────
 
-export const usePipelineStore = create<PipelineState>((set, get) => ({
-  nodes: [],
-  edges: [],
-  selectedNodeId: null,
-  isConfigPanelOpen: false,
-  isSimulationPanelOpen: false,
-  isMachineLibraryOpen: false,
-  dragNDropPosition: null,
-  dragNDropMachineName: null,
+export const usePipelineStore = create<PipelineState>()(
+  persist(
+    (set, get) => ({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
+      isConfigPanelOpen: false,
+      isSimulationPanelOpen: false,
+      isMachineLibraryOpen: false,
+      dragNDropPosition: null,
+      dragNDropMachineName: null,
 
-  lineId: null,
-  isLoading: false,
-  isReadOnly: false,
+      lineId: null,
+      isLoading: false,
+      isReadOnly: false,
 
-  setLineId: (lineId) => set({ lineId }),
-  setReadOnly: (isReadOnly) => set({ isReadOnly }),
+      setLineId: (lineId) => set({ lineId }),
+      setReadOnly: (isReadOnly) => set({ isReadOnly }),
 
-  loadPipeline: async (lineId) => {
-    set({ isLoading: true, lineId });
-    try {
-      const [machines, connections] = await Promise.all([
-        machinesApi.get(lineId),
-        connectionsApi.get(lineId),
-      ]);
+      loadPipeline: async (lineId) => {
+        set({ isLoading: true, lineId });
+        try {
+          const [machines, connections] = await Promise.all([
+            machinesApi.get(lineId),
+            connectionsApi.get(lineId),
+          ]);
 
-      const nodes = machines.map(machineToNode);
-      const edges = connections.map(connectionToEdge);
+          const nodes = machines.map(machineToNode);
+          const edges = connections.map(connectionToEdge);
 
-      set({ nodes, edges, isLoading: false });
-    } catch (error) {
-      console.error("Failed to load pipeline:", error);
-      toast.error("Failed to load pipeline data");
-      set({ isLoading: false });
-    }
-  },
+          set({ nodes, edges, isLoading: false });
+        } catch (error) {
+          console.error("Failed to load pipeline:", error);
+          toast.error("Failed to load pipeline data");
+          set({ isLoading: false });
+        }
+      },
 
-  setNodes: (nodes) => set({ nodes }),
-  setEdges: (edges) => set({ edges }),
+      setNodes: (nodes) => set({ nodes }),
+      setEdges: (edges) => set({ edges }),
 
-  onNodesChange: (changes) => {
-    if (get().isReadOnly) return;
+      onNodesChange: (changes) => {
+        if (get().isReadOnly) return;
 
-    set({
-      nodes: applyNodeChanges(changes, get().nodes) as MachineNode[],
-    });
+        set({
+          nodes: applyNodeChanges(changes, get().nodes) as MachineNode[],
+        });
 
-    // Debounce position updates to the backend
-    const { lineId } = get();
-    for (const change of changes as NodeChange<MachineNode>[]) {
-      if (change.type === "position" && change.dragging === false && change.position) {
-        const nodeId = change.id;
-        const position = change.position;
+        // Debounce position updates to the backend
+        const { lineId } = get();
+        for (const change of changes as NodeChange<MachineNode>[]) {
+          if (change.type === "position" && change.dragging === false && change.position) {
+            const nodeId = change.id;
+            const position = change.position;
 
-        // Clear any existing timer for this node
-        if (positionTimers[nodeId]) {
-          clearTimeout(positionTimers[nodeId]);
+            // Clear any existing timer for this node
+            if (positionTimers[nodeId]) {
+              clearTimeout(positionTimers[nodeId]);
+            }
+
+            positionTimers[nodeId] = setTimeout(() => {
+              machinesApi
+                .update(nodeId, {
+                  position_x: position.x,
+                  position_y: position.y,
+                })
+                .catch((err) => {
+                  console.error("Failed to sync node position:", err);
+                });
+              delete positionTimers[nodeId];
+            }, 500);
+          }
+
+          // Handle node removal from keyboard/backspace
+          if (change.type === "remove") {
+            const nodeId = change.id;
+            // Delete the machine from backend
+            machinesApi.delete(nodeId).catch((err) => {
+              console.error("Failed to delete machine:", err);
+              toast.error("Failed to delete machine from server");
+            });
+            // Delete related connections
+            const relatedEdges = get().edges.filter(
+              (e) => e.source === nodeId || e.target === nodeId
+            );
+            for (const edge of relatedEdges) {
+              connectionsApi.delete(edge.id).catch((err) => {
+                console.error("Failed to delete connection:", err);
+              });
+            }
+          }
+        }
+      },
+
+      onEdgesChange: (changes) => {
+        if (get().isReadOnly) return;
+
+        // Before applying, track edges that are being removed
+        for (const change of changes) {
+          if (change.type === "remove") {
+            const edgeId = change.id;
+            connectionsApi.delete(edgeId).catch((err) => {
+              console.error("Failed to delete connection:", err);
+              toast.error("Failed to delete connection from server");
+            });
+          }
         }
 
-        positionTimers[nodeId] = setTimeout(() => {
-          machinesApi
-            .update(nodeId, {
-              position_x: position.x,
-              position_y: position.y,
-            })
-            .catch((err) => {
-              console.error("Failed to sync node position:", err);
-            });
-          delete positionTimers[nodeId];
-        }, 500);
-      }
-
-      // Handle node removal from keyboard/backspace
-      if (change.type === "remove") {
-        const nodeId = change.id;
-        // Delete the machine from backend
-        machinesApi.delete(nodeId).catch((err) => {
-          console.error("Failed to delete machine:", err);
-          toast.error("Failed to delete machine from server");
+        set({
+          edges: applyEdgeChanges(changes, get().edges),
         });
-        // Delete related connections
-        const relatedEdges = get().edges.filter(
-          (e) => e.source === nodeId || e.target === nodeId
+      },
+
+      onConnect: (connection) => {
+        if (get().isReadOnly) {
+          toast.error("You can view this pipeline, but you cannot modify it");
+          return;
+        }
+
+        const { lineId } = get();
+        if (!lineId) return;
+
+        const tempId = `e-${connection.source}-${connection.target}-${Date.now()}`;
+
+        // ── Enforce 1-in / 1-out constraint ──────────────────────────────
+        // Find edges that would violate the rule after this new connection.
+        const displaced = get().edges.filter(
+          (e) =>
+            e.source === connection.source ||   // source already has an outgoing edge
+            e.target === connection.target       // target already has an incoming edge
         );
-        for (const edge of relatedEdges) {
+
+        // Delete displaced edges from the backend before we overwrite local state.
+        for (const edge of displaced) {
           connectionsApi.delete(edge.id).catch((err) => {
-            console.error("Failed to delete connection:", err);
+            console.error("Failed to delete displaced connection:", err);
           });
         }
-      }
-    }
-  },
+        // ─────────────────────────────────────────────────────────────────
 
-  onEdgesChange: (changes) => {
-    if (get().isReadOnly) return;
-
-    // Before applying, track edges that are being removed
-    for (const change of changes) {
-      if (change.type === "remove") {
-        const edgeId = change.id;
-        connectionsApi.delete(edgeId).catch((err) => {
-          console.error("Failed to delete connection:", err);
-          toast.error("Failed to delete connection from server");
-        });
-      }
-    }
-
-    set({
-      edges: applyEdgeChanges(changes, get().edges),
-    });
-  },
-
-  onConnect: (connection) => {
-    if (get().isReadOnly) {
-      toast.error("You can view this pipeline, but you cannot modify it");
-      return;
-    }
-
-    const { lineId } = get();
-    if (!lineId) return;
-
-    const tempId = `e-${connection.source}-${connection.target}-${Date.now()}`;
-
-    // ── Enforce 1-in / 1-out constraint ──────────────────────────────
-    // Find edges that would violate the rule after this new connection.
-    const displaced = get().edges.filter(
-      (e) =>
-        e.source === connection.source ||   // source already has an outgoing edge
-        e.target === connection.target       // target already has an incoming edge
-    );
-
-    // Delete displaced edges from the backend before we overwrite local state.
-    for (const edge of displaced) {
-      connectionsApi.delete(edge.id).catch((err) => {
-        console.error("Failed to delete displaced connection:", err);
-      });
-    }
-    // ─────────────────────────────────────────────────────────────────
-
-    // Optimistic: remove displaced edges and add the new one.
-    const displacedIds = new Set(displaced.map((e) => e.id));
-    set({
-      edges: addEdge(
-        { ...connection, id: tempId, animated: true },
-        get().edges.filter((e) => !displacedIds.has(e.id))
-      ),
-    });
-
-    // Persist to backend
-    connectionsApi
-      .create(lineId, {
-        source_machine_id: connection.source!,
-        target_machine_id: connection.target!,
-        weight: 1.0,
-      })
-      .then((created) => {
-        // Replace temp ID with server-assigned ID
+        // Optimistic: remove displaced edges and add the new one.
+        const displacedIds = new Set(displaced.map((e) => e.id));
         set({
-          edges: get().edges.map((edge) =>
-            edge.id === tempId ? { ...edge, id: created.id } : edge
+          edges: addEdge(
+            { ...connection, id: tempId, animated: true },
+            get().edges.filter((e) => !displacedIds.has(e.id))
           ),
         });
-      })
-      .catch((err) => {
-        console.error("Failed to create connection:", err);
-        toast.error("Failed to save connection");
-        // Rollback: remove the temp edge
-        set({
-          edges: get().edges.filter((edge) => edge.id !== tempId),
-        });
-      });
-  },
 
-  addNode: (machineConfig, position) => {
-    if (get().isReadOnly) {
-      toast.error("You can view this pipeline, but you cannot modify it");
-      return;
-    }
-
-    const { lineId } = get();
-    if (!lineId) return;
-
-    const tempId = `machine-${Date.now()}`;
-
-    const newNode: MachineNode = {
-      id: tempId,
-      type: "machineNode",
-      position,
-      data: {
-        label: machineConfig.name,
-        process: machineConfig.process,
-        subprocess: machineConfig.subprocess,
-        color: machineConfig.color,
-        icon: machineConfig.icon,
-        attributes: JSON.parse(JSON.stringify(machineConfig.defaultAttributes)),
+        // Persist to backend
+        connectionsApi
+          .create(lineId, {
+            source_machine_id: connection.source!,
+            target_machine_id: connection.target!,
+            weight: 1.0,
+          })
+          .then((created) => {
+            // Replace temp ID with server-assigned ID
+            set({
+              edges: get().edges.map((edge) =>
+                edge.id === tempId ? { ...edge, id: created.id } : edge
+              ),
+            });
+          })
+          .catch((err) => {
+            console.error("Failed to create connection:", err);
+            toast.error("Failed to save connection");
+            // Rollback: remove the temp edge
+            set({
+              edges: get().edges.filter((edge) => edge.id !== tempId),
+            });
+          });
       },
-    };
 
-    // Optimistic: add node locally
-    set({ nodes: [...get().nodes, newNode] });
+      addNode: (machineConfig, position) => {
+        if (get().isReadOnly) {
+          toast.error("You can view this pipeline, but you cannot modify it");
+          return;
+        }
 
-    // Persist to backend
-    const request = nodeToCreateRequest(newNode.data, position);
-    machinesApi
-      .create(lineId, request)
-      .then((created) => {
-        // Replace temp ID with server-assigned ID
+        const { lineId } = get();
+        if (!lineId) return;
+
+        const tempId = `machine-${Date.now()}`;
+
+        const newNode: MachineNode = {
+          id: tempId,
+          type: "machineNode",
+          position,
+          data: {
+            label: machineConfig.name,
+            process: machineConfig.process,
+            subprocess: machineConfig.subprocess,
+            color: machineConfig.color,
+            icon: machineConfig.icon,
+            attributes: JSON.parse(JSON.stringify(machineConfig.defaultAttributes)),
+          },
+        };
+
+        // Optimistic: add node locally
+        set({ nodes: [...get().nodes, newNode] });
+
+        // Persist to backend
+        const request = nodeToCreateRequest(newNode.data, position);
+        machinesApi
+          .create(lineId, request)
+          .then((created) => {
+            // Replace temp ID with server-assigned ID
+            set({
+              nodes: get().nodes.map((node) =>
+                node.id === tempId ? { ...node, id: created.id } : node
+              ),
+            });
+          })
+          .catch((err) => {
+            console.error("Failed to create machine:", err);
+            toast.error("Failed to save machine");
+            // Rollback: remove the temp node
+            set({
+              nodes: get().nodes.filter((node) => node.id !== tempId),
+            });
+          });
+      },
+
+      updateNodeData: (nodeId, data) => {
+        if (get().isReadOnly) {
+          toast.error("You can view this pipeline, but you cannot modify it");
+          return;
+        }
+
+        // Optimistic: update locally
         set({
           nodes: get().nodes.map((node) =>
-            node.id === tempId ? { ...node, id: created.id } : node
+            node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
           ),
         });
-      })
-      .catch((err) => {
-        console.error("Failed to create machine:", err);
-        toast.error("Failed to save machine");
-        // Rollback: remove the temp node
+
+        // Persist to backend
+        const updatePayload: Record<string, unknown> = {};
+        if (data.label !== undefined) updatePayload.name = data.label;
+        if (data.process !== undefined) updatePayload.process = data.process;
+        if (data.icon !== undefined) updatePayload.icon = data.icon;
+        if (data.attributes !== undefined) {
+          updatePayload.parameters = formatAttributesForBackend(data.attributes);
+        }
+
+        if (Object.keys(updatePayload).length > 0) {
+          machinesApi.update(nodeId, updatePayload).catch((err) => {
+            console.error("Failed to update machine:", err);
+            toast.error("Failed to update machine");
+          });
+        }
+      },
+
+      removeNode: (nodeId) => {
+        if (get().isReadOnly) {
+          toast.error("You can view this pipeline, but you cannot modify it");
+          return;
+        }
+
+        // Capture edges to delete before removing from state
+        const edgesToDelete = get().edges.filter(
+          (edge) => edge.source === nodeId || edge.target === nodeId
+        );
+
+        // Optimistic: remove locally
         set({
-          nodes: get().nodes.filter((node) => node.id !== tempId),
+          nodes: get().nodes.filter((node) => node.id !== nodeId),
+          edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+          selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
+          isConfigPanelOpen: get().selectedNodeId === nodeId ? false : get().isConfigPanelOpen,
+          isSimulationPanelOpen: false,
         });
-      });
-  },
 
-  updateNodeData: (nodeId, data) => {
-    if (get().isReadOnly) {
-      toast.error("You can view this pipeline, but you cannot modify it");
-      return;
+        // Persist to backend — delete connections first, then machine
+        Promise.all(
+          edgesToDelete.map((edge) =>
+            connectionsApi.delete(edge.id).catch((err) => {
+              console.error("Failed to delete connection:", err);
+            })
+          )
+        ).then(() => {
+          machinesApi.delete(nodeId).catch((err) => {
+            console.error("Failed to delete machine:", err);
+            toast.error("Failed to delete machine from server");
+          });
+        });
+      },
+
+      setSelectedNode: (nodeId) => {
+        set({
+          selectedNodeId: nodeId,
+          isConfigPanelOpen: nodeId !== null,
+          isSimulationPanelOpen: false,
+        });
+      },
+
+      getSelectedNode: () => {
+        const { nodes, selectedNodeId } = get();
+        return nodes.find((node) => node.id === selectedNodeId) as MachineNode | undefined;
+      },
+
+      setDragNDropMachineName: (machineName) => {
+        set({ dragNDropMachineName: machineName });
+      },
+
+      setDragNDropPosition: (position) => {
+        set({ dragNDropPosition: position });
+      },
+
+      getDragNDropPosition: () => {
+        return get().dragNDropPosition;
+      },
+
+      setConfigPanelOpen: (open) => {
+        set({
+          isConfigPanelOpen: open,
+          isSimulationPanelOpen: false,
+          selectedNodeId: open ? get().selectedNodeId : null,
+        });
+      },
+
+      setSimulationPanelOpen: (open) => {
+        set({
+          isConfigPanelOpen: false,
+          isSimulationPanelOpen: open,
+          selectedNodeId: null,
+        });
+      },
+
+      setMachineLibraryOpen: (open) => {
+        set({
+          isMachineLibraryOpen: open,
+        });
+      },
+    }),
+    {
+      name: 'pipeline-store',
+      partialize: (state) => ({ lineId: state.lineId }),
     }
-
-    // Optimistic: update locally
-    set({
-      nodes: get().nodes.map((node) =>
-        node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-      ),
-    });
-
-    // Persist to backend
-    const updatePayload: Record<string, unknown> = {};
-    if (data.label !== undefined) updatePayload.name = data.label;
-    if (data.process !== undefined) updatePayload.process = data.process;
-    if (data.icon !== undefined) updatePayload.icon = data.icon;
-    if (data.attributes !== undefined) {
-      updatePayload.parameters = formatAttributesForBackend(data.attributes);
-    }
-
-    if (Object.keys(updatePayload).length > 0) {
-      machinesApi.update(nodeId, updatePayload).catch((err) => {
-        console.error("Failed to update machine:", err);
-        toast.error("Failed to update machine");
-      });
-    }
-  },
-
-  removeNode: (nodeId) => {
-    if (get().isReadOnly) {
-      toast.error("You can view this pipeline, but you cannot modify it");
-      return;
-    }
-
-    // Capture edges to delete before removing from state
-    const edgesToDelete = get().edges.filter(
-      (edge) => edge.source === nodeId || edge.target === nodeId
-    );
-
-    // Optimistic: remove locally
-    set({
-      nodes: get().nodes.filter((node) => node.id !== nodeId),
-      edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-      selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
-      isConfigPanelOpen: get().selectedNodeId === nodeId ? false : get().isConfigPanelOpen,
-      isSimulationPanelOpen: false,
-    });
-
-    // Persist to backend — delete connections first, then machine
-    Promise.all(
-      edgesToDelete.map((edge) =>
-        connectionsApi.delete(edge.id).catch((err) => {
-          console.error("Failed to delete connection:", err);
-        })
-      )
-    ).then(() => {
-      machinesApi.delete(nodeId).catch((err) => {
-        console.error("Failed to delete machine:", err);
-        toast.error("Failed to delete machine from server");
-      });
-    });
-  },
-
-  setSelectedNode: (nodeId) => {
-    set({
-      selectedNodeId: nodeId,
-      isConfigPanelOpen: nodeId !== null,
-      isSimulationPanelOpen: false,
-    });
-  },
-
-  getSelectedNode: () => {
-    const { nodes, selectedNodeId } = get();
-    return nodes.find((node) => node.id === selectedNodeId) as MachineNode | undefined;
-  },
-
-  setDragNDropMachineName: (machineName) => {
-    set({ dragNDropMachineName: machineName });
-  },
-
-  setDragNDropPosition: (position) => {
-    set({ dragNDropPosition: position });
-  },
-
-  getDragNDropPosition: () => {
-    return get().dragNDropPosition;
-  },
-
-  setConfigPanelOpen: (open) => {
-    set({
-      isConfigPanelOpen: open,
-      isSimulationPanelOpen: false,
-      selectedNodeId: open ? get().selectedNodeId : null,
-    });
-  },
-
-  setSimulationPanelOpen: (open) => {
-    set({
-      isConfigPanelOpen: false,
-      isSimulationPanelOpen: open,
-      selectedNodeId: null,
-    });
-  },
-
-  setMachineLibraryOpen: (open) => {
-    set({
-      isMachineLibraryOpen: open,
-    });
-  },
-}));
+  ),
+);
