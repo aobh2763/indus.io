@@ -1148,7 +1148,23 @@ NOISE_PROFILES = {
         "ambient_temperature_C":    {"sigma": 0.015, "min": 15.0,    "max": 40.0},
         "ambient_humidity_pct":     {"sigma": 0.03,  "min": 20.0,    "max": 95.0},
     },
+    ("weaving", "plain weaving"): {
+        "loom_speed_picks_per_min": {"sigma": 0.01,  "min": 100.0, "max": 700.0},
+        "warp_tension_cN_per_end":  {"sigma": 0.02,  "min": 4.0,   "max": 35.0},
+        "shed_depth_cm":            {"sigma": 0.01,  "min": 6.0,   "max": 14.0},
+        "ambient_temperature_C":    {"sigma": 0.015, "min": 15.0,  "max": 40.0},
+        "ambient_humidity_pct":     {"sigma": 0.03,  "min": 20.0,  "max": 95.0},
+    },
+    ("weaving", "dobby weaving"): {
+        "loom_speed_picks_per_min": {"sigma": 0.01,  "min": 100.0, "max": 500.0},
+        "warp_tension_cN_per_end":  {"sigma": 0.02,  "min": 5.0,   "max": 50.0},
+        "shed_depth_mm":            {"sigma": 0.015, "min": 40.0,  "max": 120.0},
+        "ambient_temperature_C":    {"sigma": 0.015, "min": 15.0,  "max": 40.0},
+        "ambient_humidity_pct":     {"sigma": 0.03,  "min": 20.0,  "max": 95.0},
+    },
 }
+
+NOISE_PROFILES[("spinning", "air-jet spinning")] = NOISE_PROFILES[("spinning", "airjet spinning")]
 
 def _apply_noise(params_instance, noise_profile: dict):
     """
