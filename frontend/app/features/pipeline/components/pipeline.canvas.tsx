@@ -3,9 +3,13 @@ import {
   ReactFlow,
   Background,
   type OnSelectionChangeFunc,
+  BaseEdge,
+  EdgeLabelRenderer,
+  getBezierPath,
+  type EdgeProps,
 } from "@xyflow/react";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { usePipelineStore } from "../pipeline.store";
@@ -14,6 +18,60 @@ import MachineList from "~/features/machines/components/machines.list";
 import ConfigPanel from "~/features/machines/components/machines.config";
 import { SimulationsList } from "~/features/simulations/components/simulations.list";
 import { SimulationsControls } from "~/features/simulations/components/simulations.controls";
+
+const DeletableEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+}: EdgeProps) => {
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  const removeEdge = usePipelineStore((state) => state.removeEdge);
+  const isReadOnly = usePipelineStore((state) => state.isReadOnly);
+
+  return (
+    <>
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+      <EdgeLabelRenderer>
+        <div
+          style={{
+            opacity: 0.8,
+            position: "absolute",
+            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            pointerEvents: "all",
+          }}
+          className="nodrag nopan"
+        >
+          {!isReadOnly && (
+            <button
+              className="flex h-2 w-2 cursor-pointer items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 text-neutral-400 transition-colors hover:border-red-500 hover:bg-red-500 hover:text-white"
+              onClick={() => removeEdge(id)}
+            >
+              <X className="h-1 w-1" />
+            </button>
+          )}
+        </div>
+      </EdgeLabelRenderer>
+    </>
+  );
+};
+
+const edgeTypes = {
+  deletableEdge: DeletableEdge,
+};
 
 const PipelineBuilder = () => {
   const {
@@ -81,6 +139,7 @@ const PipelineBuilder = () => {
           fitViewOptions={{ padding: 0.2 }}
           proOptions={{ hideAttribution: true }}
           nodeTypes={{ machineNode: MachineNode }}
+          edgeTypes={edgeTypes}
         >
           <Background />
 

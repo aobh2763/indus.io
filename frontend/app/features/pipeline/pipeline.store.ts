@@ -59,6 +59,7 @@ interface PipelineState {
   addNode: (machineConfig: MachineTypeConfig, position: { x: number; y: number }) => void;
   updateNodeData: (nodeId: string, data: Partial<MachineNodeData>) => void;
   removeNode: (nodeId: string) => void;
+  removeEdge: (edgeId: string) => void;
 
   getSelectedNode: () => MachineNode | undefined;
   setSelectedNode: (nodeId: string | null) => void;
@@ -221,6 +222,7 @@ function connectionToEdge(connection: ConnectionResponse): Edge {
     source: connection.source_machine_id,
     target: connection.target_machine_id,
     animated: true,
+    type: "deletableEdge",
   };
 }
 
@@ -393,7 +395,7 @@ export const usePipelineStore = create<PipelineState>()(
         const displacedIds = new Set(displaced.map((e) => e.id));
         set({
           edges: addEdge(
-            { ...connection, id: tempId, animated: true },
+            { ...connection, id: tempId, animated: true, type: "deletableEdge" },
             get().edges.filter((e) => !displacedIds.has(e.id))
           ),
         });
@@ -535,6 +537,24 @@ export const usePipelineStore = create<PipelineState>()(
             console.error("Failed to delete machine:", err);
             toast.error("Failed to delete machine from server");
           });
+        });
+      },
+
+      removeEdge: (edgeId) => {
+        if (get().isReadOnly) {
+          toast.error("You can view this pipeline, but you cannot modify it");
+          return;
+        }
+
+        // Optimistic: remove locally
+        set({
+          edges: get().edges.filter((edge) => edge.id !== edgeId),
+        });
+
+        // Persist to backend
+        connectionsApi.delete(edgeId).catch((err) => {
+          console.error("Failed to delete connection:", err);
+          toast.error("Failed to delete connection from server");
         });
       },
 

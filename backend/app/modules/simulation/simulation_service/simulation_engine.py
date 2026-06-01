@@ -419,7 +419,7 @@ _REGISTRY: dict[tuple[str, str], Callable] = {
     ("weaving", "dobby weaving"): simulate_dobby_weaving,
     ("knitting", "warp knitting"): simulate_warp_knitting,
     ("knitting", "weft knitting"): simulate_weft_knitting,
-    ("colouring", "reactive dyeing"): simulate_reactive_dyeing,
+    ("coloring", "reactive dyeing"): simulate_reactive_dyeing,
     # ("colouring","vat dyeing"):           simulate_vat_dyeing,
     # aliases
     ("dyeing", "reactive dyeing"): simulate_reactive_dyeing,
@@ -950,7 +950,7 @@ def _build_layer3(process: str, subprocess: str, params_dict: dict) -> Any:
         return _safe(WeftKnittingParams, params_dict)
     if p == "knitting" and "warp" in s:
         return _safe(WarpKnittingOperationalParams, params_dict)
-    if p in ("colouring", "dyeing") and "reactive" in s:
+    if p in ("coloring", "dyeing") and "reactive" in s:
         return _safe(ReactiveDyeingParams, params_dict)
     if p == "printing" and "rotary" in s:
         return _safe(RotaryPrintingOperationalParams, params_dict)
@@ -1093,7 +1093,7 @@ def _bridge(
         return _knitting_output_to_reactive_input(upstream_output, downstream_override)
 
     # ── Dyeing → Printing ────────────────────────────────────────────────────
-    if ("colouring" in up_proc or "dyeing" in up_proc) and "printing" in dn_proc:
+    if ("coloring" in up_proc or "dyeing" in up_proc) and "printing" in dn_proc:
         if "rotary" in dn_sub:
             return _dyeing_output_to_rotary_printing_input(
                 upstream_output, downstream_override

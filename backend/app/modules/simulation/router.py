@@ -117,8 +117,8 @@ def step(simulation_id: str, db: Session = Depends(get_db), current_user: User =
 
     request = BatchSimulateRequest(
         production_line_id=sim.production_line_id,
-        machines=[map_machine_to_machine_input(m) for m in sim.production_line.machines],
-        connections=[map_connection_to_connection_input(c) for c in unique_connections],
+        machines=[map_machine_to_machine_input(m) for m in sim.production_line.machines if m.deleted_at is None],
+        connections=[map_connection_to_connection_input(c) for c in unique_connections if c.deleted_at is None],
         steps=1,
     )
     
