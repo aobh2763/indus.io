@@ -1,6 +1,9 @@
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { STEP, type SimulationFrame, type SimulationLink, type SimulationResponse, SimulationStatus } from "../simulations.schema";
+import { simulationsApi } from "../simulations.api";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 import {
   Accordion,
@@ -91,9 +94,94 @@ function RecordCard({ id, data, label }: { id: string; data: Record<string, unkn
         {Object.entries(data).map(([k, v]) =>
           k !== "warnings" ? <AttributeRow key={k} label={k} value={v} /> : null
         )}
-        {typeof data.warnings === "string" && data.warnings && (
-          <div className="py-2">
-            <WarningBlock text={data.warnings} />
+      </div>
+    </div>
+  );
+}
+
+function ExplainModal({ text, onClose }: { text: string; onClose: () => void }) {
+  const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [explanation, setExplanation] = useState<string>("");
+
+  // Kick off the API call on mount
+  useState(() => {
+    simulationsApi.explain(text)
+      .then((result: string) => {
+        setExplanation(result);
+        setStatus("done");
+      })
+      .catch(() => {
+        setExplanation("Something went wrong fetching the explanation.");
+        setStatus("error");
+      });
+  });
+
+  return (
+    // Backdrop
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Modal box — stop clicks bubbling to backdrop */}
+      <div
+        className="relative w-full max-w-md mx-4 rounded-xl bg-zinc-900 border border-amber-500/20 shadow-2xl p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-semibold uppercase tracking-widest text-amber-400/80">
+            AI Explanation
+          </span>
+          <button
+            onClick={onClose}
+            className="text-zinc-500 hover:text-zinc-300 transition-colors text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Original warning */}
+        <p className="text-[11px] text-zinc-500 italic mb-4 border-l-2 border-amber-500/30 pl-2">
+          {text}
+        </p>
+
+        {/* Content area */}
+        {status === "loading" ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <svg
+              className="animate-spin h-7 w-7 text-violet-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <span className="text-xs text-zinc-500">Thinking…</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {/* Scrollable explanation */}
+            <div className="max-h-64 overflow-y-auto pr-1">
+              <div className="max-h-60 overflow-y-auto">
+                <div className="text-xs text-zinc-300 leading-relaxed prose prose-invert prose-xs max-w-none
+                  prose-p:my-1 prose-headings:text-zinc-200 prose-strong:text-zinc-200
+                  prose-code:text-violet-300 prose-code:bg-zinc-800 prose-code:px-1 prose-code:rounded
+                  prose-ul:my-1 prose-li:my-0">
+                  <ReactMarkdown>{explanation}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
+
+            {/* Always visible footer button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full h-8 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 border border-zinc-700 hover:border-zinc-500 transition-all"
+              onClick={onClose}
+            >
+              Got it
+            </Button>
           </div>
         )}
       </div>
@@ -102,16 +190,31 @@ function RecordCard({ id, data, label }: { id: string; data: Record<string, unkn
 }
 
 function WarningBlock({ text }: { text: string }) {
-  const warnings = text.split(";").map(s => s.trim()).filter(Boolean);
+  const [showModal, setShowModal] = useState(false);
+
   return (
-    <div className="space-y-1.5">
-      {warnings.map((w, i) => (
-        <div key={i} className="flex gap-2 rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
-          {/*<AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />*/}
-          <p className="text-[11px] text-amber-300/80">{w}</p>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col items-start rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
+        {/* Warning text */}
+        <p className="text-[11px] text-amber-300/80 leading-snug text-justify">
+          {text}
+        </p>
+
+        {/* Explain button */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="self-end h-6 px-2 text-[10px] text-violet-300 hover:text-violet-200 hover:bg-violet-500/10 shrink-0"
+          onClick={() => setShowModal(true)}
+        >
+          Explain ✨
+        </Button>
+      </div>
+
+      {showModal && (
+        <ExplainModal text={text} onClose={() => setShowModal(false)} />
+      )}
+    </>
   );
 }
 
@@ -130,11 +233,6 @@ function LinkCard({ link }: { link: SimulationLink }) {
         <div key={i} className="px-3 divide-y divide-border/60">
           {Object.entries(state).map(([k, v]) =>
             k !== "warnings" ? <AttributeRow key={k} label={k} value={v} /> : null
-          )}
-          {typeof state.warnings === "string" && state.warnings && (
-            <div className="py-2">
-              <WarningBlock text={state.warnings} />
-            </div>
           )}
         </div>
       ))}
@@ -198,6 +296,22 @@ function FrameSection({ frame, step }: { frame: SimulationFrame, step?: number }
             {outputEntries.map(([id, data]) => (
               <RecordCard key={id} id={id} data={data as Record<string, unknown>} label="Output record" />
             ))}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Warnings */}
+        <AccordionItem value="warnings" className="border-0">
+          <AccordionTrigger className="py-1.5 px-3 rounded-md bg-muted/30 hover:bg-muted/60 text-[11px] font-semibold text-muted-foreground tracking-wider hover:no-underline [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground/50">
+            Warnings
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 space-y-2 pb-0 overflow-visible">
+            <div className="flex flex-col gap-2 rounded-md bg-amber-500/8 border border-amber-500/20 px-2.5 py-2">
+              {(frame.errors_warnings ?? [])
+                .filter((w) => w?.[0] !== '[')
+                .map((w: string, i: number) => (
+                  <WarningBlock key={i} text={w} />
+                ))}
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -300,7 +414,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
         {[
           { label: "Steps", value: `${simulationStep.steps_completed}/${simulationStep.steps_requested}` },
           { label: "Frames", value: simulationStep.frames.length },
-          { label: "Warnings", value: allWarnings.length },
+          { label: "Warnings", value: warnCount },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-md bg-muted/20 border border-border px-2.5 py-1.5 text-center">
             <p className="text-sm">{label}</p>
@@ -332,7 +446,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
       {/* Scrollable body */}
       <ScrollArea className="flex-1 min-h-0">
         {steps.length > 0 &&
-          <div className="p-4 space-y-6">
+          <div className="h-full min-h-0 p-4 space-y-6">
             <FrameSection frame={simulationStep.frame_data} step={simulationStep.step} />
           </div>}
       </ScrollArea>

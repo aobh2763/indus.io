@@ -125,6 +125,7 @@ def step(simulation_id: str, db: Session = Depends(get_db), current_user: User =
     bach_result = run_batch(request)
     service.save_simulation_frame(db, sim, bach_result["frames"][0])
     
+    
     print("Batch result for step:", bach_result)
     
     return start_simulation(db, sim)
@@ -186,7 +187,7 @@ def get_steps_between(simulation_id: str, from_datetime: datetime, to_datetime: 
     tags=["Simulation Engine"],
     summary="Run a batch simulation",
     description=(
-        "Accepts the full production-line graph (machines + connections) and a "
+        "Accepts the full commduction-line graph (machines + connections) and a "
         "number of steps.  Runs the SimulationEngine `steps` times and returns "
         "one `SimulationFrame` per step.  No Simulation DB record is created or "
         "modified — this endpoint is stateless and designed for interactive use "
@@ -200,7 +201,7 @@ def batch_simulate(
     """
     Stateless batch simulation endpoint.
 
-    The client sends the complete production-line graph once and specifies how
+    The client sends the complete commduction-line graph once and specifies how
     many steps to run.  The server returns a time-series of frames that can be
     used to animate the production line or generate a dashboard report.
     """

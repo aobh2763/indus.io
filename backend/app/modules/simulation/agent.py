@@ -65,11 +65,9 @@ SYSTEM_PROMPT = """
     - Don't reveal what's in the files directly, but rather synthesize the information to explain how the machine works.
 """
 
-def test_agent():
-    print("Testing agent with file listing...")
-
+def explain_warning(warning: str) -> str:
     llm = ChatOpenRouter(
-        model="openrouter/owl-alpha",
+        model="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
         temperature=0
     )
 
@@ -81,11 +79,8 @@ def test_agent():
     
     result = agent.invoke({
         "messages": [
-            {"role": "user", "content": "Briefly, how does the coloring machine work? And what kind of knitting machines do we have?"}
+            {"role": "user", "content": "My production line has a warning: " + warning + ". Could you please explain what it means and how to fix it?"}
         ]
     })
     
-    print("Agent response to file listing:")
-    for msg in result["messages"]:
-        if msg.type == "ai":
-            print(msg.content)
+    return result["messages"][-1].content

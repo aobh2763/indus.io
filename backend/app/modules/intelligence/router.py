@@ -18,43 +18,9 @@ router = APIRouter()
 
 
 # ── AI Agents ────────────────────────────────────────────
-@router.get("/ai-agents", response_model=list[AIAgentResponse], tags=["AI Agents"])
-def list_agents(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return service.get_all_agents(db)
-
-
-@router.post("/ai-agents", response_model=AIAgentResponse, status_code=201, tags=["AI Agents"])
-def create_agent(data: AIAgentCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return service.create_agent(db, data)
-
-
-@router.get("/ai-agents/{agent_id}", response_model=AIAgentResponse, tags=["AI Agents"])
-def get_agent(agent_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    agent = service.get_agent_by_id(db, agent_id)
-    if not agent:
-        raise NotFoundError("AI Agent")
-    return agent
-
-
-@router.put("/ai-agents/{agent_id}", response_model=AIAgentResponse, tags=["AI Agents"])
-def update_agent(
-    agent_id: str,
-    data: AIAgentUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    agent = service.update_agent(db, agent_id, data)
-    if not agent:
-        raise NotFoundError("AI Agent")
-    return agent
-
-
-@router.delete("/ai-agents/{agent_id}", status_code=204, tags=["AI Agents"])
-def delete_agent(agent_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    agent = service.soft_delete_agent(db, agent_id)
-    if not agent:
-        raise NotFoundError("AI Agent")
-
+@router.get("/ai-agents/explain", response_model=str, tags=["AI Agents"])
+def explain_warning(warning: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return service.explain(warning)
 
 # ── Suggestions ──────────────────────────────────────────
 @router.get("/lines/{line_id}/suggestions", response_model=list[SuggestionResponse], tags=["Suggestions"])

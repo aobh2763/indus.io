@@ -12,6 +12,7 @@ from app.modules.intelligence.schemas import (
     SuggestionUpdate,
 )
 
+from app.modules.simulation.agent import explain_warning
 
 # ── AI Agents ────────────────────────────────────────────
 def get_all_agents(db: Session):
@@ -49,6 +50,9 @@ def soft_delete_agent(db: Session, agent_id: uuid.UUID) -> Optional[AIAgent]:
     db.commit()
     return agent
 
+
+def explain(warning: str) -> str:
+    return explain_warning(warning)
 
 # ── Suggestions ──────────────────────────────────────────
 def get_suggestions_by_line(db: Session, line_id: uuid.UUID):

@@ -49,11 +49,13 @@ Supported subprocess keys (process → subprocess)
 """
 
 from __future__ import annotations
+import random
 
 # Make the standalone `simulation/` package importable when running from
 # the `backend/` folder (mirrors the shim used by the FastAPI bridge).
 import sys
 from pathlib import Path
+from time import time
 
 _SIM_PKG_DIR = Path(__file__).resolve().parents[5] / "simulation"
 if str(_SIM_PKG_DIR) not in sys.path:
@@ -377,13 +379,12 @@ class SimulationResult:
             tgt = conn["target_machine_id"]
             if src in self.machine_results:
                 state_at_t = self.machine_results[src].layer4_dict
-                links.append(
-                    {
-                        "source_machine": str(src),
-                        "target_machine": str(tgt),
-                        "states": [state_at_t],  # array of states, t=0
-                    }
-                )
+                links.append({
+                    "source_machine": str(src),
+                    "target_machine": str(tgt),
+                    "states": [state_at_t],
+                    "layer3_params": self.machine_results[src].layer3_params,
+                })
 
         # Collect all errors and warnings
         errors_warnings = list(self.global_warnings)
@@ -1210,6 +1211,51 @@ def persist_layer4_to_db(
 # MAIN ENGINE
 # ─────────────────────────────────────────────────────────────────────────────
 
+NOISE_PROFILES = {
+    ("spinning", "airjet spinning"): {
+        "air_pressure_bar":      {"sigma": 0.02,  "min": 4.0,   "max": 6.0},
+        "delivery_speed_m_min":  {"sigma": 0.01,  "min": 50.0,  "max": 450.0},
+        "ambient_temperature_C": {"sigma": 0.015, "min": 15.0,  "max": 40.0},
+        "ambient_humidity_pct":  {"sigma": 0.03,  "min": 20.0,  "max": 95.0},
+        "spinning_draft":        {"sigma": 0.005, "min": 0.90,  "max": 1.0},
+    },
+    ("spinning", "rotor spinning"): {
+        "rotor_speed_rpm":          {"sigma": 0.008, "min": 40_000.0, "max": 150_000.0, "coupled_id": "drive"},
+        "delivery_speed_m_min":     {"sigma": 0.008, "min": 10.0,    "max": 200.0,     "coupled_id": "drive"},
+        "opening_roller_speed_rpm": {"sigma": 0.015, "min": 5_000.0, "max": 10_000.0},
+        "ambient_temperature_C":    {"sigma": 0.015, "min": 15.0,    "max": 40.0},
+        "ambient_humidity_pct":     {"sigma": 0.03,  "min": 20.0,    "max": 95.0},
+    },
+}
+
+def _apply_noise(params_instance, noise_profile: dict):
+    """
+    Returns a new params dataclass with Gaussian noise applied to eligible fields.
+
+    Fields sharing the same `coupled_id` receive one shared random multiplier
+    so their ratio is preserved (e.g. rotor rpm / delivery speed = twist).
+    Fields without a coupled_id are noised independently.
+    """
+
+    random.seed()
+    d = dataclasses.asdict(params_instance)
+
+    # Pre-generate one multiplier per coupled group
+    coupled_multipliers = {}
+    for cfg in noise_profile.values():
+        cid = cfg.get("coupled_id")
+        if cid and cid not in coupled_multipliers:
+            coupled_multipliers[cid] = random.gauss(1.0, cfg["sigma"])
+
+    for field, cfg in noise_profile.items():
+        if field not in d or not isinstance(d[field], (int, float)):
+            continue
+        cid = cfg.get("coupled_id")
+        multiplier = coupled_multipliers[cid] if cid else random.gauss(1.0, cfg["sigma"])
+        d[field] = max(cfg["min"], min(cfg["max"], d[field] * multiplier))
+
+    return type(params_instance)(**d)
+
 
 class SimulationEngine:
     """
@@ -1279,6 +1325,13 @@ class SimulationEngine:
             try:
                 # ── Layer 3: deserialise parameters JSONB → typed dataclass ──
                 layer3 = _build_layer3(process, subprocess, params_raw)
+                # ── Apply stochastic noise to eligible Layer 3 fields ──────────
+                p_lower = process.strip().lower()
+                s_lower = subprocess.strip().lower()
+                profile_key = (p_lower, s_lower)
+                profile = NOISE_PROFILES.get(profile_key)
+                if profile:
+                    layer3 = _apply_noise(layer3, profile)
                 # Stash on the machine dict so downstream bridges can read it
                 machine["_layer3_instance"] = layer3
 

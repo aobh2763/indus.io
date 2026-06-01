@@ -65,4 +65,11 @@ export const simulationsApi = {
     const res = await api.get(API_PREFIX + '/simulations/' + id + '/steps');
     return z.array(simulationStepSchema).parse(res.data);
   },
+
+  explain: async (warning: string): Promise<string> => {
+    const res = await api.get(API_PREFIX + '/ai-agents/explain', {
+      params: { warning },
+    });
+    return res.data;
+  }
 };

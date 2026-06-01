@@ -186,6 +186,11 @@ const ConfigPanel: FC = () => {
 
   const selectedNode = getSelectedNode();
 
+  const edges = usePipelineStore((s) => s.edges);
+
+  const incoming = edges.filter((e) => e.target === selectedNode?.id).length;
+  const outgoing = edges.filter((e) => e.source === selectedNode?.id).length;
+
   useEffect(() => {
     if (selectedNode) {
       setLocalAttributes(ensureAttributes(selectedNode.data.attributes));
@@ -260,6 +265,20 @@ const ConfigPanel: FC = () => {
           </div>
 
           <Separator />
+
+          { incoming == 0 && (["inputs"] as LayerKey[]).map((layer) => (
+            <>
+              <AttributeSection
+                key={layer}
+                layerKey={layer}
+                attributes={localAttributes[layer]}
+                onChange={handleAttributeChange}
+                disabled={isReadOnly}
+              />
+
+              <Separator />
+            </>
+          ))}
 
           {(["configs"] as LayerKey[]).map((layer) => (
             <AttributeSection

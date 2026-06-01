@@ -1,4 +1,4 @@
-import { Factory, Camera } from "lucide-react";
+import { Factory, Camera, LayoutDashboard, FolderGit2, Goal } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { ProjectNotificationBell } from "~/components/projects/project-notification-bell";
@@ -56,20 +56,21 @@ export default function Navbar() {
               <Camera className="h-3.5 w-3.5" /> Scanner
             </span>
           </NavLink>
-          {!isPipeline && !isKpis ? (
-            <>
-              <NavLink to={currentPage === "projects" ? "/" : "/projects-management"}>
-                {currentPage === "dashboard" ? "Projects" : "Dashboard"}
-              </NavLink>
-              <NavLink to="/kpis">KPIs</NavLink>
-            </>
-          ) : (
-            <>
-              <NavLink to="/">Dashboard</NavLink>
-              <NavLink to="/projects-management">Projects</NavLink>
-              {!isKpis && <NavLink to="/kpis">KPIs</NavLink>}
-            </>
-          )}
+          <NavLink to="/">
+            <span className="flex items-center gap-1.5 text-red-400">
+              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+            </span>
+          </NavLink>
+          <NavLink to="/projects-management">
+            <span className="flex items-center gap-1.5 text-blue-400">
+              <FolderGit2 className="h-3.5 w-3.5" /> Projects
+            </span>
+          </NavLink>
+          <NavLink to="/kpis">
+            <span className="flex items-center gap-1.5 text-yellow-400">
+              <Goal className="h-3.5 w-3.5" /> KPIs
+            </span>
+          </NavLink>
 
           <div className="w-px h-4 bg-neutral-800 mx-1" />
 
