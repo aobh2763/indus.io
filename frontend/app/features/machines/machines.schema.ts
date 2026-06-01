@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const createMachineRequestSchema = z.object({
   icon: z.string().optional().nullable(),
   name: z.string(),
-  process: z.string().optional(),
-  subprocess: z.string().optional().nullable(),
+  process: z.string(),
+  subprocess: z.string(),
   description: z.string().optional().nullable(),
   manufacturer: z.string().optional().nullable(),
   model_reference: z.string().optional().nullable(),

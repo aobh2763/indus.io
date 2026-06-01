@@ -145,14 +145,13 @@ export const simulationFrameSchema = z.object({
   production_line_full_input: z.record(z.string(), z.record(z.string(), z.unknown())),
   production_line_full_output: z.record(z.string(), z.record(z.string(), z.unknown())),
   links: z.array(simulationLinkSchema),
-  errors_warnings: z.array(z.string()),  // fixed typo
+  errors_warnings: z.array(z.string()),
 });
 
 export const simulationStepSchema = z.object({
-  production_line_id: z.string(),
-  steps_requested: z.number(),
-  steps_completed: z.number(),
-  frames: z.array(simulationFrameSchema),
+  step: z.number().optional(),
+  simulation_id: z.string().optional(),
+  frame_data: simulationFrameSchema,
 });
 
 export type SimulationLink = z.infer<typeof simulationLinkSchema>;

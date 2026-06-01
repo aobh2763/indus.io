@@ -1,6 +1,6 @@
 import { Separator } from "~/components/ui/separator";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { STEP, type SimulationResponse, SimulationStatus } from "../simulations.schema";
+import { STEP, type SimulationFrame, type SimulationLink, type SimulationResponse, SimulationStatus } from "../simulations.schema";
 
 import {
   Accordion,
@@ -12,7 +12,11 @@ import {
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { useSimulationStore } from "../simulations.store";
-import { AlertTriangle, CheckCircle2, XCircle, ChevronRight, Activity, Layers, Zap, ArrowLeft } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle, ChevronRight, Activity, Layers, Zap, ArrowLeft, Wand2 } from "lucide-react";
+import { useGetSimulationSteps, useUpdateSimulation } from "../simulations.hooks";
+import { Textarea } from "~/components/ui/textarea";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 export interface SimulationInspectProps {
   data: SimulationResponse;
@@ -111,7 +115,7 @@ function WarningBlock({ text }: { text: string }) {
   );
 }
 
-function LinkCard({ link }: { link: (typeof STEP.frames)[0]["links"][0] }) {
+function LinkCard({ link }: { link: SimulationLink }) {
   const shortSrc = link.source_machine.slice(-4);
   const shortTgt = link.target_machine.slice(-4);
   return (
@@ -138,7 +142,7 @@ function LinkCard({ link }: { link: (typeof STEP.frames)[0]["links"][0] }) {
   );
 }
 
-function FrameSection({ frame }: { frame: (typeof STEP.frames)[0] }) {
+function FrameSection({ frame, step }: { frame: SimulationFrame, step?: number }) {
   const inputEntries = Object.entries(frame.production_line_full_input);
   const outputEntries = Object.entries(frame.production_line_full_output);
 
@@ -154,7 +158,7 @@ function FrameSection({ frame }: { frame: (typeof STEP.frames)[0] }) {
         )}>
           {frame.step}
         </div>*/}
-        <span className="text-xs text-muted-foreground">Step {frame.step}</span>
+        <span className="text-xs text-muted-foreground">Step {step}</span>
         {/* {frame.success
           ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 ml-auto" />
           : <XCircle className="h-3.5 w-3.5 text-red-400 ml-auto" />}*/}
@@ -203,11 +207,54 @@ function FrameSection({ frame }: { frame: (typeof STEP.frames)[0] }) {
 
 export function SimulationInspect({ data }: SimulationInspectProps) {
   const { setInspectedSimulationId } = useSimulationStore();
+  const isRunning = data.status === SimulationStatus.RUNNING;
+  const { startSimulation, stopSimulation } = useSimulationStore();
+  const queryClient = useQueryClient();
+  const updateSimulation = useUpdateSimulation();
 
-  const simulationStep = STEP;
-  const allWarnings = simulationStep.frames.flatMap(f => f.errors_warnings ?? []);
-  const criticalCount = allWarnings.filter(w => w.toLowerCase().startsWith("critical")).length;
-  const warnCount = allWarnings.length - criticalCount;
+  const handleToggle = () => {
+    const newStatus = isRunning ? SimulationStatus.STOPPED : SimulationStatus.RUNNING;
+
+    if (newStatus === SimulationStatus.RUNNING) {
+      startSimulation(data.id, queryClient);
+    } else {
+      stopSimulation(data.id);
+    }
+
+    updateSimulation.mutate({
+      id: data.id,
+      data: { status: newStatus },
+    });
+  };
+
+  const {
+    data: steps,
+    isLoading,
+    isPending,
+    isError,
+    error,
+    refetch: refetchSteps,
+  } = useGetSimulationSteps(data.id);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isRunning) {
+        refetchSteps();
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRunning, refetchSteps]);
+
+  if (isLoading || isPending) {
+    return <div>Loading...</div>
+  }
+
+  if (isError) {
+    return <div>{error.message}</div>
+  }
+
+  console.log(steps);
+  const simulationStep = steps[steps.length - 1];
 
   return (
     <div className="w-85 bg-black backdrop-blur-md flex flex-col h-[80vh] min-h-0 rounded-2xl border border-border shadow-md overflow-hidden">
@@ -224,6 +271,17 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {/*{statusBadge(data.status)}*/}
+          {data.status === SimulationStatus.RUNNING ? <Button
+            variant="outline"
+            onClick={() => handleToggle()}
+          >
+            Stop
+          </Button> : <Button
+            variant="outline"
+            onClick={() => handleToggle()}
+          >
+            Start
+          </Button>}
           <Button
             variant="ghost"
             size="icon"
@@ -238,7 +296,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
       <Separator className="shrink-0" />
 
       {/* Meta row */}
-      <div className="grid grid-cols-3 gap-2 px-4 py-3 shrink-0">
+      {/*<div className="grid grid-cols-3 gap-2 px-4 py-3 shrink-0">
         {[
           { label: "Steps", value: `${simulationStep.steps_completed}/${simulationStep.steps_requested}` },
           { label: "Frames", value: simulationStep.frames.length },
@@ -249,7 +307,7 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
             <p className="text-sm font-semibold">{value}</p>
           </div>
         ))}
-      </div>
+      </div>*/}
 
       {/* Warning summary chips */}
       {/*{allWarnings.length > 0 && (
@@ -273,12 +331,16 @@ export function SimulationInspect({ data }: SimulationInspectProps) {
 
       {/* Scrollable body */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-4 space-y-6">
-          {simulationStep.frames.map((frame, i) => (
-            <FrameSection key={i} frame={frame} />
-          ))}
-        </div>
+        {steps.length > 0 &&
+          <div className="p-4 space-y-6">
+            <FrameSection frame={simulationStep.frame_data} step={simulationStep.step} />
+          </div>}
       </ScrollArea>
+
+      {/*<div className="p-4 space-y-2">
+        <Textarea placeholder="Let AI explain the result..." className="w-full h-20" />
+        <Button className="w-full">Explain <Wand2 size={16} /></Button>
+      </div>*/}
     </div>
   );
 }

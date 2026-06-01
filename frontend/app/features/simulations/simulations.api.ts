@@ -9,7 +9,10 @@ import {
   type UpdateSimulationRequest,
   type SimulationResponse,
   type SimulationListResponse,
+  simulationStepSchema,
+  type SimulationStep,
 } from './simulations.schema';
+import z from 'zod';
 
 export const simulationsApi = {
   get: async (line_id: string): Promise<SimulationListResponse> => {
@@ -58,7 +61,8 @@ export const simulationsApi = {
     await api.post(API_PREFIX + '/simulations/' + id + '/step');
   },
 
-  getSteps: async (id: string): Promise<void> => {
-    await api.post(API_PREFIX + '/simulations/' + id + '/step');
+  getSteps: async (id: string): Promise<SimulationStep[]> => {
+    const res = await api.get(API_PREFIX + '/simulations/' + id + '/steps');
+    return z.array(simulationStepSchema).parse(res.data);
   },
 };

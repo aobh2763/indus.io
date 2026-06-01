@@ -25,6 +25,7 @@ export interface MachineNodeData extends Record<string, unknown> {
   color: string;
   label: string;
   process: MachineProcess;
+  subprocess: string;
   attributes: ProcessAttributes;
 }
 
@@ -129,7 +130,21 @@ function normalizeProcessAttributes(parameters: unknown): ProcessAttributes {
     return emptyAttributes();
   }
 
-  const maybeGrouped = parameters as Partial<Record<keyof ProcessAttributes, unknown>>;
+  const maybeGrouped = parameters as Record<string, unknown>;
+
+  const hasBackendShape =
+    "machine_parameters" in maybeGrouped ||
+    "input_attributes" in maybeGrouped ||
+    "output_attributes" in maybeGrouped;
+
+  if (hasBackendShape) {
+    return {
+      inputs: normalizeAttributeMap(maybeGrouped.input_attributes),
+      configs: normalizeAttributeMap(maybeGrouped.machine_parameters),
+      outputs: normalizeAttributeMap(maybeGrouped.output_attributes),
+    };
+  }
+
   const hasGroupedShape =
     "inputs" in maybeGrouped ||
     "configs" in maybeGrouped ||
@@ -159,10 +174,42 @@ function machineToNode(machine: MachineResponse): MachineNode {
     data: {
       label: machine.name,
       process: (machine.process ?? "spinning") as MachineProcess,
+      subprocess: (machine.subprocess ?? "rotor") as MachineProcess,
       color: getColorForProcess(machine.process ?? ""),
       icon: machine.icon ?? getIconForProcess(machine.process ?? ""),
       attributes: normalizeProcessAttributes(machine.parameters),
     },
+  };
+}
+
+/** Format frontend attributes to the structure expected by the backend */
+function formatAttributesForBackend(attributes: ProcessAttributes): Record<string, unknown> {
+  const machine_parameters: Record<string, unknown> = {};
+  const input_attributes: Record<string, unknown> = {};
+  const output_attributes: Record<string, unknown> = {};
+
+  if (attributes.configs) {
+    for (const [key, attr] of Object.entries(attributes.configs)) {
+      machine_parameters[key] = attr.value;
+    }
+  }
+
+  if (attributes.inputs) {
+    for (const [key, attr] of Object.entries(attributes.inputs)) {
+      input_attributes[key] = attr.value;
+    }
+  }
+
+  if (attributes.outputs) {
+    for (const [key, attr] of Object.entries(attributes.outputs)) {
+      output_attributes[key] = attr.value;
+    }
+  }
+
+  return {
+    machine_parameters,
+    input_attributes,
+    output_attributes,
   };
 }
 
@@ -181,15 +228,19 @@ function nodeToCreateRequest(
   data: MachineNodeData,
   position: { x: number; y: number }
 ): CreateMachineRequest {
-  return {
+  const req = {
     name: data.label,
     process: data.process,
+    subprocess: data.subprocess,
     icon: data.icon,
     position_x: position.x,
     position_y: position.y,
     is_configured: false,
-    parameters: data.attributes as unknown as Record<string, unknown>,
+    parameters: formatAttributesForBackend(data.attributes),
   };
+
+  console.log("NODE REQUEST:", req);
+  return req;
 }
 
 // Track debounce timers for position updates per node
@@ -387,6 +438,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       data: {
         label: machineConfig.name,
         process: machineConfig.process,
+        subprocess: machineConfig.subprocess,
         color: machineConfig.color,
         icon: machineConfig.icon,
         attributes: JSON.parse(JSON.stringify(machineConfig.defaultAttributes)),
@@ -437,7 +489,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     if (data.process !== undefined) updatePayload.process = data.process;
     if (data.icon !== undefined) updatePayload.icon = data.icon;
     if (data.attributes !== undefined) {
-      updatePayload.parameters = data.attributes;
+      updatePayload.parameters = formatAttributesForBackend(data.attributes);
     }
 
     if (Object.keys(updatePayload).length > 0) {

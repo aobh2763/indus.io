@@ -4,6 +4,7 @@ import { useSimulationStore } from "../simulations.store";
 import { Activity, Play, Square, Eye, Trash2, Loader2 } from "lucide-react";
 import { useDeleteSimulation, useUpdateSimulation } from "../simulations.hooks";
 import { SimulationStatus, type SimulationResponse } from "../simulations.schema";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface SimulationCardProps {
   data: SimulationResponse;
@@ -15,13 +16,14 @@ export function SimulationCard({ data }: SimulationCardProps) {
   const isRunning = data.status === SimulationStatus.RUNNING;
   const { startSimulation, stopSimulation } = useSimulationStore();
 
+  const queryClient = useQueryClient();
   const { setInspectedSimulationId } = useSimulationStore();
 
   const handleToggle = () => {
     const newStatus = isRunning ? SimulationStatus.STOPPED : SimulationStatus.RUNNING;
 
     if (newStatus === SimulationStatus.RUNNING) {
-      startSimulation(data.id);
+      startSimulation(data.id, queryClient);
     } else {
       stopSimulation(data.id);
     }
@@ -72,17 +74,15 @@ export function SimulationCard({ data }: SimulationCardProps) {
           {isRunning ? "Stop" : "Start"}
         </Button>
 
-        {data.status === SimulationStatus.RUNNING &&
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-7 gap-1.5 text-xs px-2.5"
-            onClick={handleInspect}
-          >
-            <Eye className="h-3 w-3" />
-            Inspect
-          </Button>
-        }
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-7 gap-1.5 text-xs px-2.5"
+          onClick={handleInspect}
+        >
+          <Eye className="h-3 w-3" />
+          Inspect
+        </Button>
 
         <Button
           size="sm"

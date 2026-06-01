@@ -54,6 +54,7 @@ from __future__ import annotations
 # the `backend/` folder (mirrors the shim used by the FastAPI bridge).
 import sys
 from pathlib import Path
+
 _SIM_PKG_DIR = Path(__file__).resolve().parents[5] / "simulation"
 if str(_SIM_PKG_DIR) not in sys.path:
     sys.path.insert(0, str(_SIM_PKG_DIR))
@@ -80,7 +81,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.spinning.rotor import ( # type: ignore
+        from simulation.spinning.rotor import (  # type: ignore
             InputMaterial as RotorInputMaterial,
             RotorOperationalParams,
             YarnQualityOutput,
@@ -102,7 +103,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.spinning.airjet import ( # type: ignore
+        from simulation.spinning.airjet import (  # type: ignore
             InputMaterial as AirjetInputMaterial,
             AirjetOperationalParams,
             YarnQualityOutput as AirjetYarnQualityOutput,
@@ -124,7 +125,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.weaving.plain import ( # type: ignore
+        from simulation.weaving.plain import (  # type: ignore
             InputYarns,
             PlainWeavingParams,
             FabricQualityOutput,
@@ -146,7 +147,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.knitting.weft_knitting import ( # type: ignore
+        from simulation.knitting.weft_knitting import (  # type: ignore
             InputFabric as KnittingInputFabric,
             WeftKnittingParams,
             KnittedFabricOutput,
@@ -168,7 +169,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.coloring.reactive_dyeing import ( # type: ignore
+        from simulation.coloring.reactive_dyeing import (  # type: ignore
             InputFabric as ReactiveDyeingInputFabric,
             ReactiveDyeingParams,
             DyedFabricOutput as ReactiveDyedFabricOutput,
@@ -191,7 +192,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.weaving.dobby import ( # type: ignore
+        from simulation.weaving.dobby import (  # type: ignore
             InputYarn as DobbyInputYarn,
             DobbyOperationalParams,
             FabricQualityOutput as DobbyFabricQualityOutput,
@@ -214,7 +215,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.knitting.warp_knitting import ( # type: ignore
+        from simulation.knitting.warp_knitting import (  # type: ignore
             InputWovenFabric as WarpKnittingInputFabric,
             WarpKnittingOperationalParams,
             WarpKnittedFabricOutput,
@@ -237,7 +238,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.printing.rotary_printing import ( # type: ignore
+        from simulation.printing.rotary_printing import (  # type: ignore
             InputDyedFabric as RotaryInputDyedFabric,
             RotaryPrintingOperationalParams,
             RotaryPrintedFabricOutput,
@@ -260,7 +261,7 @@ try:
     )
 except Exception:
     try:
-        from simulation.printing.screen_printing import ( # type: ignore
+        from simulation.printing.screen_printing import (  # type: ignore
             InputDyedFabric as ScreenPrintingInputDyedFabric,
             ScreenPrintingOperationalParams,
             PrintedFabricOutput as ScreenPrintedFabricOutput,
@@ -283,7 +284,7 @@ except Exception:
 # In a real FastAPI app this would be a SQLAlchemy model instance; here we
 # use plain dicts so the engine is DB-library-agnostic and fully testable.
 RawMachine = dict[str, Any]
-RawConnection = dict[str, Any]   # {source_machine_id, target_machine_id}
+RawConnection = dict[str, Any]  # {source_machine_id, target_machine_id}
 
 # A simulation output is any dataclass instance produced by a simulate_*() fn.
 SimOutput = Any
@@ -293,9 +294,11 @@ SimOutput = Any
 # RESULT DATACLASS
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @dataclasses.dataclass
 class MachineSimResult:
     """Holds the complete simulation result for a single machine node."""
+
     machine_id: uuid.UUID
     machine_name: str
     process: str
@@ -315,12 +318,15 @@ class MachineSimResult:
 @dataclasses.dataclass
 class SimulationResult:
     """Top-level result returned by SimulationEngine.run()."""
+
     production_line_id: uuid.UUID
-    execution_order: list[uuid.UUID]          # Machine IDs in topo-sort order
+    execution_order: list[uuid.UUID]  # Machine IDs in topo-sort order
     machine_results: dict[uuid.UUID, MachineSimResult]
     global_warnings: list[str]
     success: bool
-    connections: list[dict] = dataclasses.field(default_factory=list) # {source_machine_id, target_machine_id}
+    connections: list[dict] = dataclasses.field(
+        default_factory=list
+    )  # {source_machine_id, target_machine_id}
 
     def to_dict(self) -> dict:
         """
@@ -338,22 +344,30 @@ class SimulationResult:
         for conn in self.connections:
             src = conn["source_machine_id"]
             tgt = conn["target_machine_id"]
-            if tgt in in_degree: in_degree[tgt] += 1
-            if src in out_degree: out_degree[src] += 1
+            if tgt in in_degree:
+                in_degree[tgt] += 1
+            if src in out_degree:
+                out_degree[src] += 1
 
         # Root machines (in-degree 0) — their layer2_input is the full line input
-        root_machines = [mid for mid in self.execution_order if in_degree.get(mid, 0) == 0]
+        root_machines = [
+            mid for mid in self.execution_order if in_degree.get(mid, 0) == 0
+        ]
         # Leaf machines (out-degree 0) — their layer4_dict is the full line output
-        leaf_machines = [mid for mid in self.execution_order if out_degree.get(mid, 0) == 0]
+        leaf_machines = [
+            mid for mid in self.execution_order if out_degree.get(mid, 0) == 0
+        ]
 
         full_input = {
             str(mid): self.machine_results[mid].layer2_input
-            for mid in root_machines if mid in self.machine_results
+            for mid in root_machines
+            if mid in self.machine_results
         }
 
         full_output = {
             str(mid): self.machine_results[mid].layer4_dict
-            for mid in leaf_machines if mid in self.machine_results
+            for mid in leaf_machines
+            if mid in self.machine_results
         }
 
         # Build links array with 'states' over tick t (length 1 for steady-state)
@@ -363,11 +377,13 @@ class SimulationResult:
             tgt = conn["target_machine_id"]
             if src in self.machine_results:
                 state_at_t = self.machine_results[src].layer4_dict
-                links.append({
-                    "source_machine": str(src),
-                    "target_machine": str(tgt),
-                    "states": [state_at_t],  # array of states, t=0
-                })
+                links.append(
+                    {
+                        "source_machine": str(src),
+                        "target_machine": str(tgt),
+                        "states": [state_at_t],  # array of states, t=0
+                    }
+                )
 
         # Collect all errors and warnings
         errors_warnings = list(self.global_warnings)
@@ -375,14 +391,15 @@ class SimulationResult:
             errors_warnings.extend(mres.warnings)
 
         return {
-            "production_line_full_input":  full_input,
-            "links":                       links,
+            "production_line_full_input": full_input,
+            "links": links,
             "production_line_full_output": full_output,
-            "errors_warnings":             errors_warnings,
+            "errors_warnings": errors_warnings,
         }
 
     def save_to_json(self, filepath: str) -> None:
         import json
+
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=4)
 
@@ -394,21 +411,21 @@ class SimulationResult:
 # Add new entries here whenever a new simulation module is written.
 
 _REGISTRY: dict[tuple[str, str], Callable] = {
-    ("spinning", "rotor spinning"):       simulate_rotor_spinning,
-    ("spinning", "air-jet spinning"):     simulate_airjet_spinning,
-    ("spinning", "airjet spinning"):      simulate_airjet_spinning,
-    ("weaving",  "plain weaving"):        simulate_plain_weaving,
-    ("weaving", "dobby weaving"):         simulate_dobby_weaving,
-    ("knitting", "warp knitting"):        simulate_warp_knitting,
-    ("knitting", "weft knitting"):        simulate_weft_knitting,
-    ("colouring","reactive dyeing"):      simulate_reactive_dyeing,
+    ("spinning", "rotor spinning"): simulate_rotor_spinning,
+    ("spinning", "air-jet spinning"): simulate_airjet_spinning,
+    ("spinning", "airjet spinning"): simulate_airjet_spinning,
+    ("weaving", "plain weaving"): simulate_plain_weaving,
+    ("weaving", "dobby weaving"): simulate_dobby_weaving,
+    ("knitting", "warp knitting"): simulate_warp_knitting,
+    ("knitting", "weft knitting"): simulate_weft_knitting,
+    ("colouring", "reactive dyeing"): simulate_reactive_dyeing,
     # ("colouring","vat dyeing"):           simulate_vat_dyeing,
     # aliases
-    ("dyeing",   "reactive dyeing"):      simulate_reactive_dyeing,
+    ("dyeing", "reactive dyeing"): simulate_reactive_dyeing,
     # ("dyeing",   "vat dyeing"):           simulate_vat_dyeing,
-    ("printing", "rotary printing"):      simulate_rotary_printing,
+    ("printing", "rotary printing"): simulate_rotary_printing,
     ("printing", "rotary screen printing"): simulate_rotary_printing,
-    ("printing", "screen printing"):      simulate_screen_printing
+    ("printing", "screen printing"): simulate_screen_printing,
 }
 
 
@@ -433,6 +450,7 @@ def _lookup(process: str, subprocess: str) -> Callable:
 #                      (user-supplied overrides take precedence over derived values)
 # into the correct Layer 2 input dataclass for the downstream node.
 
+
 def _build_rotor_input(override_dict: dict) -> RotorInputMaterial:
     """
     Layer 2 for Rotor Spinning.
@@ -443,8 +461,12 @@ def _build_rotor_input(override_dict: dict) -> RotorInputMaterial:
         fiber_type=override_dict.get("fiber_type", "cotton_carded"),
         fiber_length_mm=float(override_dict.get("fiber_length_mm", 27.0)),
         fiber_fineness_dtex=float(override_dict.get("fiber_fineness_dtex", 1.7)),
-        short_fiber_content_pct=float(override_dict.get("short_fiber_content_pct", 14.0)),
-        fiber_tensile_strength_cN_tex=float(override_dict.get("fiber_tensile_strength_cN_tex", 28.0)),
+        short_fiber_content_pct=float(
+            override_dict.get("short_fiber_content_pct", 14.0)
+        ),
+        fiber_tensile_strength_cN_tex=float(
+            override_dict.get("fiber_tensile_strength_cN_tex", 28.0)
+        ),
         sliver_count_ktex=float(override_dict.get("sliver_count_ktex", 4.5)),
         moisture_content_pct=float(override_dict.get("moisture_content_pct", 7.0)),
         trash_content_pct=float(override_dict.get("trash_content_pct", 1.2)),
@@ -457,8 +479,12 @@ def _build_airjet_input(override_dict: dict) -> AirjetInputMaterial:
         fiber_type=override_dict.get("fiber_type", "cotton_combed"),
         fiber_length_mm=float(override_dict.get("fiber_length_mm", 30.0)),
         fiber_fineness_dtex=float(override_dict.get("fiber_fineness_dtex", 1.5)),
-        short_fiber_content_pct=float(override_dict.get("short_fiber_content_pct", 6.0)),
-        fiber_tensile_strength_cN_tex=float(override_dict.get("fiber_tensile_strength_cN_tex", 32.0)),
+        short_fiber_content_pct=float(
+            override_dict.get("short_fiber_content_pct", 6.0)
+        ),
+        fiber_tensile_strength_cN_tex=float(
+            override_dict.get("fiber_tensile_strength_cN_tex", 32.0)
+        ),
         sliver_count_ktex=float(override_dict.get("sliver_count_ktex", 3.0)),
         moisture_content_pct=float(override_dict.get("moisture_content_pct", 6.5)),
         trash_content_pct=float(override_dict.get("trash_content_pct", 0.3)),
@@ -487,7 +513,7 @@ def _spinning_output_to_weaving_input(
       yarn_count_tex/Ne from spinning L3 params
     """
     tex = float(spinning_params.yarn_count_tex)
-    Ne  = float(spinning_params.yarn_count_Ne)
+    Ne = float(spinning_params.yarn_count_Ne)
     ytype = spinning_params.yarn_count_tex  # will grab fiber_type below
 
     # fiber_type lives in the spinning L2 (InputMaterial), not L4.
@@ -498,25 +524,43 @@ def _spinning_output_to_weaving_input(
         warp_yarn_count_tex=override_dict.get("warp_yarn_count_tex", tex),
         warp_yarn_count_Ne=override_dict.get("warp_yarn_count_Ne", Ne),
         warp_yarn_tenacity_cN_tex=override_dict.get(
-            "warp_yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex),
+            "warp_yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex
+        ),
         warp_yarn_CVm_pct=override_dict.get(
-            "warp_yarn_CVm_pct", yarn_output.yarn_evenness_CVm_pct),
+            "warp_yarn_CVm_pct", yarn_output.yarn_evenness_CVm_pct
+        ),
         warp_yarn_hairiness_H=override_dict.get(
-            "warp_yarn_hairiness_H", yarn_output.hairiness_H),
+            "warp_yarn_hairiness_H", yarn_output.hairiness_H
+        ),
         warp_yarn_twist_t_per_m=override_dict.get(
-            "warp_yarn_twist_t_per_m", getattr(yarn_output, "actual_twist_turns_per_m", getattr(yarn_output, "wrapping_twist_am", 500.0))),
+            "warp_yarn_twist_t_per_m",
+            getattr(
+                yarn_output,
+                "actual_twist_turns_per_m",
+                getattr(yarn_output, "wrapping_twist_am", 500.0),
+            ),
+        ),
         warp_yarn_type=override_dict.get("warp_yarn_type", fiber_type),
         # Weft defaults to same yarn unless overridden
         weft_yarn_count_tex=override_dict.get("weft_yarn_count_tex", tex),
         weft_yarn_count_Ne=override_dict.get("weft_yarn_count_Ne", Ne),
         weft_yarn_tenacity_cN_tex=override_dict.get(
-            "weft_yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex),
+            "weft_yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex
+        ),
         weft_yarn_CVm_pct=override_dict.get(
-            "weft_yarn_CVm_pct", yarn_output.yarn_evenness_CVm_pct),
+            "weft_yarn_CVm_pct", yarn_output.yarn_evenness_CVm_pct
+        ),
         weft_yarn_hairiness_H=override_dict.get(
-            "weft_yarn_hairiness_H", yarn_output.hairiness_H),
+            "weft_yarn_hairiness_H", yarn_output.hairiness_H
+        ),
         weft_yarn_twist_t_per_m=override_dict.get(
-            "weft_yarn_twist_t_per_m", getattr(yarn_output, "actual_twist_turns_per_m", getattr(yarn_output, "wrapping_twist_am", 500.0))),
+            "weft_yarn_twist_t_per_m",
+            getattr(
+                yarn_output,
+                "actual_twist_turns_per_m",
+                getattr(yarn_output, "wrapping_twist_am", 500.0),
+            ),
+        ),
         weft_yarn_type=override_dict.get("weft_yarn_type", fiber_type),
     )
 
@@ -529,7 +573,7 @@ def _weaving_output_to_knitting_input(
     Bridge: Weaving Layer 4 (FabricQualityOutput / DobbyFabricQualityOutput) → Knitting Layer 2 (InputFabric).
     """
     d = asdict(fabric_output)
-    d.update(override_dict)           # DB overrides win
+    d.update(override_dict)  # DB overrides win
 
     fallbacks = {
         "yarn_diameter_warp_mm": 0.2,
@@ -548,7 +592,11 @@ def _weaving_output_to_knitting_input(
         "weft_break_risk": d.get("weft_break_risk", "low"),
         "cloth_defect_risk": "low",
         "production_rate_m_per_min": d.get("actual_production_m_per_hour", 30.0) / 60.0,
-        "production_rate_m2_per_hour": (d.get("actual_production_m_per_hour", 30.0) * d.get("fabric_width_cm", 160.0) / 100.0),
+        "production_rate_m2_per_hour": (
+            d.get("actual_production_m_per_hour", 30.0)
+            * d.get("fabric_width_cm", 160.0)
+            / 100.0
+        ),
     }
 
     kwargs = {}
@@ -590,7 +638,11 @@ def _weaving_output_to_reactive_input(
         "weft_break_risk": d.get("weft_break_risk", "low"),
         "cloth_defect_risk": "low",
         "production_rate_m_per_min": d.get("actual_production_m_per_hour", 30.0) / 60.0,
-        "production_rate_m2_per_hour": (d.get("actual_production_m_per_hour", 30.0) * d.get("fabric_width_cm", 160.0) / 100.0),
+        "production_rate_m2_per_hour": (
+            d.get("actual_production_m_per_hour", 30.0)
+            * d.get("fabric_width_cm", 160.0)
+            / 100.0
+        ),
     }
 
     kwargs = {}
@@ -614,12 +666,12 @@ def _spinning_output_to_dobby_input(
     Bridge: Spinning Layer 4 (YarnQualityOutput) → Dobby Weaving Layer 2 (DobbyInputYarn).
     """
     tex = float(getattr(spinning_params, "yarn_count_tex", 20.0))
-    Ne  = float(getattr(spinning_params, "yarn_count_Ne", 30.0))
+    Ne = float(getattr(spinning_params, "yarn_count_Ne", 30.0))
     twist_factor = float(getattr(spinning_params, "twist_factor_am", 130.0))
-    
+
     # Calculate English twist multiplier from metric twist factor
     twist_mult_fallback = round(twist_factor / 32.57, 2)
-    
+
     fiber_type = override_dict.get("fiber_type", "cotton")
 
     return DobbyInputYarn(
@@ -627,10 +679,16 @@ def _spinning_output_to_dobby_input(
         yarn_count_Ne=override_dict.get("yarn_count_Ne", Ne),
         fiber_type=override_dict.get("fiber_type", fiber_type),
         twist_multiplier=override_dict.get("twist_multiplier", twist_mult_fallback),
-        yarn_tenacity_cN_tex=override_dict.get("yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex),
-        yarn_evenness_CVm_pct=override_dict.get("yarn_evenness_CVm_pct", yarn_output.yarn_evenness_CVm_pct),
+        yarn_tenacity_cN_tex=override_dict.get(
+            "yarn_tenacity_cN_tex", yarn_output.yarn_tenacity_cN_tex
+        ),
+        yarn_evenness_CVm_pct=override_dict.get(
+            "yarn_evenness_CVm_pct", yarn_output.yarn_evenness_CVm_pct
+        ),
         hairiness_H=override_dict.get("hairiness_H", yarn_output.hairiness_H),
-        neps_per_km=override_dict.get("neps_per_km", getattr(yarn_output, "neps_per_km", 50.0)),
+        neps_per_km=override_dict.get(
+            "neps_per_km", getattr(yarn_output, "neps_per_km", 50.0)
+        ),
         warp_sizing_applied=override_dict.get("warp_sizing_applied", True),
         size_add_on_pct=override_dict.get("size_add_on_pct", 10.0),
         moisture_regain_pct=override_dict.get("moisture_regain_pct", 8.0),
@@ -649,11 +707,17 @@ def _weaving_output_to_warp_knitting_input(
 
     fallbacks = {
         "fabric_width_cm": d.get("fabric_width_cm", 160.0),
-        "fabric_weight_g_per_m2": d.get("fabric_weight_g_per_m2", d.get("fabric_areal_weight_g_m2", 150.0)),
-        "cloth_cover_factor": d.get("cloth_cover_factor", d.get("total_cover_factor", 0.8)),
+        "fabric_weight_g_per_m2": d.get(
+            "fabric_weight_g_per_m2", d.get("fabric_areal_weight_g_m2", 150.0)
+        ),
+        "cloth_cover_factor": d.get(
+            "cloth_cover_factor", d.get("total_cover_factor", 0.8)
+        ),
         "weft_crimp_pct": d.get("weft_crimp_pct", 8.0),
         "warp_crimp_pct": d.get("warp_crimp_pct", 8.0),
-        "warp_yarn_quality_risk": d.get("warp_end_break_risk", d.get("warp_break_risk", "low")),
+        "warp_yarn_quality_risk": d.get(
+            "warp_end_break_risk", d.get("warp_break_risk", "low")
+        ),
         "weft_yarn_quality_risk": d.get("weft_break_risk", "low"),
         "substrate_nep_visibility": d.get("expected_nep_visibility", "negligible"),
         "substrate_regularity": d.get("pick_spacing_regularity", "excellent"),
@@ -690,7 +754,9 @@ def _knitting_output_to_reactive_input(
     d.update(override_dict)
 
     weight = d.get("fabric_areal_weight_g_m2", d.get("fabric_weight_g_per_m2", 150.0))
-    prod_rate_m_h = d.get("production_rate_m_per_hour", d.get("actual_production_m_per_hour", 15.0))
+    prod_rate_m_h = d.get(
+        "production_rate_m_per_hour", d.get("actual_production_m_per_hour", 15.0)
+    )
     width = d.get("fabric_width_finished_cm", 160.0)
 
     fallbacks = {
@@ -829,6 +895,7 @@ def _dyeing_output_to_screen_printing_input(
 # LAYER 3 BUILDER — deserialise JSONB parameters → typed dataclass
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _build_layer3(process: str, subprocess: str, params_dict: dict) -> Any:
     """
     Deserialises the machine.parameters JSONB column into the correct
@@ -846,6 +913,8 @@ def _build_layer3(process: str, subprocess: str, params_dict: dict) -> Any:
     s = subprocess.strip().lower()
 
     def _safe(cls, data: dict):
+        data = data["machine_parameters"]
+
         """Build cls from data dict, raising a helpful error on missing keys."""
         fields = cls.__dataclass_fields__
         kwargs = {}
@@ -898,16 +967,19 @@ def _build_layer3(process: str, subprocess: str, params_dict: dict) -> Any:
 # DAG UTILITIES
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _build_adjacency(
     machines: list[RawMachine],
     connections: list[RawConnection],
-) -> tuple[dict[uuid.UUID, list[uuid.UUID]],   # children  (src → [dst])
-           dict[uuid.UUID, list[uuid.UUID]],   # parents   (dst → [src])
-           dict[uuid.UUID, int]]:              # in-degree
+) -> tuple[
+    dict[uuid.UUID, list[uuid.UUID]],  # children  (src → [dst])
+    dict[uuid.UUID, list[uuid.UUID]],  # parents   (dst → [src])
+    dict[uuid.UUID, int],
+]:  # in-degree
     """Builds forward adjacency, reverse adjacency, and in-degree maps."""
-    children:  dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
-    parents:   dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
-    in_degree: dict[uuid.UUID, int]             = {m["id"]: 0 for m in machines}
+    children: dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
+    parents: dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
+    in_degree: dict[uuid.UUID, int] = {m["id"]: 0 for m in machines}
 
     for conn in connections:
         src = conn["source_machine_id"]
@@ -929,9 +1001,7 @@ def _topological_sort(
     """
     children, parents, in_degree = _build_adjacency(machines, connections)
 
-    queue: deque[uuid.UUID] = deque(
-        mid for mid, deg in in_degree.items() if deg == 0
-    )
+    queue: deque[uuid.UUID] = deque(mid for mid, deg in in_degree.items() if deg == 0)
     order: list[uuid.UUID] = []
 
     while queue:
@@ -957,6 +1027,7 @@ def _topological_sort(
 # OUTPUT → INPUT BRIDGE DISPATCHER
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _bridge(
     upstream_output: SimOutput,
     upstream_machine: RawMachine,
@@ -976,10 +1047,10 @@ def _bridge(
 
     Returns the appropriate Layer 2 dataclass instance.
     """
-    up_proc  = upstream_machine.get("process", "").lower()
-    up_sub   = upstream_machine.get("subprocess", "").lower()
-    dn_proc  = downstream_machine.get("process", "").lower()
-    dn_sub   = downstream_machine.get("subprocess", "").lower()
+    up_proc = upstream_machine.get("process", "").lower()
+    up_sub = upstream_machine.get("subprocess", "").lower()
+    dn_proc = downstream_machine.get("process", "").lower()
+    dn_sub = downstream_machine.get("subprocess", "").lower()
 
     # ── Spinning → Weaving ───────────────────────────────────────────────────
     if "spinning" in up_proc and "weaving" in dn_proc:
@@ -1003,9 +1074,13 @@ def _bridge(
     # ── Weaving → Knitting ───────────────────────────────────────────────────
     if "weaving" in up_proc and "knitting" in dn_proc:
         if "warp" in dn_sub:
-            return _weaving_output_to_warp_knitting_input(upstream_output, downstream_override)
+            return _weaving_output_to_warp_knitting_input(
+                upstream_output, downstream_override
+            )
         else:
-            return _weaving_output_to_knitting_input(upstream_output, downstream_override)
+            return _weaving_output_to_knitting_input(
+                upstream_output, downstream_override
+            )
 
     # ── Weaving → Reactive Dyeing ────────────────────────────────────────────
     if "weaving" in up_proc and "reactive" in dn_sub:
@@ -1018,9 +1093,13 @@ def _bridge(
     # ── Dyeing → Printing ────────────────────────────────────────────────────
     if ("colouring" in up_proc or "dyeing" in up_proc) and "printing" in dn_proc:
         if "rotary" in dn_sub:
-            return _dyeing_output_to_rotary_printing_input(upstream_output, downstream_override)
+            return _dyeing_output_to_rotary_printing_input(
+                upstream_output, downstream_override
+            )
         else:
-            return _dyeing_output_to_screen_printing_input(upstream_output, downstream_override)
+            return _dyeing_output_to_screen_printing_input(
+                upstream_output, downstream_override
+            )
 
     raise NotImplementedError(
         f"No bridge implemented for connection "
@@ -1033,6 +1112,7 @@ def _bridge(
 # ─────────────────────────────────────────────────────────────────────────────
 # DB PERSISTENCE HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _flatten_output(output: SimOutput) -> dict[str, Any]:
     """
@@ -1052,14 +1132,14 @@ def _flatten_output(output: SimOutput) -> dict[str, Any]:
         elif isinstance(v, bool):
             flat[k] = 1.0 if v else 0.0
         elif isinstance(v, str):
-            flat[k] = v    # caller handles non-Float columns
+            flat[k] = v  # caller handles non-Float columns
         else:
             flat[k] = float(v) if v is not None else None
     return flat
 
 
 def persist_layer4_to_db(
-    session,                     # SQLAlchemy Session
+    session,  # SQLAlchemy Session
     machine_id: uuid.UUID,
     flat_output: dict[str, Any],
     attribute_cache: dict[str, Any],  # name → AttributeDefinition ORM object
@@ -1097,7 +1177,7 @@ def persist_layer4_to_db(
                     id=uuid.uuid4(),
                     name=attr_name,
                     type="OUTPUT",
-                    unit=None,   # unit metadata can be added separately
+                    unit=None,  # unit metadata can be added separately
                 )
                 session.add(attr_def)
                 session.flush()
@@ -1128,6 +1208,7 @@ def persist_layer4_to_db(
 # ─────────────────────────────────────────────────────────────────────────────
 # MAIN ENGINE
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class SimulationEngine:
     """
@@ -1189,7 +1270,7 @@ class SimulationEngine:
         # ── Step 2: execute each node in order ───────────────────────────────
         for mid in exec_order:
             machine = machine_map[mid]
-            process    = machine.get("process",    "")
+            process = machine.get("process", "")
             subprocess = machine.get("subprocess", "")
             params_raw = machine.get("parameters", {}) or {}
             input_attr = machine.get("input_attributes", {}) or {}
@@ -1223,8 +1304,11 @@ class SimulationEngine:
                     # Multiple upstream nodes (e.g. two spinning machines → one
                     # weaving machine for warp + weft from different processes).
                     layer2 = self._build_multi_upstream_layer2(
-                        process, subprocess,
-                        upstream_ids, machine_map, machine_results,
+                        process,
+                        subprocess,
+                        upstream_ids,
+                        machine_map,
+                        machine_results,
                         input_attr,
                     )
 
@@ -1309,12 +1393,12 @@ class SimulationEngine:
 
         machines_raw: list[RawMachine] = [
             {
-                "id":                m.id,
-                "name":              m.name,
-                "process":           m.process or "",
-                "subprocess":        m.subprocess or "",
-                "parameters":        m.parameters or {},
-                "input_attributes":  _load_input_attrs(m),
+                "id": m.id,
+                "name": m.name,
+                "process": m.process or "",
+                "subprocess": m.subprocess or "",
+                "parameters": m.parameters or {},
+                "input_attributes": _load_input_attrs(m),
             }
             for m in line.machines
         ]
@@ -1388,22 +1472,24 @@ class SimulationEngine:
 
         for up_id in upstream_ids:
             up_machine = machine_map[up_id]
-            up_result  = machine_results[up_id]
+            up_result = machine_results[up_id]
             role = up_machine.get("input_attributes", {}).get("role", "")
             if role == "weft" or warp_output is not None:
-                weft_output  = up_result.layer4_output
+                weft_output = up_result.layer4_output
                 weft_machine = up_machine
             else:
-                warp_output  = up_result.layer4_output
+                warp_output = up_result.layer4_output
                 warp_machine = up_machine
 
         if "dobby" in subprocess.lower():
             if warp_output is None:
-                raise ValueError("Dobby Weaving node has multiple upstream nodes but could not find a warp source.")
+                raise ValueError(
+                    "Dobby Weaving node has multiple upstream nodes but could not find a warp source."
+                )
             return _spinning_output_to_dobby_input(
                 warp_output,
-                warp_machine["_layer3_instance"], # type: ignore
-                override_dict
+                warp_machine["_layer3_instance"],  # type: ignore
+                override_dict,
             )
 
         if warp_output is None or weft_output is None:
@@ -1415,14 +1501,14 @@ class SimulationEngine:
         # Build warp InputYarns from warp spinning node
         warp_input = _spinning_output_to_weaving_input(
             warp_output,
-            warp_machine["_layer3_instance"], # type: ignore
+            warp_machine["_layer3_instance"],  # type: ignore
             {k: v for k, v in override_dict.items() if "warp" in k},
         )
 
         # Build weft InputYarns from weft spinning node
         weft_input = _spinning_output_to_weaving_input(
             weft_output,
-            weft_machine["_layer3_instance"], # type: ignore
+            weft_machine["_layer3_instance"],  # type: ignore
             {k: v for k, v in override_dict.items() if "weft" in k},
         )
 
@@ -1435,7 +1521,7 @@ class SimulationEngine:
             warp_yarn_hairiness_H=warp_input.warp_yarn_hairiness_H,
             warp_yarn_twist_t_per_m=warp_input.warp_yarn_twist_t_per_m,
             warp_yarn_type=warp_input.warp_yarn_type,
-            weft_yarn_count_tex=weft_input.warp_yarn_count_tex,   # weft machine's "warp" slot
+            weft_yarn_count_tex=weft_input.warp_yarn_count_tex,  # weft machine's "warp" slot
             weft_yarn_count_Ne=weft_input.warp_yarn_count_Ne,
             weft_yarn_tenacity_cN_tex=weft_input.warp_yarn_tenacity_cN_tex,
             weft_yarn_CVm_pct=weft_input.warp_yarn_CVm_pct,
@@ -1818,26 +1904,57 @@ if __name__ == "__main__":
     }
 
     machines = [
-        m_rotor_spinning, m_airjet_spinning,
-        m_plain_weaving, m_dobby_weaving,
-        m_weft_knitting, m_warp_knitting,
-        m_dyeing_reactive_1, m_dyeing_reactive_2,
-        m_rotary_printing, m_screen_printing
+        m_rotor_spinning,
+        m_airjet_spinning,
+        m_plain_weaving,
+        m_dobby_weaving,
+        m_weft_knitting,
+        m_warp_knitting,
+        m_dyeing_reactive_1,
+        m_dyeing_reactive_2,
+        m_rotary_printing,
+        m_screen_printing,
     ]
 
     connections = [
         # Branch 1: Spinner Rotor + Spinner Airjet -> Plain Loom -> Weft Knitter -> Dyeing 1 -> Rotary Printer -> Screen Printer
-        {"source_machine_id": m_rotor_spinning["id"], "target_machine_id": m_plain_weaving["id"]},
-        {"source_machine_id": m_airjet_spinning["id"], "target_machine_id": m_plain_weaving["id"]},
-        {"source_machine_id": m_plain_weaving["id"], "target_machine_id": m_weft_knitting["id"]},
-        {"source_machine_id": m_weft_knitting["id"], "target_machine_id": m_dyeing_reactive_1["id"]},
-        {"source_machine_id": m_dyeing_reactive_1["id"], "target_machine_id": m_rotary_printing["id"]},
-        {"source_machine_id": m_rotary_printing["id"], "target_machine_id": m_screen_printing["id"]},
-
+        {
+            "source_machine_id": m_rotor_spinning["id"],
+            "target_machine_id": m_plain_weaving["id"],
+        },
+        {
+            "source_machine_id": m_airjet_spinning["id"],
+            "target_machine_id": m_plain_weaving["id"],
+        },
+        {
+            "source_machine_id": m_plain_weaving["id"],
+            "target_machine_id": m_weft_knitting["id"],
+        },
+        {
+            "source_machine_id": m_weft_knitting["id"],
+            "target_machine_id": m_dyeing_reactive_1["id"],
+        },
+        {
+            "source_machine_id": m_dyeing_reactive_1["id"],
+            "target_machine_id": m_rotary_printing["id"],
+        },
+        {
+            "source_machine_id": m_rotary_printing["id"],
+            "target_machine_id": m_screen_printing["id"],
+        },
         # Branch 2: Spinner Airjet -> Dobby Loom -> Warp Knitter -> Dyeing 2
-        {"source_machine_id": m_airjet_spinning["id"], "target_machine_id": m_dobby_weaving["id"]},
-        {"source_machine_id": m_dobby_weaving["id"], "target_machine_id": m_warp_knitting["id"]},
-        {"source_machine_id": m_warp_knitting["id"], "target_machine_id": m_dyeing_reactive_2["id"]},
+        {
+            "source_machine_id": m_airjet_spinning["id"],
+            "target_machine_id": m_dobby_weaving["id"],
+        },
+        {
+            "source_machine_id": m_dobby_weaving["id"],
+            "target_machine_id": m_warp_knitting["id"],
+        },
+        {
+            "source_machine_id": m_warp_knitting["id"],
+            "target_machine_id": m_dyeing_reactive_2["id"],
+        },
     ]
 
     engine = SimulationEngine()
@@ -1868,7 +1985,7 @@ if __name__ == "__main__":
             print(f"  ! {w}")
 
     print("\n" + "=" * 75)
-    
+
     # Save the output format as requested by the user
     output_filepath = "simulation_output.json"
     result.save_to_json(output_filepath)
