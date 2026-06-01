@@ -187,9 +187,9 @@ const ConfigPanel: FC = () => {
   const selectedNode = getSelectedNode();
 
   const edges = usePipelineStore((s) => s.edges);
-  const connectionCount = edges.filter(
-    (e) => e.source === selectedNode?.id || e.target === selectedNode?.id
-  ).length;
+
+  const incoming = edges.filter((e) => e.target === selectedNode?.id).length;
+  const outgoing = edges.filter((e) => e.source === selectedNode?.id).length;
 
   useEffect(() => {
     if (selectedNode) {
@@ -266,7 +266,7 @@ const ConfigPanel: FC = () => {
 
           <Separator />
 
-          { connectionCount < 2 && (["inputs"] as LayerKey[]).map((layer) => (
+          { incoming == 0 && (["inputs"] as LayerKey[]).map((layer) => (
             <>
               <AttributeSection
                 key={layer}
