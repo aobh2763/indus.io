@@ -95,7 +95,7 @@ export default function Dashboard() {
           </div>
 
           {/* ── Charts & Pipeline Preview ────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
             <div className="lg:col-span-2">
               <KpiCharts
                 kpis={kpis}
@@ -103,9 +103,6 @@ export default function Dashboard() {
                 machines={machines}
                 sensorData={store.sensorData}
               />
-            </div>
-            <div>
-              <PipelinePreview machines={machines} connections={[]} />
             </div>
           </div>
 
